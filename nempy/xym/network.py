@@ -128,7 +128,7 @@ class NodeSelector:
         self.logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0]) if logger is None else logger
         self._URLs = node_urls
         # hourly update of the node in case it appears more relevant
-        self.actualizer = threading.Thread(target=self.node_actualizer, kwargs={'interval': 3}, daemon=True)
+        self.actualizer = threading.Thread(target=self.node_actualizer, kwargs={'interval': 3600}, daemon=True)
         self.actualizer.start()
 
     def node_actualizer(self, interval):
