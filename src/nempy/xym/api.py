@@ -11,8 +11,6 @@ from symbolchain.core.facade.SymFacade import SymFacade
 from . import ed25519, network
 from .constants import Fees, FM, TransactionTypes, TransactionMetrics
 
-logging.basicConfig(level=logging.DEBUG)
-
 
 class Dividers:
     dividers = {}
