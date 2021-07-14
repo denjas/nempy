@@ -1,4 +1,5 @@
 import hashlib
+import logging
 from binascii import unhexlify
 from typing import List
 
@@ -8,7 +9,9 @@ from symbolchain.core.CryptoTypes import Signature, PublicKey
 from symbolchain.core.facade.SymFacade import SymFacade
 
 from . import ed25519, network
-from .constants import Fees, FM, TransactionTypes, TransactionMetrics, HexSequenceSizes
+from .constants import Fees, FM, TransactionTypes, TransactionMetrics
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class Dividers:
@@ -167,10 +170,10 @@ class Transaction:
 
         # TODO delete after all tests have been run
         div = 1000000
-        print(Fees.FAST.name, fast_fee_multiplier * transaction_size / div)
-        print(Fees.AVERAGE.name, average_fee_multiplier * transaction_size / div)
-        print(Fees.SLOW.name, slow_fee_multiplier * transaction_size / div)
-        print(Fees.SLOWEST.name, slowest_fee_multiplier * transaction_size / div)
+        logging.debug(f'Fees.FAST.name: {fast_fee_multiplier * transaction_size / div}')
+        logging.debug(f'Fees.AVERAGE.name: {average_fee_multiplier * transaction_size / div}')
+        logging.debug(f'Fees.SLOW.name: {slow_fee_multiplier * transaction_size / div}')
+        logging.debug(f'Fees.SLOWEST.name: {slowest_fee_multiplier * transaction_size / div}')
 
         fee_multiplier = None
         if fee_type == Fees.FAST:
@@ -207,15 +210,3 @@ class Transaction:
         # entity_hash = Hash256(hashlib.sha3_256(entity_hash_bytes).digest())
         entity_hash = hashlib.sha3_256(entity_hash_bytes).hexdigest().upper()
         return entity_hash
-
-
-def check_hex(hex_sequence: str, size: HexSequenceSizes):
-    try:
-        int(hex_sequence, 16)
-    except ValueError:
-        return False
-    if len(hex_sequence) == size:
-        return True
-    return False
-
-

@@ -11,12 +11,15 @@ from urllib.parse import urlparse
 
 import requests
 
-from nempy.utils.measure_latency import measure_latency
-from nempy.xym import constants
-from nempy.xym.constants import BlockchainStatuses
-from . import ed25519
+from src.nempy.utils.measure_latency import measure_latency
+from src.nempy.xym.constants import BlockchainStatuses
+from . import ed25519, constants
 
 logging.basicConfig(level=logging.DEBUG)
+logging.getLogger('asyncio').setLevel(logging.ERROR)
+logging.getLogger('asyncio.coroutines').setLevel(logging.ERROR)
+logging.getLogger('websockets').setLevel(logging.ERROR)
+logging.getLogger('urllib3').setLevel(logging.ERROR)
 
 
 def send_transaction(payload: bytes) -> bool:
@@ -123,22 +126,34 @@ class NodeSelector:
     _URL: str = None
     _URLs: list = None
     _sorted_URLs = None
+    _re_elections = False
 
     def __init__(self, node_urls: list[str], logger=None):
         self.logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0]) if logger is None else logger
         self._URLs = node_urls
-        # hourly update of the node in case it appears more relevant
-        self.actualizer = threading.Thread(target=self.node_actualizer, kwargs={'interval': 3600}, daemon=True)
-        self.actualizer.start()
+        if len(self._URLs) == 1:
+            self._re_elections = None
+            self._URL = self._URLs[0]
+        else:
+            # hourly update of the node in case it appears more relevant
+            self.actualizer = threading.Thread(target=self.node_actualizer, kwargs={'interval': 3600}, daemon=True)
+            self.actualizer.start()
 
     def node_actualizer(self, interval):
         asyncio.set_event_loop(asyncio.new_event_loop())
         while True:
+            self._re_elections = False
             self.reselect_node()
+            self._re_elections = True
             time.sleep(interval)
 
     @property
     def url(self):
+        if self._re_elections is None:
+            return self._URL
+        # waiting for the node re-election
+        while not self._re_elections:
+            time.sleep(0.5)
         if self.health(self._URL) != BlockchainStatuses.OK:
             self.reselect_node()
         return self._URL

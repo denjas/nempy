@@ -20,6 +20,7 @@ from Cryptodome.Hash import RIPEMD160
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from .constants import HexSequenceSizes
 
 Point = collections.namedtuple('Point', ['x', 'y'])
 
@@ -29,6 +30,16 @@ b = 256
 q = 2 ** 255 - 19
 
 hash_len = 32
+
+
+def check_hex(hex_sequence: str, size: HexSequenceSizes):
+    try:
+        int(hex_sequence, 16)
+    except ValueError:
+        return False
+    if len(hex_sequence) == size:
+        return True
+    return False
 
 
 def check_address(address, prefix=None):
@@ -85,7 +96,8 @@ class Ed25519:
         c = self.outer(self.B, a)
         return hexlify(self.point_to_bytes(c))
 
-    def get_address(self, public_key, main_net=True, prefix=None):
+    @staticmethod
+    def get_address( public_key, main_net=True, prefix=None):
         """ compute the nem-py address from the public one """
         public_key = unhexlify(Ed25519.str2bytes(public_key))
         if isinstance(public_key, str):
