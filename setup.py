@@ -37,7 +37,7 @@ setup(
     project_urls={"Bug Tracker": "https://github.com/DENjjA/nempy/issues", },
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: Apache Software License 2.0",
+        "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
     package_dir={"": "src"},
