@@ -15,12 +15,6 @@ from src.nempy.utils.measure_latency import measure_latency
 from src.nempy.xym.constants import BlockchainStatuses
 from . import ed25519, constants
 
-logging.basicConfig(level=logging.DEBUG)
-logging.getLogger('asyncio').setLevel(logging.ERROR)
-logging.getLogger('asyncio.coroutines').setLevel(logging.ERROR)
-logging.getLogger('websockets').setLevel(logging.ERROR)
-logging.getLogger('urllib3').setLevel(logging.ERROR)
-
 
 class SymbolNetworkException(Exception):
 
@@ -172,23 +166,20 @@ class NodeSelector:
 
     def __init__(self, node_urls: list[str], logger=None):
         self.logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0]) if logger is None else logger
-        self._URLs = node_urls
-        if len(self._URLs) == 1:
-            self._re_elections = None
-            self._URL = self._URLs[0]
-            self.logger.debug(f'Selected node: {self._URL }')
-        else:
-            # hourly update of the node in case it appears more relevant
-            self.actualizer = threading.Thread(target=self.node_actualizer, kwargs={'interval': 3600}, daemon=True)
-            self.actualizer.start()
+        self.url = node_urls
 
     def node_actualizer(self, interval):
         asyncio.set_event_loop(asyncio.new_event_loop())
         while True:
             self._re_elections = False
             self.reelection_node()
+            if self._re_elections is None:
+                break
             self._re_elections = True
             time.sleep(interval)
+            if self._re_elections is None:
+                break
+        logging.debug('The node actualization thread has been stopped.')
 
     @property
     def url(self):
@@ -200,6 +191,20 @@ class NodeSelector:
         if self.health(self._URL) != BlockchainStatuses.OK:
             self.reelection_node()
         return self._URL
+
+    @url.setter
+    def url(self, value):
+        if isinstance(value, str):
+            value = [value]
+        self._URLs = value
+        if len(self._URLs) == 1:
+            self._re_elections = None
+            self._URL = self._URLs[0]
+            self.logger.debug(f'Selected node: {self._URL}')
+        else:
+            # hourly update of the node in case it appears more relevant
+            self.actualizer = threading.Thread(target=self.node_actualizer, kwargs={'interval': 3600}, daemon=True)
+            self.actualizer.start()
 
     def reelection_node(self):
         self.logger.debug('Node reselecting...')
@@ -217,8 +222,9 @@ class NodeSelector:
             self.logger.warning(f'Reselection node: {self._URL} -> {new_url}')
         if new_url is None:
             self.logger.error('It was not possible to select the current node from the list of available ones')
-        self._URL = new_url
-        self.logger.debug(f'Selected node: {self._URL}')
+        if self._re_elections is not None:
+            self._URL = new_url
+            self.logger.debug(f'Selected node: {self._URL}')
 
     @staticmethod
     def health(url):
@@ -268,7 +274,7 @@ class NodeSelector:
         return average
 
 
-node_selector = NodeSelector(os.getenv('NIS_URLs', 'http://192.168.0.103:3000').replace(' ', '').split(","))
+node_selector = NodeSelector(os.getenv('NIS_URLs', 'http://192.168.0.103:3000, http://ngl-dual-001.testnet.symboldev.network:3000').replace(' ', '').split(","))
 
 
 
