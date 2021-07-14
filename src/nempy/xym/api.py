@@ -72,11 +72,11 @@ class Mosaic(tuple):
 
     def __new__(cls, mosaic_id: str, amount: float):
         cls.size = 16
-        mantissa = Mosaic.get_divisibility(mosaic_id)
-        if mantissa is None:
-            raise ConnectionError(f'Blockchain node (Symbol) is not responding')
-        divisibility = 10 ** int(mantissa)
-        return tuple.__new__(Mosaic, [int(mosaic_id, 16), int(amount * divisibility)])
+        divisibility = Mosaic.get_divisibility(mosaic_id)
+        if divisibility is None:
+            raise ValueError(f'Failed to get divisibility from network')
+        divider = 10 ** int(divisibility)
+        return tuple.__new__(Mosaic, [int(mosaic_id, 16), int(amount * divider)])
 
     @staticmethod
     def get_divisibility(mosaic_id: str):
@@ -146,15 +146,11 @@ class Transaction:
                                                   self.sym_facade.network.generation_hash_seed)
 
         payload_bytes = self.sym_facade.transaction_factory.attach_signature(transaction, signature)
-        # self.size = len(unhexlify(eval(payload_bytes.decode("UTF-8"))['payload']))
-        # print(self.size)
 
         # print(transaction)
         # print(hexlify(transaction.serialize()))
-        # print('---- ' * 20)
-        # print('max_fee:', descriptor['fee'] / 10 ** 6)
         # print(answer.status_code, answer.text)
-        # print(entity_hash)
+        logging.debug(f'Transaction hash: {entity_hash}')
 
         return entity_hash, payload_bytes
 
@@ -162,13 +158,14 @@ class Transaction:
     def calc_max_fee(transaction_size: int, fee_type: Fees):
         # network fee multipliers
         nfm = network.get_fee_multipliers()
+        if nfm is None:
+            raise ValueError(f'Failed to get fee multipliers from network. Unable to calculate fee')
         # https://github.com/nemgrouplimited/symbol-desktop-wallet/blob/507d4694a0ff55b0b039be0b5d061b47b2386fde/src/services/TransactionCommand.ts#L200
         fast_fee_multiplier = nfm[FM.min] if nfm[FM.average] < nfm[FM.min] else nfm[FM.average]
         average_fee_multiplier = nfm[FM.min] + nfm[FM.average] * 0.65
         slow_fee_multiplier = nfm[FM.min] + nfm[FM.average] * 0.35
         slowest_fee_multiplier = nfm[FM.min]
 
-        # TODO delete after all tests have been run
         div = 1000000
         logging.debug(f'Fees.FAST.name: {fast_fee_multiplier * transaction_size / div}')
         logging.debug(f'Fees.AVERAGE.name: {average_fee_multiplier * transaction_size / div}')
