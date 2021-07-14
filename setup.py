@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
 import json
+import os
 
 from setuptools import setup, find_packages
+
+module_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 with open("README.md", "r", encoding="utf-8") as fh:
@@ -34,7 +37,7 @@ setup(
     project_urls={"Bug Tracker": "https://github.com/DENjjA/nempy/issues", },
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: Apache 2.0 License",
+        "License :: OSI Approved :: Apache Software License 2.0",
         "Operating System :: OS Independent",
     ],
     package_dir={"": "src"},
