@@ -172,7 +172,7 @@ class NodeSelector:
     _sorted_URLs = None
     _re_elections = False
 
-    def __init__(self, node_urls: list[str], logger=None):
+    def __init__(self, node_urls: [list[str], str], logger=None):
         self.logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0]) if logger is None else logger
         self.url = node_urls
 
@@ -210,6 +210,11 @@ class NodeSelector:
             self._URL = self._URLs[0]
             self.logger.debug(f'Selected node: {self._URL}')
         else:
+            #  if the daemon is running and not actualizing right now
+            if self._re_elections == True:
+                # actualize and exit
+                self.reelection_node()
+                return
             # hourly update of the node in case it appears more relevant
             self.actualizer = threading.Thread(target=self.node_actualizer, kwargs={'interval': 3600}, daemon=True)
             self.actualizer.start()
