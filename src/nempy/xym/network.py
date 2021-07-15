@@ -15,7 +15,6 @@ from src.nempy.utils.measure_latency import measure_latency
 from src.nempy.xym.constants import BlockchainStatuses
 from . import ed25519, constants
 
-
 class SymbolNetworkException(Exception):
 
     def __init__(self, error):
@@ -109,28 +108,37 @@ def get_divisibility(mosaic_id: str):
 
 
 def get_balance(address: str, mosaic_filter: [list, str] = None, is_linked: bool = False) -> (dict, int):
-    if ed25519.check_address(address):
-        endpoint = f'{node_selector.url}/accounts/{address}'
+    if isinstance(mosaic_filter, str):
+        mosaic_filter = [mosaic_filter]
+    if not ed25519.check_address(address):
+        logging.error(f'Incorrect wallet address: `{address}`')
+        return None
+    for mosaic_id in mosaic_filter:
+        if not ed25519.check_hex(mosaic_id, constants.HexSequenceSizes.mosaic_id):
+            logging.error(f'Incorrect mosaic ID: `{mosaic_id}`')
+            return None
+    endpoint = f'{node_selector.url}/accounts/{address}'
+    try:
         answer = requests.get(endpoint)
-        if answer.status_code != HTTPStatus.OK:
-            return answer.text, answer.status_code
-        address_info = json.loads(answer.text)
-        mosaics = address_info['account']['mosaics']
-        balance = {}
-        for mosaic in mosaics:
-            div = get_divisibility(mosaic['id'])
-            if div is None:
-                return div, status_code
-            amount = int(mosaic['amount']) / 10 ** div
-            balance[mosaic['id']] = amount
-        if mosaic_filter is not None:
-            if isinstance(mosaic_filter, str):
-                mosaic_filter = [mosaic_filter]
-            filtered_balance = {key: balance[key] for key in mosaic_filter}
-            return filtered_balance, HTTPStatus.OK
-        return balance, HTTPStatus.OK
-    else:
-        return 'Incorrect wallet address', HTTPStatus.BAD_REQUEST
+    except Exception as e:
+        logging.error(e)
+        return None
+    if answer.status_code != HTTPStatus.OK:
+        logging.error(answer.text)
+        return None
+    address_info = json.loads(answer.text)
+    mosaics = address_info['account']['mosaics']
+    balance = {}
+    for mosaic in mosaics:
+        div = get_divisibility(mosaic['id'])
+        if div is None:
+            return None
+        balance[mosaic['id']] = int(mosaic['amount']) / 10 ** div
+    if mosaic_filter is not None:
+        filtered_balance = {key: balance.get(key) for key in mosaic_filter if key in balance}
+        return filtered_balance
+    return balance
+
 
 
 class Timing:
