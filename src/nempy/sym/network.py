@@ -11,8 +11,8 @@ from urllib.parse import urlparse
 
 import requests
 
-from src.nempy.utils.measure_latency import measure_latency
-from src.nempy.xym.constants import BlockchainStatuses
+from nempy.utils.measure_latency import measure_latency
+from nempy.sym.constants import BlockchainStatuses
 from . import ed25519, constants
 
 class SymbolNetworkException(Exception):

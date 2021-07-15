@@ -6,9 +6,9 @@ from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.CryptoTypes import PrivateKey
 from symbolchain.core.sym.KeyPair import KeyPair
 
-from .xym import api as xym
-from .xym.api import node_selector
-from .xym.constants import BlockchainStatuses, DecoderStatus
+from .sym import api as sym
+from .sym import network
+from .sym.constants import BlockchainStatuses, DecoderStatus
 
 
 class NEMEngine:
@@ -130,8 +130,8 @@ class XYMEngine(NEMEngine):
         self.mosaic_name = mosaic_name
         self.token = f'{namespace}:{mosaic_name}'
         self.mosaic_id = mosaic_id
-        self.node_selector = node_selector
-        self.transaction = xym.Transaction()
+        self.node_selector = network.node_selector
+        self.transaction = sym.Transaction()
         self.network_type = self.transaction.network_type
         self.timing = self.transaction.timing
         super().__init__(self.node_selector.url, decryptor=decryptor, wallet_path=wallet_path, wallet_pass=wallet_pass)
@@ -145,13 +145,13 @@ class XYMEngine(NEMEngine):
         return public_key, address
 
     def send_tokens(self, recipient_address: str, amount: float, message: [str, bytes] = ''):
-        mosaic = xym.Mosaic(self.mosaic_id, amount=amount)
-        message = xym.PlainMessage(message)
+        mosaic = sym.Mosaic(self.mosaic_id, amount=amount)
+        message = sym.PlainMessage(message)
         entity_hash, payload = self.transaction.create(pr_key=self.private_key,
                                                        recipient_address=recipient_address,
                                                        mosaics=mosaic,
                                                        message=message)
-        text, status_code = xym.send_transaction(payload)
+        text, status_code = network.send_transaction(payload)
         if status_code != HTTPStatus.ACCEPTED:
             return text, status_code
         return entity_hash, status_code
@@ -159,12 +159,12 @@ class XYMEngine(NEMEngine):
     def check_status(self, is_logging):
         if self.private_key is None:
             return BlockchainStatuses.NOT_INITIALIZED
-        return xym.NodeSelector.health(self.node_selector.url)
+        return network.NodeSelector.health(self.node_selector.url)
 
     def get_balance(self, nem_address, test=False):
-        amount, status_code = xym.get_balance(nem_address)
+        amount, status_code = network.get_balance(nem_address)
         return amount, status_code
 
     @staticmethod
     def check_transaction_confirmation(transaction_hash):
-        return xym.check_transaction_confirmation(transaction_hash)
+        return network.check_transaction_confirmation(transaction_hash)
