@@ -105,9 +105,11 @@ class Transaction:
                recipient_address: str,
                mosaics: [Mosaic, List[Mosaic]] = None,
                message: [PlainMessage, EncryptMessage, None] = None,
-               fee_type: Fees = Fees.SLOWEST,  # TODO test the function to get a dynamic value of the commission !!!
-               deadline: [int, None] = None) -> (Hash256, bytes):
+               fee_type: Fees = Fees.SLOWEST,
+               deadline: [dict, None] = None) -> (Hash256, bytes):
 
+        if deadline is None:
+            deadline = {'minutes': 2}
         if mosaics is None:
             mosaics = []
         if not isinstance(mosaics, list):
@@ -120,8 +122,8 @@ class Transaction:
                     mosaics.insert(0, mosaics.pop(i))
 
         key_pair = self.sym_facade.KeyPair(PrivateKey(unhexlify(pr_key)))
-        if deadline is None:
-            deadline = self.timing.calc_deadline(minutes=2)
+
+        deadline = self.timing.calc_deadline(**deadline)
 
         descriptor = {
             'type': 'transfer',

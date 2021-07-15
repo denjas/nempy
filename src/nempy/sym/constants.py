@@ -9,6 +9,15 @@ EPOCH_TIME_MAINNET = datetime.datetime(2021, 3, 16, 0, 6, 25, tzinfo=datetime.ti
 EPOCH_TIME_TESTNET = datetime.datetime(2021, 3, 25, 17, 56, 17, tzinfo=datetime.timezone.utc)
 
 
+class TransactionStatus(Enum):
+    NOT_FOUND = - 1
+    UNCONFIRMED_ADDED = 0
+    CONFIRMED_ADDED = 1
+    PARTIAL_ADDED = 2
+    # UNCONFIRMED_REMOVED = 3
+    # PARTIAL_REMOVED = 4
+
+
 class DecoderStatus(Enum):
     DECRYPTED = None
     NO_DATA = 'Missing data to decode'

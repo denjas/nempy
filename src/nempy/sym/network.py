@@ -14,6 +14,8 @@ import requests
 from nempy.utils.measure_latency import measure_latency
 from nempy.sym.constants import BlockchainStatuses
 from . import ed25519, constants
+from .constants import TransactionStatus
+
 
 class SymbolNetworkException(Exception):
 
@@ -33,21 +35,27 @@ def send_transaction(payload: bytes) -> bool:
     return False
 
 
-def check_transaction_confirmation(transaction_hash):
+def check_transaction_state(transaction_hash):
     timeout = 10
-    endpoint = f'{node_selector.url}/transactions/confirmed/{transaction_hash}'
-    try:
-        answer = requests.get(endpoint, timeout=timeout)
+    check_order = ['confirmed', 'unconfirmed', 'partial']
+    status = TransactionStatus.NOT_FOUND
+    for checker in check_order:
+        endpoint = f'{node_selector.url}/transactions/{checker}/{transaction_hash}'
+        try:
+            answer = requests.get(endpoint, timeout=timeout)
+        except Exception as e:
+            logging.error(str(e))
+            return None
         if answer.status_code == 200:
-            return True
-        if answer.status_code == 404:
-            return False
-        if answer.status_code == 409:
-            # logger.error(str(answer.json()))
-            return False
-    except Exception as e:
-        # logger.error(str(e))
-        return False
+            if checker == 'confirmed':
+                status = TransactionStatus.CONFIRMED_ADDED
+            if checker == 'unconfirmed':
+                status = TransactionStatus.UNCONFIRMED_ADDED
+            if checker == 'partial':
+                status = TransactionStatus.PARTIAL_ADDED
+        if answer.status_code == HTTPStatus.CONFLICT:
+            logging.error(answer.text)
+    return status
 
 
 def get_network_properties():
@@ -140,7 +148,6 @@ def get_balance(address: str, mosaic_filter: [list, str] = None, is_linked: bool
     return balance
 
 
-
 class Timing:
 
     def __init__(self):
@@ -211,7 +218,7 @@ class NodeSelector:
             self.logger.debug(f'Selected node: {self._URL}')
         else:
             #  if the daemon is running and not actualizing right now
-            if self._re_elections == True:
+            if self._re_elections:  # not started and not waiting
                 # actualize and exit
                 self.reelection_node()
                 return
@@ -287,7 +294,8 @@ class NodeSelector:
         return average
 
 
-node_selector = NodeSelector(os.getenv('NIS_URLs', 'http://192.168.0.103:3000, http://ngl-dual-001.testnet.symboldev.network:3000').replace(' ', '').split(","))
+# singleton for background work with the list of nodes
+node_selector = NodeSelector(os.getenv('NIS_URLs', 'http://localhoct:3000').replace(' ', '').split(","))
 
 
 
