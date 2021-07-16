@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 import requests
 
 from nempy.utils.measure_latency import measure_latency
-from nempy.sym.constants import BlockchainStatuses
+from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET
 from . import ed25519, constants
 from .constants import TransactionStatus
 
@@ -150,10 +150,17 @@ def get_balance(address: str, mosaic_filter: [list, str] = None, is_linked: bool
 
 class Timing:
 
-    def __init__(self):
-        network_properties = get_network_properties()
-        epoch_adjustment = int(network_properties['network']['epochAdjustment'][0:-1])
-        self.datetime = datetime.datetime.fromtimestamp(epoch_adjustment, tz=datetime.timezone.utc)
+    def __init__(self, network_type: str = None):
+        if network_type is None:
+            network_properties = get_network_properties()
+            epoch_adjustment = int(network_properties['network']['epochAdjustment'][0:-1])
+            self.epoch_time = datetime.datetime.fromtimestamp(epoch_adjustment, tz=datetime.timezone.utc)
+        elif network_type == 'public_test':
+            self.epoch_time = EPOCH_TIME_TESTNET
+        elif network_type == 'public':
+            self.epoch_time = EPOCH_TIME_MAINNET
+        else:
+            raise EnvironmentError()
 
     def calc_deadline(self, days: float = 0, seconds: float = 0, milliseconds: float = 0,
                       minutes: float = 0, hours: float = 0, weeks: float = 0):
@@ -165,7 +172,7 @@ class Timing:
         # receive_timestamp = int(node_info['communicationTimestamps']['receiveTimestamp'])
         # td = datetime.timedelta(milliseconds=receive_timestamp)
         now = datetime.datetime.now(tz=datetime.timezone.utc)
-        td = now - self.datetime
+        td = now - self.epoch_time
         td += datetime.timedelta(days=days, seconds=seconds,
                                  milliseconds=milliseconds, minutes=minutes,
                                  hours=hours, weeks=weeks)
