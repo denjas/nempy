@@ -14,30 +14,27 @@ from symbolchain.core.facade.NisFacade import NisFacade
 from binascii import hexlify, unhexlify
 
 
-EPOCH_TIME = datetime.datetime(2015, 3, 29, 0, 6, 25, tzinfo=datetime.timezone.utc)
+EPOCH_TIME_TEST = datetime.datetime(2015, 3, 29, 0, 6, 38, tzinfo=datetime.timezone.utc)
+EPOCH_TIME_MAIN = datetime.datetime(2015, 3, 29, 0, 6, 25, tzinfo=datetime.timezone.utc)
 
 
 class Timing:
 
     def __init__(self, network_type: str = None):
         if network_type == 'testnet':
-            self.epoch_time = EPOCH_TIME
+            self.epoch_time = EPOCH_TIME_TEST
 
     def calc_deadline(self, days: float = 0, seconds: float = 0, milliseconds: float = 0,
                       minutes: float = 0, hours: float = 0, weeks: float = 0):
 
         if days + seconds + milliseconds + minutes + hours + weeks <= 0:
             raise TimeoutError('Added time must be positive otherwise the transaction will not have time to process')
-        # perhaps this code will be needed if you need to get time from a node
-        # node_info = json.loads(requests.get(endpoint).text)
-        # receive_timestamp = int(node_info['communicationTimestamps']['receiveTimestamp'])
-        # td = datetime.timedelta(milliseconds=receive_timestamp)
         now = datetime.datetime.now(tz=datetime.timezone.utc)
-        td = now - self.epoch_time
-        td += datetime.timedelta(days=days, seconds=seconds,
-                                 milliseconds=milliseconds, minutes=minutes,
-                                 hours=hours, weeks=weeks)
-        deadline = int(td.total_seconds() * 1000)
+        timestamp = now - self.epoch_time
+        td = timestamp + datetime.timedelta(days=days, seconds=seconds,
+                                            milliseconds=milliseconds, minutes=minutes,
+                                            hours=hours, weeks=weeks)
+        deadline = int(td.total_seconds())
         return deadline
 
 
@@ -88,25 +85,16 @@ class Transaction:
     def create(self,
                pr_key: str,
                recipient_address: str,
-               # mosaics: [Mosaic, List[Mosaic]] = None,
-               # message: [PlainMessage, EncryptMessage, None] = None,
-               # fee_type: Fees = Fees.SLOWEST,
+               # mosaics: [Mosaic, List[Mosaic]] = None, # do not implemented
+               amount: float = 0,
+               message: str = None,
                deadline: [dict, None] = None
                ):
 
         if deadline is None:
-            deadline = {'minutes': 2}
-        # if mosaics is None:
-        #     mosaics = []
-        # if not isinstance(mosaics, list):
-        #     mosaics = [mosaics]
-        #
-        # if len(mosaics) > 1:
-        #     for i, mosaic in enumerate(mosaics):
-        #         if mosaic[0] == self.XYM_ID:
-        #             # Mosaic XYM should be in the first place in the list
-        #             mosaics.insert(0, mosaics.pop(i))
-
+            deadline = {'hours': 24}
+        else:
+            raise NotImplemented('Deadline change is not possible due to libraries in dependencies')
         key_pair = self.nis_facade.KeyPair(PrivateKey(unhexlify(pr_key)))
 
         deadline = self.timing.calc_deadline(**deadline)
@@ -115,16 +103,11 @@ class Transaction:
             'type': 'transfer',
             'recipient_address': recipient_address,
             'signer_public_key': key_pair.public_key,
-            'amount': 1000000,
+            'amount': amount * 10 ** 6,
             # 'mosaics': ['nem.xem', 12345],
-            # 'fee': self.max_fee,
-            'deadline': int(deadline / 1000),
-            'message': 'Hello World!'
+            'deadline': deadline,
+            'message': message
         }
-
-        # self.size = self.MIN_TRANSACTION_SIZE + descriptor['message'].size + sum(mosaic.size for mosaic in descriptor['mosaics'])
-        # self.max_fee = Transaction.calc_max_fee(self.size, fee_type)
-        # descriptor['fee'] = self.max_fee
 
         transaction = self.nis_facade.transaction_factory.create(descriptor)
 
@@ -134,17 +117,17 @@ class Transaction:
 
         payload_bytes = self.nis_facade.transaction_factory.attach_signature(transaction, signature)
 
-        mosaics = {'mosaicId': {'namespaceId': 'nem', 'name': 'xem'}, 'quantity': 11111}
-        tx_dict = {
-            'mosaics': [mosaics]
-        }
-        bytes_with_mosaic = tx_ver2(transaction.serialize(), tx_dict)
-
+        # mosaics = {'mosaicId': {'namespaceId': 'nem', 'name': 'xem'}, 'quantity': 11111}
+        # tx_dict = {
+        #     'mosaics': [mosaics]
+        # }
+        # bytes_with_mosaic = tx_ver2(transaction.serialize(), tx_dict)
+        #
         print(transaction)
-        print(hexlify(transaction.serialize()))
+        # print(hexlify(transaction.serialize()))
         # logging.debug(f'Transaction hash: {entity_hash}')
 
-        return None, {'data': hexlify(bytes_with_mosaic).decode(), 'signature': str(signature)}
+        return None, {'data': hexlify(transaction.serialize()).decode(), 'signature': str(signature)}
 
 
 DIV = {'nem:xem': 6}
