@@ -13,7 +13,7 @@ import requests
 
 from nempy.utils.measure_latency import measure_latency
 from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET
-from . import ed25519, constants
+from . import ed25519, constants, config
 from .constants import TransactionStatus
 
 
@@ -302,7 +302,7 @@ class NodeSelector:
 
 
 # singleton for background work with the list of nodes
-node_selector = NodeSelector(os.getenv('NIS_URLs', 'http://localhoct:3000').replace(' ', '').split(","))
+node_selector = NodeSelector(config.URLs)
 
 
 
