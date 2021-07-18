@@ -245,11 +245,11 @@ class NodeSelector:
         working = {key: val for key, val in urls_p_h.items() if val[1]}
         self._sorted_URLs = [k for k, v in sorted(working.items(), key=lambda item: item[1][0])]
         new_url = self._sorted_URLs[0] if len(self._sorted_URLs) > 0 else None
-        if new_url != self._URL and self._URL is not None:
-            self.logger.warning(f'Reselection node: {self._URL} -> {new_url}')
-        if new_url is None:
-            self.logger.error('It was not possible to select the current node from the list of available ones')
         if self._re_elections is not None:
+            if new_url != self._URL and self._URL is not None:
+                self.logger.warning(f'Reselection node: {self._URL} -> {new_url}')
+            if new_url is None:
+                self.logger.error('It was not possible to select the current node from the list of available ones')
             self._URL = new_url
             self.logger.debug(f'Selected node: {self._URL}')
 
