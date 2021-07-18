@@ -60,7 +60,7 @@ def connector(url, subscribers, formatting, log):
               type=click.Choice(where_to_subscribe.keys()), default='all',
               show_default=True, help='Channels available for subscribe')
 @click.argument('channels', nargs=-1, )
-@click.option('-a', '--address', type=str, multiple=True, required=False, help='Wallet (account) address')
+@click.option('-a', '--address', type=str, multiple=True, required=False, help='Account address')
 @click.option('-l', '--log', type=str, required=False, default='', help='Path to the log file')
 @click.option('-f', '--formatting', is_flag=True, help='Formatted output')
 def main(url, channels, address, formatting, log):
