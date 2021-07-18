@@ -119,11 +119,15 @@ def get_by_mnemonic(network_type, bip32_coin_id, is_generate=False):
     return accounts[account]
 
 
-def print_account(account):
+def print_account(account, is_hidden=True):
     prepare = []
     for key, value in account.items():
-        if key == 'Private Key':
-            value = '*' * len(value)
+        if key == 'Mnemonic':
+            positions = [pos for pos, char in enumerate(value) if char == ' ']
+            value = value[:positions[8]] + '\n' + value[positions[8] + 1:positions[16]] + '\n' + value[positions[16] + 1:]
+        if is_hidden:
+            if key in ['Private Key', 'Password', 'Mnemonic']:
+                value = ''.join('*' for e in value if e.isalnum())
         prepare.append([key, value])
     table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
     print(table)
