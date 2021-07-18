@@ -1,13 +1,19 @@
+import random
 from enum import Enum
+from hashlib import blake2b
 
 import click
 import logging
+from tabulate import tabulate
+import binascii
 from pprint import pprint
 import inquirer
 from nempy.sym import network
 import stdiomask
 from symbolchain.core.Bip32 import Bip32
 from symbolchain.core.facade.SymFacade import SymFacade
+from bip_utils import Bip39MnemonicGenerator, Bip39WordsNum, Bip39Languages
+from password_strength import PasswordPolicy
 
 
 class GenerationTypes(Enum):
@@ -42,7 +48,21 @@ def init_general_params() -> (str, int, str):
         bip32_coin_id = 1
     else:
         raise ValueError('Invalid URL or network not supported')
-    password = stdiomask.getpass('Enter your wallet password: ')
+    policy = PasswordPolicy.from_names(
+        length=8,  # min length: 8
+        uppercase=1,  # need min. 1 uppercase letters
+        numbers=2,  # need min. 2 digits
+        special=1,  # need min. 1 special characters
+        nonletters=2,  # need min. 2 non-letter characters (digits, specials, anything)
+    )
+    is_good_pass = False
+    while not is_good_pass:
+        password = stdiomask.getpass(f'Enter your wallet password {policy.test("")}: ')
+        in_policies = policy.test(password)
+        if in_policies:
+            print(in_policies)
+        else:
+            is_good_pass = True
     return network_type, bip32_coin_id, password
 
 
@@ -67,8 +87,23 @@ def derive_key_by_mnemonic(network_type, bip32_coin_id, mnemonic):
     return accounts
 
 
-def import_by_mnemonic(network_type, bip32_coin_id):
-    mnemonic = stdiomask.getpass('Enter a mnemonic passphrase. Words must be separated by spaces: ')
+def get_by_mnemonic(network_type, bip32_coin_id, is_generate=False):
+    if is_generate:
+        random_char_set = ''
+        print('Write something (random character set), the input will be interrupted automatically')
+        attempts = list(range(random.randint(4, 7)))
+        for i in attempts:
+            something = input(f'Something else ({len(attempts) - i}): ')
+            if not something:
+                print('Only a non-empty line will have to be repeated :(')
+                attempts.append(len(attempts))
+                continue
+            random_char_set += something
+        print(random_char_set)
+        entropy_bytes_hex = blake2b(random_char_set.encode(), digest_size=32).hexdigest().encode()
+        mnemonic = Bip39MnemonicGenerator(Bip39Languages.ENGLISH).FromEntropy(binascii.unhexlify(entropy_bytes_hex))
+    else:
+        mnemonic = stdiomask.getpass('Enter a mnemonic passphrase. Words must be separated by spaces: ')
     accounts = derive_key_by_mnemonic(network_type, bip32_coin_id, mnemonic)
     addresses = [account for account in accounts.keys()]
     questions = [
@@ -84,6 +119,16 @@ def import_by_mnemonic(network_type, bip32_coin_id):
     return accounts[account]
 
 
+def print_account(account):
+    prepare = []
+    for key, value in account.items():
+        if key == 'Private Key':
+            value = '*' * len(value)
+        prepare.append([key, value])
+    table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
+    print(table)
+
+
 @click.group('profile')
 def main():
     print('profile')
@@ -95,9 +140,17 @@ def import_account():
     gen_type = get_gen_type()
 
     if gen_type == GenerationTypes.MNEMONIC:
-        account = import_by_mnemonic(network_type, bip32_coin_id)
+        account = get_by_mnemonic(network_type, bip32_coin_id)
     account['Password'] = password
-    print(account)
+    print_account(account)
+
+
+@main.command('create')
+def create_account():
+    network_type, bip32_coin_id, password = init_general_params()
+    account = get_by_mnemonic(network_type, bip32_coin_id, is_generate=True)
+    account['Password'] = password
+    print_account(account)
 
 
 if __name__ == '__main__':
