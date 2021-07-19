@@ -57,14 +57,12 @@ class Account:
         return table
 
     def serialize(self):
-        return pickle.dumps(self)
+        return pickle.dumps(self.__dict__, fix_imports=False)
 
     @staticmethod
     def deserialize(data):
-        des_date = pickle.loads(data)
-        if isinstance(des_date, Account):
-            return des_date
-        raise TypeError('Despiralized data does not correspond to `Account` type')
+        des_date = pickle.loads(data, fix_imports=False)
+        return Account(des_date)
 
 
 class DecoderStatus(Enum):
@@ -104,7 +102,8 @@ def read_account(path: str, password: str) -> [Account, DecoderStatus]:
     if decrypted is None:
         logging.error(DecoderStatus.WRONG_PASS.value)
         return DecoderStatus.WRONG_PASS
-    return Account.deserialize(decrypted)
+    decrypted_account = Account.deserialize(decrypted)
+    return decrypted_account
 
 
 def write_account(path, password, account: Account):

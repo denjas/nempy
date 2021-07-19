@@ -20,7 +20,7 @@ def main(debug):
         logging.basicConfig(level=logging.DEBUG)
 
 
-main.add_command(monitoring_sym, 'monitoring')
+main.add_command(monitoring_sym)
 main.add_command(profile_sym)
 
 

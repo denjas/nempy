@@ -53,7 +53,7 @@ def connector(url, subscribers, formatting, log):
     loop.run_until_complete(monitoring(url, subscribers, formatting, log))
 
 
-@click.command(help='- Monitor blocks, transactions and errors', context_settings=dict(max_content_width=300))
+@click.command('monitoring', help='- Monitor blocks, transactions and errors', context_settings=dict(max_content_width=300))
 @click.option('--url', type=str, required=False, default=None,
               help='Node URL (example: http://ngl-dual-001.testnet.symboldev.network:3000)')
 @click.option('-c', '--channels', nargs=0,
