@@ -28,31 +28,26 @@ class Account:
         if self.private_key is None:
             raise AttributeError('The private key is required for the account')
 
-    def __str__(self):
+    def __repr__(self):
         prepare = list()
-        prepare.append(['Name', self.name])
-        prepare.append(['Address', self.address])
-        prepare.append(['Public Key ', self.public_key])
-        prepare.append(['Private Key', self.private_key])
-        prepare.append(['Path', self.path])
-        positions = [pos for pos, char in enumerate(self.mnemonic) if char == ' ']
-        mnemonic = self.mnemonic[:positions[8]] + '\n' + self.mnemonic[positions[8] + 1:positions[16]] + '\n' + self.mnemonic[positions[16] + 1:]
-        prepare.append(['Mnemonic', mnemonic])
-        prepare.append(['Password', self.password])
-        prepare.append(['URL', self.node_url])
+        for key, value in self.__dict__.items():
+            if key == 'mnemonic':
+                value = '****** ***** ****** ***** ***** ******* ******** ***** *********'
+            if key in ['private_key', 'password', 'path']:
+                value = ''.join('*' for e in value if e.isalnum())
+            key = key.replace('_', ' ').title()
+            prepare.append([key, value])
         table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
         return table
 
-    def __repr__(self):
+    def __str__(self):
         prepare = list()
-        prepare.append(['Name', self.name])
-        prepare.append(['Address', self.address])
-        prepare.append(['Public Key ',  self.public_key])
-        prepare.append(['Private Key', ''.join('*' for e in self.private_key if e.isalnum())])
-        prepare.append(['Path', ''.join('*' for e in self.path if e.isalnum())])
-        prepare.append(['Mnemonic', '****** ***** ****** ***** ***** ******* ******** ***** *********'])
-        prepare.append(['Password', ''.join('*' for e in self.password if e.isalnum())])
-        prepare.append(['URL', self.node_url])
+        for key, value in self.__dict__.items():
+            if key == 'mnemonic':
+                positions = [pos for pos, char in enumerate(self.mnemonic) if char == ' ']
+                value = self.mnemonic[:positions[8]] + '\n' + self.mnemonic[positions[8] + 1:positions[16]] + '\n' + self.mnemonic[positions[16] + 1:]
+            key = key.replace('_', ' ').title()
+            prepare.append([key, value])
         table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
         return table
 
