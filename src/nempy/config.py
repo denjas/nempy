@@ -1,3 +1,3 @@
 import os
 
-DEFAULT_WALLETS_DIR = os.path.expanduser('~/.config/nempy')
+DEFAULT_ACCOUNTS_DIR = os.path.expanduser('~/.config/nempy')

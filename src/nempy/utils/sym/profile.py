@@ -8,9 +8,9 @@ import click
 import inquirer
 import stdiomask
 from bip_utils import Bip39MnemonicGenerator, Bip39Languages
-from nempy.config import DEFAULT_WALLETS_DIR
+from nempy.config import DEFAULT_ACCOUNTS_DIR
 from nempy.sym import network
-from nempy.wallet import Account, write_account, read_account
+from nempy.account import Account, write_account, read_account, DecoderStatus
 from password_strength import PasswordPolicy
 from symbolchain.core.Bip32 import Bip32
 from symbolchain.core.facade.SymFacade import SymFacade
@@ -19,6 +19,10 @@ from symbolchain.core.facade.SymFacade import SymFacade
 class GenerationTypes(Enum):
     MNEMONIC = 0
     PRIVATE_KEY = 1
+
+def build_account_path(name):
+    account_path = os.path.join(DEFAULT_ACCOUNTS_DIR, name + '.account')
+    return account_path
 
 
 def get_gen_type() -> GenerationTypes:
@@ -41,7 +45,7 @@ def init_general_params() -> (str, int, str):
     while True:
         name = input('Enter the account name: ')
         if name != '':
-            account_path = os.path.join(DEFAULT_WALLETS_DIR, name + '.account')
+            account_path = build_account_path(name)
             if os.path.exists(account_path):
                 print('An account with the same name already exists, please select a different name')
                 continue
@@ -69,7 +73,7 @@ def input_pass(n_attempts: int, valid_pass: str = None):
         nonletters=2,  # need min. 2 non-letter characters (digits, specials, anything)
     )
     for i in range(n_attempts):
-        password = stdiomask.getpass(f'Enter your wallet password {policy.test("")}: ')
+        password = stdiomask.getpass(f'Enter your account password {policy.test("")}: ')
         in_policies = policy.test(password)
         if in_policies:
             if valid_pass is not None:
@@ -167,7 +171,7 @@ def main():
     Interactive profile creation or importing mode
     :return:
     """
-    print('Interactive profile creation mode:')
+    print('Interactive account management.')
 
 
 @main.command('import')
@@ -196,6 +200,23 @@ def create_account():
     account['node_url'] = node_url
     account = Account(account)
     account_creation(account, account_path)
+
+
+@main.command('info')
+@click.option('-n', '--name', type=str, required=False, default='', help='Account name')
+def info(name):
+    if not name:
+        name = input('Enter the account name: ')
+    account_path = build_account_path(name)
+    if not os.path.exists(account_path):
+        print(f'The account named `{name}` does not exist')
+        exit(1)
+    password = stdiomask.getpass(f'Enter your account password: ')
+    account = read_account(account_path, password)
+    if isinstance(account, DecoderStatus):
+        exit(1)
+    print(account)
+    print_warning()
 
 
 if __name__ == '__main__':

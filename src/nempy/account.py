@@ -39,6 +39,7 @@ class Account:
         mnemonic = self.mnemonic[:positions[8]] + '\n' + self.mnemonic[positions[8] + 1:positions[16]] + '\n' + self.mnemonic[positions[16] + 1:]
         prepare.append(['Mnemonic', mnemonic])
         prepare.append(['Password', self.password])
+        prepare.append(['URL', self.node_url])
         table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
         return table
 
@@ -51,6 +52,7 @@ class Account:
         prepare.append(['Path', ''.join('*' for e in self.path if e.isalnum())])
         prepare.append(['Mnemonic', '****** ***** ****** ***** ***** ******* ******** ***** *********'])
         prepare.append(['Password', ''.join('*' for e in self.password if e.isalnum())])
+        prepare.append(['URL', self.node_url])
         table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
         return table
 
@@ -95,12 +97,12 @@ def decryption(password: str, encrypted_data: str) -> [bytes, None]:
 
 def read_account(path: str, password: str) -> [Account, DecoderStatus]:
     if not os.path.exists(path):
-        logging.warning(DecoderStatus.NO_DATA.value)
+        logging.error(DecoderStatus.NO_DATA.value)
         return DecoderStatus.NO_DATA
     encrypted_data = open(path, 'r').read()
     decrypted = decryption(password, encrypted_data)
     if decrypted is None:
-        logging.warning(DecoderStatus.WRONG_PASS.value)
+        logging.error(DecoderStatus.WRONG_PASS.value)
         return DecoderStatus.WRONG_PASS
     return Account.deserialize(decrypted)
 
