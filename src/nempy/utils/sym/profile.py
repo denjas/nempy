@@ -48,6 +48,10 @@ def init_general_params() -> (str, int, str):
         bip32_coin_id = 1
     else:
         raise ValueError('Invalid URL or network not supported')
+    return network_type, bip32_coin_id
+
+
+def input_pass(n_attempts: int, valid_pass: str = None):
     policy = PasswordPolicy.from_names(
         length=8,  # min length: 8
         uppercase=1,  # need min. 1 uppercase letters
@@ -55,15 +59,24 @@ def init_general_params() -> (str, int, str):
         special=1,  # need min. 1 special characters
         nonletters=2,  # need min. 2 non-letter characters (digits, specials, anything)
     )
-    is_good_pass = False
-    while not is_good_pass:
+    for i in range(n_attempts):
         password = stdiomask.getpass(f'Enter your wallet password {policy.test("")}: ')
         in_policies = policy.test(password)
         if in_policies:
-            print(in_policies)
+            if valid_pass is not None:
+                print(f'The entered password does not match the previously entered. Attempts left: {n_attempts - i}')
+            else:
+                print(in_policies)
         else:
-            is_good_pass = True
-    return network_type, bip32_coin_id, password
+            if valid_pass is not None:
+                if valid_pass == password:
+                    return password
+                else:
+                    print(f'The entered password does not match the previously entered. Attempts left: {n_attempts - i}')
+                    continue
+            else:
+                return password
+    return None
 
 
 def derive_key_by_mnemonic(network_type, bip32_coin_id, mnemonic):
@@ -87,11 +100,11 @@ def derive_key_by_mnemonic(network_type, bip32_coin_id, mnemonic):
     return accounts
 
 
-def get_by_mnemonic(network_type, bip32_coin_id, is_generate=False):
+def account_by_mnemonic(network_type, bip32_coin_id, is_generate=False):
     if is_generate:
         random_char_set = ''
         print('Write something (random character set), the input will be interrupted automatically')
-        attempts = list(range(random.randint(4, 7)))
+        attempts = list(range(random.randint(3, 5)))
         for i in attempts:
             something = input(f'Something else ({len(attempts) - i}): ')
             if not something:
@@ -99,7 +112,6 @@ def get_by_mnemonic(network_type, bip32_coin_id, is_generate=False):
                 attempts.append(len(attempts))
                 continue
             random_char_set += something
-        print(random_char_set)
         entropy_bytes_hex = blake2b(random_char_set.encode(), digest_size=32).hexdigest().encode()
         mnemonic = Bip39MnemonicGenerator(Bip39Languages.ENGLISH).FromEntropy(binascii.unhexlify(entropy_bytes_hex))
     else:
@@ -126,8 +138,11 @@ def print_account(account, is_hidden=True):
             positions = [pos for pos, char in enumerate(value) if char == ' ']
             value = value[:positions[8]] + '\n' + value[positions[8] + 1:positions[16]] + '\n' + value[positions[16] + 1:]
         if is_hidden:
-            if key in ['Private Key', 'Password', 'Mnemonic']:
+            if key in ['Private Key', 'Password']:
                 value = ''.join('*' for e in value if e.isalnum())
+        if is_hidden:
+            if key == 'Mnemonic':
+                value = '****** ***** ****** ***** ***** ******* ******** ***** *********'
         prepare.append([key, value])
     table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
     print(table)
@@ -138,23 +153,45 @@ def main():
     print('profile')
 
 
+def print_info():
+    print("""
+                                !!! Important !!!
+Save the mnemonic, it will be needed to restore access to the wallet  
+in case of password loss
+Where to store can be found here - https://en.bitcoinwiki.org/wiki/Mnemonic_phrase
+!!! Do not share your secret key with anyone, it guarantees access to your funds !!!
+    """)
+
+
 @main.command('import')
 def import_account():
-    network_type, bip32_coin_id, password = init_general_params()
+    network_type, bip32_coin_id = init_general_params()
+    password = input_pass(10)
     gen_type = get_gen_type()
 
     if gen_type == GenerationTypes.MNEMONIC:
-        account = get_by_mnemonic(network_type, bip32_coin_id)
+        account = account_by_mnemonic(network_type, bip32_coin_id)
     account['Password'] = password
     print_account(account)
+    print('Password repeat to show hidden information')
+    password = input_pass(3, valid_pass=password)
+    if password is not None:
+        print_account(account, is_hidden=False)
+        print_info()
 
 
 @main.command('create')
 def create_account():
-    network_type, bip32_coin_id, password = init_general_params()
-    account = get_by_mnemonic(network_type, bip32_coin_id, is_generate=True)
+    network_type, bip32_coin_id = init_general_params()
+    password = input_pass(10)
+    account = account_by_mnemonic(network_type, bip32_coin_id, is_generate=True)
     account['Password'] = password
     print_account(account)
+    print('Password repeat to show hidden information')
+    password = input_pass(3, valid_pass=password)
+    if password is not None:
+        print_account(account, is_hidden=False)
+        print_info()
 
 
 if __name__ == '__main__':
