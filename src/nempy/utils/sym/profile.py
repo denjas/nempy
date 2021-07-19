@@ -1,19 +1,19 @@
+import binascii
+import os
 import random
 from enum import Enum
 from hashlib import blake2b
 
 import click
-import logging
-from tabulate import tabulate
-import binascii
-from pprint import pprint
 import inquirer
-from nempy.sym import network
 import stdiomask
+from bip_utils import Bip39MnemonicGenerator, Bip39Languages
+from nempy.config import DEFAULT_WALLETS_DIR
+from nempy.sym import network
+from nempy.wallet import Account, write_account, read_account
+from password_strength import PasswordPolicy
 from symbolchain.core.Bip32 import Bip32
 from symbolchain.core.facade.SymFacade import SymFacade
-from bip_utils import Bip39MnemonicGenerator, Bip39WordsNum, Bip39Languages
-from password_strength import PasswordPolicy
 
 
 class GenerationTypes(Enum):
@@ -38,7 +38,16 @@ def get_gen_type() -> GenerationTypes:
 
 
 def init_general_params() -> (str, int, str):
-    node_url = input('Enter the Symbol node URL. (Example: http://localhost:3000): ') or 'http://192.168.0.103:3000'
+    while True:
+        name = input('Enter the account name: ')
+        if name != '':
+            account_path = os.path.join(DEFAULT_WALLETS_DIR, name + '.account')
+            if os.path.exists(account_path):
+                print('An account with the same name already exists, please select a different name')
+                continue
+            break
+        print('The name cannot be empty.')
+    node_url = input('Enter the Symbol node URL. (Example: http://localhost:3000): ')
     network.node_selector.url = node_url
     network_type = network.get_node_network()
     print(network_type.upper())
@@ -48,7 +57,7 @@ def init_general_params() -> (str, int, str):
         bip32_coin_id = 1
     else:
         raise ValueError('Invalid URL or network not supported')
-    return network_type, bip32_coin_id
+    return account_path, name, network_type, bip32_coin_id, node_url
 
 
 def input_pass(n_attempts: int, valid_pass: str = None):
@@ -93,10 +102,10 @@ def derive_key_by_mnemonic(network_type, bip32_coin_id, mnemonic):
         public_key = str(child_key_pair.public_key).upper()
         address = str(facade.network.public_key_to_address(child_key_pair.public_key)).upper()
         address_view = '-'.join(address[i:i + 6] for i in range(0, len(address), 6))
-        accounts[address_view] = ({'Address': address_view,
-                                   'Public Key': public_key,
-                                   'Private Key': private_key,
-                                   'Path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'"})
+        accounts[address_view] = ({'address': address_view,
+                                   'public_key': public_key,
+                                   'private_key': private_key,
+                                   'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'"})
     return accounts
 
 
@@ -127,71 +136,66 @@ def account_by_mnemonic(network_type, bip32_coin_id, is_generate=False):
     ]
     answers = inquirer.prompt(questions)
     account = answers['address']
-    accounts[account]['Mnemonic'] = mnemonic
+    accounts[account]['mnemonic'] = mnemonic
     return accounts[account]
 
 
-def print_account(account, is_hidden=True):
-    prepare = []
-    for key, value in account.items():
-        if key == 'Mnemonic':
-            positions = [pos for pos, char in enumerate(value) if char == ' ']
-            value = value[:positions[8]] + '\n' + value[positions[8] + 1:positions[16]] + '\n' + value[positions[16] + 1:]
-        if is_hidden:
-            if key in ['Private Key', 'Password']:
-                value = ''.join('*' for e in value if e.isalnum())
-        if is_hidden:
-            if key == 'Mnemonic':
-                value = '****** ***** ****** ***** ***** ******* ******** ***** *********'
-        prepare.append([key, value])
-    table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
-    print(table)
+def account_creation(account, account_path):
+    print(repr(account))
+    print('Password repeat to show hidden information')
+    password = input_pass(3, valid_pass=account.password)
+    if password is not None:
+        write_account(account_path, password, account)
+        print(f'\nAccount created at: {account_path}')
+        account = read_account(account_path, password)
+        print(account)
+        print_warning()
+
+
+def print_warning():
+    print("""
+                                !!! Important !!!
+Save the mnemonic, it will be needed to restore access to the wallet in case of password loss
+Where to store can be found here - https://en.bitcoinwiki.org/wiki/Mnemonic_phrase
+!!!Do not share your secret key and mnemonic with anyone, it guarantees access to your funds!!!
+    """)
 
 
 @click.group('profile')
 def main():
-    print('profile')
-
-
-def print_info():
-    print("""
-                                !!! Important !!!
-Save the mnemonic, it will be needed to restore access to the wallet  
-in case of password loss
-Where to store can be found here - https://en.bitcoinwiki.org/wiki/Mnemonic_phrase
-!!! Do not share your secret key with anyone, it guarantees access to your funds !!!
-    """)
+    """
+    Interactive profile creation or importing mode
+    :return:
+    """
+    print('Interactive profile creation mode:')
 
 
 @main.command('import')
 def import_account():
-    network_type, bip32_coin_id = init_general_params()
+    account_path, name, network_type, bip32_coin_id, node_url = init_general_params()
     password = input_pass(10)
     gen_type = get_gen_type()
 
     if gen_type == GenerationTypes.MNEMONIC:
         account = account_by_mnemonic(network_type, bip32_coin_id)
-    account['Password'] = password
-    print_account(account)
-    print('Password repeat to show hidden information')
-    password = input_pass(3, valid_pass=password)
-    if password is not None:
-        print_account(account, is_hidden=False)
-        print_info()
+    account['password'] = password
+    account['name'] = name
+    account['node_url'] = node_url
+    account = Account(account)
+    account_creation(account, account_path)
 
 
 @main.command('create')
 def create_account():
-    network_type, bip32_coin_id = init_general_params()
+    account_path, name, network_type, bip32_coin_id, node_url = init_general_params()
     password = input_pass(10)
     account = account_by_mnemonic(network_type, bip32_coin_id, is_generate=True)
-    account['Password'] = password
-    print_account(account)
-    print('Password repeat to show hidden information')
-    password = input_pass(3, valid_pass=password)
-    if password is not None:
-        print_account(account, is_hidden=False)
-        print_info()
+
+    account['password'] = password
+    account['name'] = name
+    account['node_url'] = node_url
+    account = Account(account)
+    account_creation(account, account_path)
 
 
 if __name__ == '__main__':
