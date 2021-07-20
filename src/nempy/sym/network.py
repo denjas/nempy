@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 import requests
 
 from nempy.utils.sym.measure_latency import measure_latency
-from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET
+from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType
 from . import ed25519, constants, config
 from .constants import TransactionStatus
 
@@ -185,10 +185,27 @@ class NodeSelector:
     _URLs: list = None
     _sorted_URLs = None
     _re_elections = False
+    _network_type = NetworkType.TEST_NET
 
     def __init__(self, node_urls: [list[str], str], logger=None):
         self.logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0]) if logger is None else logger
         self.url = node_urls
+
+    @property
+    def network_type(self):
+        return self._network_type
+
+    @network_type.setter
+    def network_type(self, network_type):
+        self._network_type = network_type
+        if self._network_type == NetworkType.MAIN_NET:
+            logging.debug('Switch to MAIN network')
+            self.url = config.MAIN_NODE_URLs
+        elif self._network_type == NetworkType.TEST_NET:
+            logging.debug('Switch to TEST network')
+            self.url = config.TEST_NODE_URLs
+        else:
+            raise TypeError('Unknown network type')
 
     def node_actualizer(self, interval):
         asyncio.set_event_loop(asyncio.new_event_loop())
@@ -302,7 +319,7 @@ class NodeSelector:
 
 
 # singleton for background work with the list of nodes
-node_selector = NodeSelector(config.URLs)
+node_selector = NodeSelector(config.TEST_NODE_URLs)
 
 
 
