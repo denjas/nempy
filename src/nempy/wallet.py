@@ -115,21 +115,23 @@ class Account:
             if self.secret is None:
                 raise AttributeError('The private key is required for the account')
 
-    def __repr__(self):
-        prepare = list()
-        for key, value in self.__dict__.items():
-            if key == 'secret':
-                value = '****************************************************************'
-            key = key.replace('_', ' ').title()
-            prepare.append([key, value])
-        table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
-        return table
+    # def __repr__(self):
+    #     prepare = list()
+    #     for key, value in self.__dict__.items():
+    #         if key == 'secret':
+    #             value = '****************************************************************'
+    #         key = key.replace('_', ' ').title()
+    #         prepare.append([key, value])
+    #     table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
+    #     return table
 
     def __str__(self):
         prepare = list()
         for key, value in self.__dict__.items():
             if key == 'secret':
                 continue
+            if key == 'address':
+                value = '-'.join(value[i:i + 6] for i in range(0, len(value), 6))
             key = key.replace('_', ' ').title()
             prepare.append([key, value])
         for key, value in self.__dict__['secret'].items():
@@ -221,18 +223,17 @@ class Account:
             private_key = str(child_key_pair.private_key).upper()
             public_key = str(child_key_pair.public_key).upper()
             address = str(facade.network.public_key_to_address(child_key_pair.public_key)).upper()
-            address_view = '-'.join(address[i:i + 6] for i in range(0, len(address), 6))
-            accounts[address_view] = ({'address': address_view,
-                                       'public_key': public_key,
-                                       'secret': {'private_key': private_key},
-                                       'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'"})
+            accounts[address] = ({'address': address,
+                                  'public_key': public_key,
+                                  'secret': {'private_key': private_key},
+                                  'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'"})
         return accounts
 
     def account_creation(self, account_path, password):
         self.write_account(account_path, password)
         print(f'\nAccount created at: {account_path}')
         account = Account.read_account(account_path, password)
-        print(repr(account))
+        print(account)
         print_warning()
 
     def write_account(self, path, password):
@@ -372,35 +373,43 @@ class Wallet:
     def __init__(self):
         os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
         self.load_profiles()
+        if not self.profiles:
+            print('No profiles have been created. To create a profile, run the command `nempy-cli.py profile create`')
+            exit(1)
         self.init_default_profile()
 
     def load_profiles(self):
         profiles_paths = os.listdir(PROFILES_FILES)
         for pp in profiles_paths:
             path = os.path.join(PROFILES_FILES, pp)
-            self.profiles[os.path.splitext(pp)[0]] = Profile().loaf_profile(path)
+            profile = Profile().loaf_profile(path)
+            self.profiles[os.path.splitext(pp)[0]] = profile
 
     def print_profiles(self):
-        for profile in self.profiles:
+        for profile in self.profiles.values():
             print(profile)
-            print('')
+            print('#############################################################################################')
 
     def init_default_profile(self):
         config = configparser.ConfigParser()
         config.read(CONFIG_FILE)
-        self.default_profile = self.profiles[config['profile']['default']]
+        default_profile = self.profiles.get(config['profile']['default'])
+        if default_profile is None:
+            self.set_default_profile()
+        else:
+            self.default_profile = default_profile
 
     def set_default_profile(self):
-        names = [profile.name + f' [{profile.network_type}]' for profile in self.profiles.keys()]
+        names = {profile.name + f' [{profile.network_type}]': profile.name for profile in self.profiles.values()}
         questions = [
             inquirer.List(
                 "name",
                 message="Select default profile",
-                choices=names,
+                choices=names.keys(),
             ),
         ]
         answers = inquirer.prompt(questions)
-        name = answers['name']
+        name = names[answers['name']]
         config = configparser.ConfigParser()
         config.read(CONFIG_FILE)
         profile = self.profiles[name]

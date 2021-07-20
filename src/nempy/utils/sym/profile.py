@@ -1,6 +1,7 @@
 
 from enum import Enum
 import click
+from nempy.wallet import Wallet, Profile
 
 
 @click.group('profile')
@@ -29,8 +30,9 @@ def import_account():
 
 
 @main.command('create')
-def create_account():
-    pass
+def create_profile():
+    profile = Profile()
+    profile.create_profile()
     # account_path, name, network_type, bip32_coin_id, node_url = init_general_params()
     # password = input_pass(10)
     # account = account_by_mnemonic(network_type, bip32_coin_id, is_generate=True)
@@ -44,8 +46,9 @@ def create_account():
 
 @main.command('info')
 @click.option('-n', '--name', type=str, required=False, default='', help='Account name')
-def info(name):
-    pass
+def profile_info(name):
+    wallet = Wallet()
+    wallet.print_profiles()
     # if not name:
     #     name = get_default_account()
     # account_path = build_account_path(name)
