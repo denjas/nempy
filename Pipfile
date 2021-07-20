@@ -17,6 +17,7 @@ inquirer = "==2.7.0"
 stdiomask = "==0.0.6"
 bip-utils = "==1.11.1"
 tabulate = "==0.8.9"
+bcrypt = "==3.2.0"
 
 [dev-packages]
 

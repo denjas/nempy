@@ -9,6 +9,11 @@ EPOCH_TIME_MAINNET = datetime.datetime(2021, 3, 16, 0, 6, 25, tzinfo=datetime.ti
 EPOCH_TIME_TESTNET = datetime.datetime(2021, 3, 25, 17, 56, 17, tzinfo=datetime.timezone.utc)
 
 
+class NetworkType(Enum):
+    TEST_NET = 'public_test'
+    MAIN_NET = 'public'
+
+
 class TransactionStatus(Enum):
     NOT_FOUND = - 1
     UNCONFIRMED_ADDED = 0

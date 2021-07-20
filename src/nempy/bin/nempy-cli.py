@@ -5,6 +5,7 @@ import logging
 import click
 from nempy.utils.sym.monitoring import main as monitoring_sym
 from nempy.utils.sym.profile import main as profile_sym
+from nempy.utils.sym.account import main as account_sym
 
 
 logging.getLogger('asyncio').setLevel(logging.ERROR)
@@ -22,6 +23,7 @@ def main(debug):
 
 main.add_command(monitoring_sym)
 main.add_command(profile_sym)
+main.add_command(account_sym)
 
 
 if __name__ == '__main__':
