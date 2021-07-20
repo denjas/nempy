@@ -24,6 +24,7 @@ from nempy.sym.constants import NetworkType
 from password_strength import PasswordPolicy
 from symbolchain.core.facade.SymFacade import SymFacade
 from tabulate import tabulate
+from nempy.sym.config import MAIN_NODE_URLs, TEST_NODE_URLs
 
 
 def print_warning():
@@ -62,7 +63,7 @@ def input_new_pass(n_attempts: int):
     return None
 
 
-def input_network_type() -> str:
+def input_network_type() -> NetworkType:
     questions = [
         inquirer.List(
             "type",
@@ -72,6 +73,12 @@ def input_network_type() -> str:
     ]
     answers = inquirer.prompt(questions)
     network_type = answers['type']
+    if network_type == 'MAIN_NET':
+        network_type = NetworkType.MAIN_NET
+    elif network_type == 'TEST_NET':
+        network_type = NetworkType.TEST_NET
+    else:
+        raise TypeError('Unknown network type')
     return network_type
 
 
@@ -105,7 +112,7 @@ class Account:
     private_key = None
     path = None
     mnemonic = None
-    network_type = None
+    network_type: NetworkType = None
     secret = None
     profile = None
 
@@ -128,7 +135,7 @@ class Account:
     def __str__(self):
         prepare = list()
         for key, value in self.__dict__.items():
-            if key == 'secret':
+            if key in ['secret', 'network_type']:
                 continue
             if key == 'address':
                 value = '-'.join(value[i:i + 6] for i in range(0, len(value), 6))
@@ -140,6 +147,7 @@ class Account:
                 value = value[:positions[8]] + '\n' + value[positions[8] + 1:positions[16]] + '\n' + value[positions[16] + 1:]
             key = key.replace('_', ' ').title()
             prepare.append([key, value])
+        prepare.append(['Network Type', self.network_type.name])
         table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
         return table
 
@@ -167,15 +175,13 @@ class Account:
                     continue
                 break
             print('The name cannot be empty.')
-        if network_type == 'MAIN_NET':
+        if network_type == NetworkType.MAIN_NET:
             bip32_coin_id = 4343
-            network_type = NetworkType.MAIN_NET
-        elif network_type == 'TEST_NET':
-            network_type = NetworkType.TEST_NET
+        elif network_type == NetworkType.TEST_NET:
             bip32_coin_id = 1
         else:
             raise ValueError('Invalid URL or network not supported')
-        return account_path, name, network_type, bip32_coin_id
+        return account_path, name, bip32_coin_id
 
     @staticmethod
     def account_by_mnemonic(network_type, bip32_coin_id, is_generate=False):
@@ -206,7 +212,7 @@ class Account:
         answers = inquirer.prompt(questions)
         account = answers['address']
         accounts[account]['secret'].update({'mnemonic': mnemonic})
-        accounts[account]['network_type'] = network_type.name
+        accounts[account]['network_type'] = network_type
         return accounts[account]
 
     @staticmethod
@@ -261,16 +267,16 @@ class Account:
             return DecoderStatus.WRONG_PASS
         return account
 
-    @staticmethod
-    def read_accounts(profile: str, password: str = None):
-        accounts_dir = os.listdir(DEFAULT_ACCOUNTS_DIR)
-        accounts = list()
-        for account in accounts_dir:
-            path = os.path.join(DEFAULT_ACCOUNTS_DIR, account)
-            _account = Account.read_account(path, password)
-            if _account.profile == profile:
-                accounts.append(_account)
-        return accounts
+    # @staticmethod
+    # def read_accounts(profile: str, password: str = None):
+    #     accounts_dir = os.listdir(DEFAULT_ACCOUNTS_DIR)
+    #     accounts = list()
+    #     for account in accounts_dir:
+    #         path = os.path.join(DEFAULT_ACCOUNTS_DIR, account)
+    #         _account = Account.read_account(path, password)
+    #         if _account.profile == profile:
+    #             accounts.append(_account)
+    #     return accounts
 
     @staticmethod
     def get_gen_type() -> GenerationTypes:
@@ -296,6 +302,7 @@ class Account:
 
     @staticmethod
     def set_default_account(name):
+
         config = configparser.ConfigParser()
         config.read(CONFIG_FILE)
         config['account']['default'] = name
@@ -305,7 +312,7 @@ class Account:
 
 class Profile:
     name = None
-    network_type = None
+    network_type: NetworkType = None
     pass_hash = None
 
     def __init__(self, profile: dict = None):
@@ -314,12 +321,44 @@ class Profile:
             [setattr(self, key, value) for key, value in profile.items()]
 
     def __str__(self):
-        prepare = [[key.replace('_', ' ').title(), value] for key, value in self.__dict__.items()]
+        prepare = [[key.replace('_', ' ').title(), value]
+                   for key, value in self.__dict__.items() if key != 'network_type']
+        prepare.append(['Network Type', self.network_type.name])
         table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
         return table
 
     def __repr__(self):
         return self.name
+
+    def load_accounts(self, password=None) -> dict:
+        accounts = {}
+        accounts_paths = os.listdir(DEFAULT_ACCOUNTS_DIR)
+        for account_path in accounts_paths:
+            path = os.path.join(DEFAULT_ACCOUNTS_DIR, account_path)
+            account = Account.read_account(path, password)
+            if account.profile == self.name:
+                accounts[os.path.splitext(account_path)[0]] = account
+        return accounts
+
+    def set_default_account(self):
+        accounts = self.load_accounts()
+        if not accounts:
+            print(f'There are no accounts for the {self.name} profile. To create an account, run the command: `nempy-cli.py account create`')
+            exit(1)
+        questions = [
+            inquirer.List(
+                "name",
+                message="Select default account",
+                choices=accounts.keys(),
+            ),
+        ]
+        answers = inquirer.prompt(questions)
+        account = accounts[answers['name']]
+        config = configparser.ConfigParser()
+        config.read(CONFIG_FILE)
+        config['account']['default'] = account.name
+        with open(CONFIG_FILE, 'w') as configfile:
+            config.write(configfile)
 
     def check_pass(self, password: str = None, attempts: int = 1):
         if password is not None:
@@ -330,7 +369,7 @@ class Profile:
                 return None
 
         for i in range(attempts):
-            password = stdiomask.getpass(f'Enter your `{self.name} [{self.network_type}]` profile password: ')
+            password = stdiomask.getpass(f'Enter your `{self.name} [{self.network_type.name}]` profile password: ')
             if bcrypt.checkpw(password.encode('utf-8'), self.pass_hash):
                 return password
             print(f'Incorrect password. Try again ({attempts - 1 - i})')
@@ -345,6 +384,8 @@ class Profile:
             exit(1)
         self.pass_hash = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt(12))
         self.save_profile(path)
+        print(f'Profile {self.name} successful created by path: {path}')
+        print(self)
         return path
 
     def save_profile(self, path):
@@ -368,7 +409,7 @@ class Profile:
 class Wallet:
 
     profiles = dict()
-    default_profile = None
+    default_profile: Profile = None
 
     def __init__(self):
         os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
@@ -398,9 +439,10 @@ class Wallet:
             self.set_default_profile()
         else:
             self.default_profile = default_profile
+        network.node_selector.network_type = self.default_profile.network_type
 
     def set_default_profile(self):
-        names = {profile.name + f' [{profile.network_type}]': profile.name for profile in self.profiles.values()}
+        names = {profile.name + f' [{profile.network_type.name}]': profile.name for profile in self.profiles.values()}
         questions = [
             inquirer.List(
                 "name",
