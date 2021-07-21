@@ -1,5 +1,5 @@
+#!/usr/bin/env python
 
-from enum import Enum
 import click
 from nempy.wallet import Wallet, Profile
 
@@ -46,8 +46,7 @@ def profile_info(name, is_list):
     wallet = Wallet()
     if is_list:
         wallet.print_profiles()
-    print(wallet.default_profile)
-    #
+    print(wallet.profile)
 
 
 if __name__ == '__main__':
