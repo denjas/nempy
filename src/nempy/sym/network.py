@@ -16,6 +16,16 @@ from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TI
 from . import ed25519, constants, config
 from .constants import TransactionStatus
 
+logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
+# create formatter
+formatter = logging.Formatter('[%(asctime)s][%(levelname)s] %(name)s - %(message)s')
+ch = logging.StreamHandler()
+# add formatter to ch
+ch.setFormatter(formatter)
+
+# add ch to logger
+logger.addHandler(ch)
+
 
 class SymbolNetworkException(Exception):
 
@@ -44,7 +54,7 @@ def check_transaction_state(transaction_hash):
         try:
             answer = requests.get(endpoint, timeout=timeout)
         except Exception as e:
-            logging.error(str(e))
+            logger.error(str(e))
             return None
         if answer.status_code == 200:
             if checker == 'confirmed':
@@ -54,7 +64,7 @@ def check_transaction_state(transaction_hash):
             if checker == 'partial':
                 status = TransactionStatus.PARTIAL_ADDED
         if answer.status_code == HTTPStatus.CONFLICT:
-            logging.error(answer.text)
+            logger.error(answer.text)
     return status
 
 
@@ -92,7 +102,7 @@ def get_fee_multipliers():
     try:
         answer = requests.get(f'{node_selector.url}/network/fees/transaction')
     except Exception as e:
-        logging.error(e)
+        logger.error(e)
         return None
     if answer.status_code == HTTPStatus.OK:
         fee_multipliers = json.loads(answer.text)
@@ -104,35 +114,39 @@ def get_divisibility(mosaic_id: str):
     try:
         answer = requests.get(f'{node_selector.url}/mosaics/{mosaic_id}')
     except Exception as e:
-        logging.error(e)
+        logger.error(e)
         return None
     if answer.status_code == HTTPStatus.OK:
         node_info = json.loads(answer.text)
         divisibility = int(node_info['mosaic']['divisibility'])
         return divisibility
     err = json.loads(answer.text)
-    logging.error(f"{err['code']}: {err['message']}")
+    logger.error(f"{err['code']}: {err['message']}")
     return None
 
 
 def get_balance(address: str, mosaic_filter: [list, str] = None, is_linked: bool = False) -> (dict, int):
     if isinstance(mosaic_filter, str):
         mosaic_filter = [mosaic_filter]
+    if mosaic_filter is None:
+        mosaic_filter = []
     if not ed25519.check_address(address):
-        logging.error(f'Incorrect wallet address: `{address}`')
+        logger.error(f'Incorrect wallet address: `{address}`')
         return None
     for mosaic_id in mosaic_filter:
         if not ed25519.check_hex(mosaic_id, constants.HexSequenceSizes.mosaic_id):
-            logging.error(f'Incorrect mosaic ID: `{mosaic_id}`')
+            logger.error(f'Incorrect mosaic ID: `{mosaic_id}`')
             return None
     endpoint = f'{node_selector.url}/accounts/{address}'
     try:
         answer = requests.get(endpoint)
     except Exception as e:
-        logging.error(e)
+        logger.error(e)
         return None
     if answer.status_code != HTTPStatus.OK:
-        logging.error(answer.text)
+        logger.error(answer.text)
+        if answer.status_code == HTTPStatus.NOT_FOUND:
+            return {}
         return None
     address_info = json.loads(answer.text)
     mosaics = address_info['account']['mosaics']
@@ -142,7 +156,7 @@ def get_balance(address: str, mosaic_filter: [list, str] = None, is_linked: bool
         if div is None:
             return None
         balance[mosaic['id']] = int(mosaic['amount']) / 10 ** div
-    if mosaic_filter is not None:
+    if mosaic_filter:
         filtered_balance = {key: balance.get(key) for key in mosaic_filter if key in balance}
         return filtered_balance
     return balance
@@ -187,8 +201,7 @@ class NodeSelector:
     _re_elections = False
     _network_type = NetworkType.TEST_NET
 
-    def __init__(self, node_urls: [list[str], str], logger=None):
-        self.logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0]) if logger is None else logger
+    def __init__(self, node_urls: [list[str], str]):
         self.url = node_urls
 
     @property
@@ -199,10 +212,10 @@ class NodeSelector:
     def network_type(self, network_type):
         self._network_type = network_type
         if self._network_type == NetworkType.MAIN_NET:
-            logging.debug('Switch to MAIN network')
+            logger.debug('Switch to MAIN network')
             self.url = config.MAIN_NODE_URLs
         elif self._network_type == NetworkType.TEST_NET:
-            logging.debug('Switch to TEST network')
+            logger.debug('Switch to TEST network')
             self.url = config.TEST_NODE_URLs
         else:
             raise TypeError('Unknown network type')
@@ -218,7 +231,7 @@ class NodeSelector:
             time.sleep(interval)
             if self._re_elections is None:
                 break
-        logging.debug('The node actualization thread has been stopped.')
+        logger.debug('The node actualization thread has been stopped.')
 
     @property
     def url(self):
@@ -239,7 +252,7 @@ class NodeSelector:
         if len(self._URLs) == 1:
             self._re_elections = None
             self._URL = self._URLs[0]
-            self.logger.debug(f'Selected node: {self._URL}')
+            logger.debug(f'Selected node: {self._URL}')
         else:
             #  if the daemon is running and not actualizing right now
             if self._re_elections:  # not started and not waiting
@@ -251,7 +264,7 @@ class NodeSelector:
             self.actualizer.start()
 
     def reelection_node(self):
-        self.logger.debug('Node reselecting...')
+        logger.debug('Node reselecting...')
         heights = [NodeSelector.get_height(url) for url in self._URLs]
         max_height = max(heights)
         heights_filter = [True if height >= max_height * 0.97 else False for height in heights]
@@ -264,11 +277,11 @@ class NodeSelector:
         new_url = self._sorted_URLs[0] if len(self._sorted_URLs) > 0 else None
         if self._re_elections is not None:
             if new_url != self._URL and self._URL is not None:
-                self.logger.warning(f'Reselection node: {self._URL} -> {new_url}')
+                logger.warning(f'Reselection node: {self._URL} -> {new_url}')
             if new_url is None:
-                self.logger.error('It was not possible to select the current node from the list of available ones')
+                logger.error('It was not possible to select the current node from the list of available ones')
             self._URL = new_url
-            self.logger.debug(f'Selected node: {self._URL}')
+            logger.debug(f'Selected node: {self._URL}')
 
     @staticmethod
     def health(url):
@@ -320,6 +333,3 @@ class NodeSelector:
 
 # singleton for background work with the list of nodes
 node_selector = NodeSelector(config.TEST_NODE_URLs)
-
-
-

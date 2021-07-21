@@ -209,9 +209,10 @@ class Account:
             opened_file.write(pickled_data)
         logging.debug(f'Wallet saved along the way: {path}')
 
-    def decode(self, password: str):
+    def decode(self, password: str = ''):
+        if not password:
+            password = stdiomask.getpass(f'Enter your `{self.profile} [{self.network_type.name}]` profile password: ')
         decoded_account = copy.deepcopy(self)
-
         decoded_account.private_key = pickle.loads(decryption(password, self.private_key))
         if decoded_account.mnemonic is not None:
             decoded_account.mnemonic = pickle.loads(decryption(password, self.mnemonic))

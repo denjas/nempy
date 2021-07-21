@@ -3,6 +3,7 @@ import os
 import click
 from nempy.wallet import Wallet
 from nempy.account import Account, print_warning, DecoderStatus, GenerationTypes
+from nempy.engine import XYMEngine
 
 
 @click.group('account')
@@ -103,40 +104,20 @@ def info(name, decode, is_list):
         print_warning()
 
 
-
-    # account_path = Account.build_account_path(name)
-    # if not os.path.exists(account_path):
-    #     print(f'The account named `{name}` does not exist in profile `{wallet.profile.name}`')
-    #     wallet.profile.set_default_account()
-    # password = None
-    # if decode:
-    #     print('Attention! Hide information received after entering a password from prying eyes')
-    #     password = wallet.profile.check_pass(attempts=3)
-    #     if password is None:
-    #         exit(1)
-    # accounts = wallet.profile.load_accounts(password)
-    # if not accounts:
-    #     print(f'There are no accounts for the {wallet.profile.name} profile.')
-    #     print('To create an account, run the command: `nempy-cli.py account create`')
-    #     exit(1)
-    # if not is_list:
-    #     accounts = {name: accounts.get(name, {})}
-    # for account in accounts.values():
-    #     if isinstance(account, DecoderStatus):
-    #         exit(1)
-    #     print(account)
-    #     print('###################################################################################')
-    # if decode:
-    #     print_warning()
-
-
 @main.command('balance')
-def balance():
+@click.option('-a', '--address', type=str, required=False, default='', help='Get the balance at the address. Default current account balance')
+def get_balance(address):
     """
     Get the balance for the current account
     """
     wallet = Wallet()
-    balance = wallet.profile.account.get_balance()
+    engine = XYMEngine(wallet.profile.account)
+    if not address:
+        address = wallet.profile.account.address
+    balance = engine.get_balance(address)
+    if balance == {}:
+        print('There is no account, or there was no movement of funds on it')
+        exit(0)
     print(balance)
 
 
