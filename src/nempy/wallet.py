@@ -68,7 +68,7 @@ class Wallet:
         with open(CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
         self.profile = profile
-        self.profile.set_default_account()
+        self.profile.input_default_account()
 
 
 

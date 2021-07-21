@@ -2,6 +2,7 @@ import binascii
 import configparser
 import logging
 import os
+import copy
 import pickle
 import random
 from base64 import b64decode
@@ -15,7 +16,6 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
 from bip_utils import Bip39MnemonicGenerator, Bip39Languages
-from nempy.config import CONFIG_FILE
 from nempy.config import DEFAULT_ACCOUNTS_DIR
 from nempy.sym.constants import NetworkType
 from symbolchain.core.Bip32 import Bip32
@@ -33,17 +33,18 @@ def print_warning():
     """)
 
 
-def encryption(password: str, data: bytes) -> str:
+def encryption(password: str, data: bytes) -> bytes:
     key = blake2b(password.encode(), digest_size=16).hexdigest().encode()
     cipher = AES.new(key, AES.MODE_CBC)
     ct_bytes = cipher.encrypt(pad(data, AES.block_size))
-    iv = b64encode(cipher.iv).decode('utf-8')
-    ct = b64encode(ct_bytes).decode('utf-8')
+    iv = b64encode(cipher.iv)
+    ct = b64encode(ct_bytes)
     result = iv + ct
     return result
 
 
-def decryption(password: str, encrypted_data: str) -> [bytes, None]:
+def decryption(password: str, encrypted_data: bytes) -> [bytes, None]:
+    encrypted_data = encrypted_data.decode('utf-8')
     key = blake2b(password.encode(), digest_size=16).hexdigest().encode()
     try:
         iv = b64decode(encrypted_data[0:24])
@@ -74,31 +75,30 @@ class Account:
     path = None
     mnemonic = None
     network_type: NetworkType = None
-    secret = None
     profile = None
 
     def __init__(self, account: dict = None):
         if account is not None:
             [setattr(self, key, value) for key, value in account.items()]
-            if self.secret is None:
+            if self.private_key is None:
                 raise AttributeError('The private key is required for the account')
 
     def __str__(self):
         prepare = list()
         for key, value in self.__dict__.items():
-            if key in ['secret', 'network_type']:
-                continue
             if key == 'address':
                 value = '-'.join(value[i:i + 6] for i in range(0, len(value), 6))
-            key = key.replace('_', ' ').title()
-            prepare.append([key, value])
-        for key, value in self.__dict__['secret'].items():
-            if key == 'mnemonic':
+            if key == 'mnemonic' and not isinstance(value, bytes):
                 positions = [pos for pos, char in enumerate(value) if char == ' ']
                 value = value[:positions[8]] + '\n' + value[positions[8] + 1:positions[16]] + '\n' + value[positions[16] + 1:]
+            elif key == 'mnemonic' and isinstance(value, bytes):
+                value = '******* **** ********** ******* ***** *********** ******** *****'
+            if key == 'private_key' and isinstance(value, bytes):
+                value = '*' * 64
+            if isinstance(value, NetworkType):
+                value = value.name
             key = key.replace('_', ' ').title()
             prepare.append([key, value])
-        prepare.append(['Network Type', self.network_type.name])
         table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
         return table
 
@@ -126,13 +126,17 @@ class Account:
                     continue
                 break
             print('The name cannot be empty.')
+        is_default = False
+        answer = input(f'Set `{name}` account as default? Y/n: ') or 'y'
+        if answer.lower() == 'y':
+            is_default = True
         if network_type == NetworkType.MAIN_NET:
             bip32_coin_id = 4343
         elif network_type == NetworkType.TEST_NET:
             bip32_coin_id = 1
         else:
             raise ValueError('Invalid URL or network not supported')
-        return account_path, name, bip32_coin_id
+        return account_path, name, bip32_coin_id, is_default
 
     @staticmethod
     def account_by_mnemonic(network_type, bip32_coin_id, is_generate=False):
@@ -162,8 +166,6 @@ class Account:
         ]
         answers = inquirer.prompt(questions)
         account = answers['address']
-        accounts[account]['secret'].update({'mnemonic': mnemonic})
-        accounts[account]['network_type'] = network_type
         return accounts[account]
 
     @staticmethod
@@ -182,41 +184,50 @@ class Account:
             address = str(facade.network.public_key_to_address(child_key_pair.public_key)).upper()
             accounts[address] = ({'address': address,
                                   'public_key': public_key,
-                                  'secret': {'private_key': private_key},
-                                  'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'"})
+                                  'private_key': private_key,
+                                  'mnemonic': mnemonic,
+                                  'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'",
+                                  'network_type': network_type})
         return accounts
 
     def account_creation(self, account_path, password):
         self.write_account(account_path, password)
         print(f'\nAccount created at: {account_path}')
-        account = Account.read_account(account_path, password)
+        account = Account.read_account(account_path).decode(password)
         print(account)
         print_warning()
 
     def write_account(self, path, password):
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        secret = pickle.dumps(self.secret)
-        enc_secret = encryption(password=password, data=secret)
-        self.secret = enc_secret
+        pickle_private_key = pickle.dumps(self.private_key)
+        self.private_key = encryption(password=password, data=pickle_private_key)
+        if self.mnemonic is not None:
+            pickle_mnemonic = pickle.dumps(self.mnemonic)
+            self.mnemonic = encryption(password=password, data=pickle_mnemonic)
         pickled_data = self.serialize()
         with open(path, 'wb') as opened_file:
             opened_file.write(pickled_data)
         logging.debug(f'Wallet saved along the way: {path}')
 
+    def decode(self, password: str):
+        decoded_account = copy.deepcopy(self)
+
+        decoded_account.private_key = pickle.loads(decryption(password, self.private_key))
+        if decoded_account.mnemonic is not None:
+            decoded_account.mnemonic = pickle.loads(decryption(password, self.mnemonic))
+        if decoded_account.private_key is None:
+            logging.error(DecoderStatus.WRONG_PASS.value)
+            return DecoderStatus.WRONG_PASS
+        return decoded_account
+
     @staticmethod
-    def read_account(path: str, password: str = None):
+    def read_account(path: str):
         if not os.path.exists(path):
             logging.error(DecoderStatus.NO_DATA.value)
             return DecoderStatus.NO_DATA
         account = Account.deserialize(open(path, 'rb').read())
-        if password is None:
-            account.secret = {}
-            return account
-        account.secret = pickle.loads(decryption(password, account.secret))
-        if account.secret is None:
-            logging.error(DecoderStatus.WRONG_PASS.value)
-            return DecoderStatus.WRONG_PASS
         return account
+
 
     # @staticmethod
     # def read_accounts(profile: str, password: str = None):

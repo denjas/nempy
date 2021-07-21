@@ -41,17 +41,17 @@ class Profile:
         accounts = self.load_accounts()
         return accounts.get(account_name)
 
-    def load_accounts(self, password=None) -> dict:
+    def load_accounts(self) -> dict:
         accounts = {}
         accounts_paths = os.listdir(DEFAULT_ACCOUNTS_DIR)
         for account_path in accounts_paths:
             path = os.path.join(DEFAULT_ACCOUNTS_DIR, account_path)
-            account = Account.read_account(path, password)
+            account = Account.read_account(path)
             if account.profile == self.name:
                 accounts[os.path.splitext(account_path)[0]] = account
         return accounts
 
-    def set_default_account(self):
+    def input_default_account(self):
         accounts = self.load_accounts()
         if not accounts:
             print(f'There are no accounts for the {self.name} profile. To create an account, run the command: `nempy-cli.py account create`')
@@ -65,9 +65,13 @@ class Profile:
         ]
         answers = inquirer.prompt(questions)
         account = accounts[answers['name']]
+        Profile.set_default_account(account.name)
+
+    @staticmethod
+    def set_default_account(name):
         config = configparser.ConfigParser()
         config.read(CONFIG_FILE)
-        config['account']['default'] = account.name
+        config['account']['default'] = name
         with open(CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
 
