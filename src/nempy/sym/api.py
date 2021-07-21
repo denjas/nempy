@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import os
 from binascii import unhexlify
 from typing import List
 
@@ -10,6 +11,8 @@ from symbolchain.core.facade.SymFacade import SymFacade
 
 from . import ed25519, network
 from .constants import Fees, FM, TransactionTypes, TransactionMetrics
+
+logger = logging.getLogger(os.path.splitext(os.path.basename(__name__))[0])
 
 
 class Dividers:
@@ -150,7 +153,7 @@ class Transaction:
         # print(transaction)
         # print(hexlify(transaction.serialize()))
         # print(answer.status_code, answer.text)
-        logging.debug(f'Transaction hash: {entity_hash}')
+        logger.debug(f'Transaction hash: {entity_hash}')
 
         return entity_hash, payload_bytes
 
@@ -167,10 +170,10 @@ class Transaction:
         slowest_fee_multiplier = nfm[FM.min]
 
         div = 1000000
-        logging.debug(f'Fees.FAST.name: {fast_fee_multiplier * transaction_size / div}')
-        logging.debug(f'Fees.AVERAGE.name: {average_fee_multiplier * transaction_size / div}')
-        logging.debug(f'Fees.SLOW.name: {slow_fee_multiplier * transaction_size / div}')
-        logging.debug(f'Fees.SLOWEST.name: {slowest_fee_multiplier * transaction_size / div}')
+        logger.debug(f'Fees.FAST.name: {fast_fee_multiplier * transaction_size / div}')
+        logger.debug(f'Fees.AVERAGE.name: {average_fee_multiplier * transaction_size / div}')
+        logger.debug(f'Fees.SLOW.name: {slow_fee_multiplier * transaction_size / div}')
+        logger.debug(f'Fees.SLOWEST.name: {slowest_fee_multiplier * transaction_size / div}')
 
         fee_multiplier = None
         if fee_type == Fees.FAST:

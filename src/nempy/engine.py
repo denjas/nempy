@@ -1,16 +1,15 @@
 import abc
-from binascii import unhexlify
-from collections.abc import Callable
+import logging
+import os
 from http import HTTPStatus
-from symbolchain.core.CryptoTypes import Hash256
-from symbolchain.core.CryptoTypes import PrivateKey
-from symbolchain.core.sym.KeyPair import KeyPair
+
+from nempy.account import Account
 
 from .sym import api as sym
 from .sym import network
-from .sym.constants import BlockchainStatuses, DecoderStatus
+from .sym.constants import BlockchainStatuses
 
-from nempy.account import Account
+logger = logging.getLogger(os.path.splitext(os.path.basename(__name__))[0])
 
 
 class NEMEngine:

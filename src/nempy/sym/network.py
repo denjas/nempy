@@ -16,15 +16,8 @@ from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TI
 from . import ed25519, constants, config
 from .constants import TransactionStatus
 
-logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
-# create formatter
-formatter = logging.Formatter('[%(asctime)s][%(levelname)s] %(name)s - %(message)s')
-ch = logging.StreamHandler()
-# add formatter to ch
-ch.setFormatter(formatter)
 
-# add ch to logger
-logger.addHandler(ch)
+logger = logging.getLogger(os.path.splitext(os.path.basename(__name__))[0])
 
 
 class SymbolNetworkException(Exception):
@@ -210,6 +203,8 @@ class NodeSelector:
 
     @network_type.setter
     def network_type(self, network_type):
+        if network_type == self.network_type:
+            return
         self._network_type = network_type
         if self._network_type == NetworkType.MAIN_NET:
             logger.debug('Switch to MAIN network')

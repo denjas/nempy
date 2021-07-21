@@ -13,6 +13,9 @@ from password_strength import PasswordPolicy
 from tabulate import tabulate
 
 
+logger = logging.getLogger(os.path.splitext(os.path.basename(__name__))[0])
+
+
 class Profile:
     name = None
     network_type: NetworkType = None
@@ -80,7 +83,7 @@ class Profile:
             if bcrypt.checkpw(password.encode('utf-8'), self.pass_hash):
                 return password
             else:
-                logging.error('Incorrect password')
+                logger.error('Incorrect password')
                 return None
 
         for i in range(attempts):
@@ -88,7 +91,7 @@ class Profile:
             if bcrypt.checkpw(password.encode('utf-8'), self.pass_hash):
                 return password
             print(f'Incorrect password. Try again ({attempts - 1 - i})')
-        logging.error('Incorrect password')
+        logger.error('Incorrect password')
         return None
 
     def create_profile(self):

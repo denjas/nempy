@@ -1,5 +1,4 @@
 import binascii
-import configparser
 import logging
 import os
 import copy
@@ -21,6 +20,8 @@ from nempy.sym.constants import NetworkType
 from symbolchain.core.Bip32 import Bip32
 from symbolchain.core.facade.SymFacade import SymFacade
 from tabulate import tabulate
+
+logger = logging.getLogger(os.path.splitext(os.path.basename(__name__))[0])
 
 
 def print_warning():
@@ -207,7 +208,7 @@ class Account:
         pickled_data = self.serialize()
         with open(path, 'wb') as opened_file:
             opened_file.write(pickled_data)
-        logging.debug(f'Wallet saved along the way: {path}')
+        logger.debug(f'Wallet saved along the way: {path}')
 
     def decode(self, password: str = ''):
         if not password:
@@ -217,14 +218,14 @@ class Account:
         if decoded_account.mnemonic is not None:
             decoded_account.mnemonic = pickle.loads(decryption(password, self.mnemonic))
         if decoded_account.private_key is None:
-            logging.error(DecoderStatus.WRONG_PASS.value)
+            logger.error(DecoderStatus.WRONG_PASS.value)
             return DecoderStatus.WRONG_PASS
         return decoded_account
 
     @staticmethod
     def read_account(path: str):
         if not os.path.exists(path):
-            logging.error(DecoderStatus.NO_DATA.value)
+            logger.error(DecoderStatus.NO_DATA.value)
             return DecoderStatus.NO_DATA
         account = Account.deserialize(open(path, 'rb').read())
         return account
