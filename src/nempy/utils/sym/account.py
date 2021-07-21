@@ -1,3 +1,4 @@
+import json
 import os
 
 import click
@@ -12,7 +13,7 @@ def main():
     Interactive account management
     :return:
     """
-    print('Interactive account management.')
+    print('|Interactive account management|')
 
 
 @main.command('import')
@@ -108,7 +109,7 @@ def info(name, decode, is_list):
 @click.option('-a', '--address', type=str, required=False, default='', help='Get the balance at the address. Default current account balance')
 def get_balance(address):
     """
-    Get the balance for the current account
+    Get the balance for the current  account
     """
     wallet = Wallet()
     engine = XYMEngine(wallet.profile.account)
@@ -118,7 +119,8 @@ def get_balance(address):
     if balance == {}:
         print('There is no account, or there was no movement of funds on it')
         exit(0)
-    print(balance)
+    h_balance = engine.mosaic_humanization(balance)
+    print(json.dumps(h_balance, sort_keys=True, indent=2))
 
 
 if __name__ == '__main__':

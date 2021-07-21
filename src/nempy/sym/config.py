@@ -1,11 +1,11 @@
 TEST_NODE_URLs = [
-        'http://ngl-dual-001.testnet.symboldev.network:3000',
-        'http://ngl-dual-101.testnet.symboldev.network:3000',
-        'http://ngl-dual-201.testnet.symboldev.network:3000',
+        # 'http://ngl-dual-001.testnet.symboldev.network:3000',
+        # 'http://ngl-dual-101.testnet.symboldev.network:3000',
+        # 'http://ngl-dual-201.testnet.symboldev.network:3000',
         'http://ngl-dual-301.testnet.symboldev.network:3000',
         'http://ngl-dual-401.testnet.symboldev.network:3000',
-        'http://ngl-dual-501.testnet.symboldev.network:3000',
-        'http://ngl-dual-601.testnet.symboldev.network:3000'
+        # 'http://ngl-dual-501.testnet.symboldev.network:3000',
+        # 'http://ngl-dual-601.testnet.symboldev.network:3000'
 ]
 
 MAIN_NODE_URLs = [
@@ -27,9 +27,9 @@ MAIN_NODE_URLs = [
         # 'http://ngl-dual-301.symbolblockchain.io:3000',
         # 'http://ngl-dual-302.symbolblockchain.io:3000',
         # 'http://ngl-dual-303.symbolblockchain.io:3000',
-        'http://ngl-dual-304.symbolblockchain.io:3000',
-        'http://ngl-dual-305.symbolblockchain.io:3000',
-        'http://ngl-dual-401.symbolblockchain.io:3000',
+        # 'http://ngl-dual-304.symbolblockchain.io:3000',
+        # 'http://ngl-dual-305.symbolblockchain.io:3000',
+        # 'http://ngl-dual-401.symbolblockchain.io:3000',
         'http://ngl-dual-402.symbolblockchain.io:3000',
         'http://ngl-dual-403.symbolblockchain.io:3000',
         'http://ngl-dual-404.symbolblockchain.io:3000',

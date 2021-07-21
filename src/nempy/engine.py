@@ -71,5 +71,17 @@ class XYMEngine(NEMEngine):
         return amount
 
     @staticmethod
+    def mosaic_humanization(mosaics: dict[str, float]):
+        mosaics_ids = list(mosaics.keys())
+        mosaic_names = network.get_mosaic_names(mosaics_ids)
+        if mosaic_names is not None:
+            mosaic_names = mosaic_names['mosaicNames']
+            rf_mosaic_names = {mn.get('mosaicId'): mn.get('names')[0] for mn in mosaic_names if len(mn.get('names'))}
+            named_mosaic = {rf_mosaic_names.get(m_id, m_id): mosaics[m_id] for m_id in mosaics_ids}
+            return named_mosaic
+        else:
+            return mosaics
+
+    @staticmethod
     def check_transaction_confirmation(transaction_hash):
         return network.check_transaction_state(transaction_hash)

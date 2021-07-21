@@ -8,7 +8,7 @@ import threading
 import time
 from http import HTTPStatus
 from urllib.parse import urlparse
-
+from typing import Optional, Union
 import requests
 
 from nempy.utils.sym.measure_latency import measure_latency
@@ -36,6 +36,23 @@ def send_transaction(payload: bytes) -> bool:
     if answer.status_code == HTTPStatus.ACCEPTED:
         return True
     return False
+
+
+def get_mosaic_names(mosaics: [list, str]) -> Optional[dict]:
+    if isinstance(mosaics, str):
+        mosaics = [mosaics]
+    data = {'mosaicIds': mosaics}
+    headers = {'Content-type': 'application/json'}
+    try:
+        answer = requests.post(f'{node_selector.url}/namespaces/mosaic/names', json=data, headers=headers, timeout=10)
+    except ConnectionError as e:
+        logger.error(str(e))
+        return None
+    if answer.status_code == HTTPStatus.OK:
+        return json.loads(answer.text)
+    else:
+        logger.error(answer.text)
+    return None
 
 
 def check_transaction_state(transaction_hash):
@@ -118,7 +135,7 @@ def get_divisibility(mosaic_id: str):
     return None
 
 
-def get_balance(address: str, mosaic_filter: [list, str] = None, is_linked: bool = False) -> (dict, int):
+def get_balance(address: str, mosaic_filter: [list, str] = None, is_linked: bool = False) -> Optional[dict]:
     if isinstance(mosaic_filter, str):
         mosaic_filter = [mosaic_filter]
     if mosaic_filter is None:
@@ -319,7 +336,7 @@ class NodeSelector:
             asyncio.set_event_loop(asyncio.new_event_loop())
         parse_result = urlparse(url)
         loop = asyncio.get_event_loop()
-        latency = loop.run_until_complete(measure_latency(host=parse_result.hostname, port=parse_result.port, runs=5))
+        latency = loop.run_until_complete(measure_latency(host=parse_result.hostname, port=parse_result.port, runs=3))
         if (result := len(list(filter(None, latency)))) == 0:
             return None
         average = sum(filter(None, latency)) / result
