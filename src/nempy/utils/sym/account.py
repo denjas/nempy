@@ -46,6 +46,15 @@ def create_account():
         account.account_creation(account_path, password)
 
 
+@main.command('setdefault')
+def setdefault():
+    """
+    Change the default account
+    """
+    wallet = Wallet()
+    wallet.default_profile.set_default_account()
+
+
 @main.command('info')
 @click.option('-n', '--name', type=str, required=False, default='', help='Account name. If not set, the default account name will be used')
 @click.option('--decode', required=False, is_flag=True, help='Decode secret data')
