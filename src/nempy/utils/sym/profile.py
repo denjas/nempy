@@ -38,13 +38,16 @@ def setdefault():
 
 @main.command('info')
 @click.option('-n', '--name', type=str, required=False, default='', help='Account name')
-def profile_info(name):
+@click.option('--list', 'is_list', required=False, is_flag=True, help='List of all profile of the current wallet')
+def profile_info(name, is_list):
     """
-    Displays account information
+    Displays profile information
     """
     wallet = Wallet()
+    if is_list:
+        wallet.print_profiles()
     print(wallet.default_profile)
-    # wallet.print_profiles()
+    #
 
 
 if __name__ == '__main__':

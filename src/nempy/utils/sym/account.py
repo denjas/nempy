@@ -15,6 +15,9 @@ def main():
 
 @main.command('import')
 def import_account():
+    """
+    Create a new account with existing private key or mnemonic
+    """
     wallet = Wallet()
     account_path, name, bip32_coin_id = Account.init_general_params(wallet.default_profile.network_type)
     password = wallet.default_profile.check_pass(attempts=3)
@@ -29,6 +32,9 @@ def import_account():
 
 @main.command('create')
 def create_account():
+    """
+    Create a new account
+    """
     wallet = Wallet()
     account_path, name, bip32_coin_id = Account.init_general_params(wallet.default_profile.network_type)
     password = wallet.default_profile.check_pass(attempts=3)
@@ -41,16 +47,19 @@ def create_account():
 
 
 @main.command('info')
-@click.option('-n', '--name', type=str, required=False, default='', help='Account name')
-@click.option('--decode', required=False, is_flag=True, help='Account name')
-@click.option('--list', 'is_list', required=False, is_flag=True, help='Account name')
+@click.option('-n', '--name', type=str, required=False, default='', help='Account name. If not set, the default account name will be used')
+@click.option('--decode', required=False, is_flag=True, help='Decode secret data')
+@click.option('--list', 'is_list', required=False, is_flag=True, help='List of all accounts of the current profile')
 def info(name, decode, is_list):
+    """
+    Account Information
+    """
     wallet = Wallet()
     if not name:
         name = Account.get_default_account()
     account_path = Account.build_account_path(name)
     if not os.path.exists(account_path):
-        print(f'The account named `{name}` does not exist')
+        print(f'The account named `{name}` does not exist in profile `{wallet.default_profile.name}`')
         wallet.default_profile.set_default_account()
     password = None
     if decode:
@@ -60,7 +69,8 @@ def info(name, decode, is_list):
             exit(1)
     accounts = wallet.default_profile.load_accounts(password)
     if not accounts:
-        print(f'There are no accounts for the {wallet.default_profile.name} profile. To create an account, run the command: `nempy-cli.py account create`')
+        print(f'There are no accounts for the {wallet.default_profile.name} profile.')
+        print('To create an account, run the command: `nempy-cli.py account create`')
         exit(1)
     if not is_list:
         accounts = {name: accounts.get(name, {})}
@@ -68,7 +78,7 @@ def info(name, decode, is_list):
         if isinstance(account, DecoderStatus):
             exit(1)
         print(account)
-        print('#############################################################################################')
+        print('###################################################################################')
     if decode:
         print_warning()
 

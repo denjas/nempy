@@ -30,9 +30,10 @@ from nempy.sym.config import MAIN_NODE_URLs, TEST_NODE_URLs
 def print_warning():
     print("""
                                 !!! Important !!!
-Save the mnemonic, it will be needed to restore access to the wallet in case of password loss
-Where to store can be found here - https://en.bitcoinwiki.org/wiki/Mnemonic_phrase
+ Save the mnemonic, it will be needed to restore access to the wallet in case of password loss
+       Where to store can be found here - https://en.bitcoinwiki.org/wiki/Mnemonic_phrase
 !!!Do not share your secret key and mnemonic with anyone, it guarantees access to your funds!!!
+                                       !!!
     """)
 
 
@@ -300,14 +301,14 @@ class Account:
         config.read(CONFIG_FILE)
         return config['account']['default']
 
-    @staticmethod
-    def set_default_account(name):
-
-        config = configparser.ConfigParser()
-        config.read(CONFIG_FILE)
-        config['account']['default'] = name
-        with open(CONFIG_FILE, 'w') as configfile:
-            config.write(configfile)
+    # @staticmethod
+    # def set_default_account(name):
+    #
+    #     config = configparser.ConfigParser()
+    #     config.read(CONFIG_FILE)
+    #     config['account']['default'] = name
+    #     with open(CONFIG_FILE, 'w') as configfile:
+    #         config.write(configfile)
 
 
 class Profile:
@@ -459,6 +460,7 @@ class Wallet:
         with open(CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
         self.default_profile = profile
+        self.default_profile.set_default_account()
 
 
 def encryption(password: str, data: bytes) -> str:
