@@ -21,7 +21,7 @@ from symbolchain.core.Bip32 import Bip32
 from symbolchain.core.facade.SymFacade import SymFacade
 from tabulate import tabulate
 
-logger = logging.getLogger(os.path.splitext(os.path.basename(__name__))[0])
+logger = logging.getLogger(__name__)
 
 
 def print_warning():
@@ -210,16 +210,17 @@ class Account:
             opened_file.write(pickled_data)
         logger.debug(f'Wallet saved along the way: {path}')
 
-    def decode(self, password: str = ''):
+    def decode(self, password: str = '', description: str = ''):
         if not password:
-            password = stdiomask.getpass(f'Enter your `{self.profile} [{self.network_type.name}]` profile password: ')
+            password = stdiomask.getpass(f'Enter your `{self.profile} [{self.network_type.name}]` profile password {description}: ')
         decoded_account = copy.deepcopy(self)
-        decoded_account.private_key = pickle.loads(decryption(password, self.private_key))
+        decrypted_key = decryption(password, self.private_key)
+        if decrypted_key is None:
+            logger.error(DecoderStatus.WRONG_PASS.value)
+            raise SystemExit(DecoderStatus.WRONG_PASS.value)
+        decoded_account.private_key = pickle.loads(decrypted_key)
         if decoded_account.mnemonic is not None:
             decoded_account.mnemonic = pickle.loads(decryption(password, self.mnemonic))
-        if decoded_account.private_key is None:
-            logger.error(DecoderStatus.WRONG_PASS.value)
-            return DecoderStatus.WRONG_PASS
         return decoded_account
 
     @staticmethod

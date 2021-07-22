@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import os.path
+from collections import Callable
 from urllib.parse import urlparse
 
 import click
@@ -23,7 +24,7 @@ where_to_subscribe = {
 }
 
 
-async def monitoring(url, subscribers, formatting, log):
+async def monitoring(url, subscribers, formatting, log, callback):
     result = urlparse(url)
     uri = f"ws://{result.hostname}:{result.port}/ws"
     async with websockets.connect(uri) as ws:
@@ -39,6 +40,9 @@ async def monitoring(url, subscribers, formatting, log):
                 res = await ws.recv()
                 if formatting:
                     res = json.dumps(json.loads(res), indent=4)
+                if callback is not None:
+                    callback(json.loads(res))
+                    continue
                 print(res)
                 if log:
                     with open(log, 'a+') as f:
@@ -48,9 +52,9 @@ async def monitoring(url, subscribers, formatting, log):
             raise RuntimeError('Server mot response')
 
 
-def connector(url, subscribers, formatting, log):
+def connector(url, subscribers, formatting: bool = False, log: str = '', callback: Callable = None):
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(monitoring(url, subscribers, formatting, log))
+    loop.run_until_complete(monitoring(url, subscribers, formatting, log, callback))
 
 
 @click.command('monitoring', help='- Monitor blocks, transactions and errors', context_settings=dict(max_content_width=300))

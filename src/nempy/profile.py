@@ -13,7 +13,7 @@ from password_strength import PasswordPolicy
 from tabulate import tabulate
 
 
-logger = logging.getLogger(os.path.splitext(os.path.basename(__name__))[0])
+logger = logging.getLogger(__name__)
 
 
 class Profile:
@@ -126,7 +126,7 @@ class Profile:
         if new_password is None:
             return None
         for i in range(n_attempts):
-            repeat_password = stdiomask.getpass(f'Repeat password: ')
+            repeat_password = stdiomask.getpass(f'Repeat password for confirmation: ')
             if repeat_password != new_password:
                 print(f'Try again, attempts left {n_attempts - i}')
             else:

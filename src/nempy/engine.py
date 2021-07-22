@@ -1,15 +1,22 @@
 import abc
 import logging
 import os
+from enum import Enum
 from http import HTTPStatus
+from typing import List, Union, Tuple
 
 from nempy.account import Account
+from nempy.sym.constants import BlockchainStatuses
 
 from .sym import api as sym
 from .sym import network
-from .sym.constants import BlockchainStatuses
 
-logger = logging.getLogger(os.path.splitext(os.path.basename(__name__))[0])
+
+logger = logging.getLogger(__name__)
+
+
+class EngineStatusCode(Enum):
+    INVALID_ACCOUNT_INFO = 'There is no information on the network for this account. '
 
 
 class NEMEngine:
@@ -28,7 +35,7 @@ class NEMEngine:
         yield 'public_key', self.account.public_key
 
     @abc.abstractmethod
-    def send_tokens(self, recipient_address: str, mosaic_id, amount: float, message: [str, bytes] = ''):
+    def send_tokens(self, recipient_address: str, mosaics: list[(str, float)], message: [str, bytes] = ''):
         pass
 
     @abc.abstractmethod
@@ -49,17 +56,29 @@ class XYMEngine(NEMEngine):
         self.timing = self.transaction.timing
         super().__init__(self.node_selector.url, account)
 
-    def send_tokens(self, recipient_address: str, mosaic_id: str, amount: float, message: [str, bytes] = ''):
-        mosaic = sym.Mosaic(mosaic_id, amount=amount)
-        message = sym.PlainMessage(message)
-        entity_hash, payload = self.transaction.create(pr_key=self.account.decode(),
+    def send_tokens(self,
+                    recipient_address: str,
+                    mosaics: List[Tuple[str, float]],
+                    message: [str, bytes] = '',
+                    is_encrypted=False,
+                    password: str = '',
+                    deadline: dict = None):
+        mosaics = [sym.Mosaic(mosaic_id=mosaic[0], amount=mosaic[1]) for mosaic in mosaics]
+        if is_encrypted:
+            address_info = network.get_accounts_info(address=recipient_address)
+            if not address_info:
+                return EngineStatusCode.INVALID_ACCOUNT_INFO
+            public_key = address_info['account']['publicKey']
+            message = sym.EncryptMessage(self.account.decode(password, 'to encrypt the message').private_key, public_key, message)
+        else:
+            message = sym.PlainMessage(message)
+        entity_hash, payload = self.transaction.create(pr_key=self.account.decode(password, 'to transfer the transaction').private_key,
                                                        recipient_address=recipient_address,
-                                                       mosaics=mosaic,
-                                                       message=message)
-        text, status_code = network.send_transaction(payload)
-        if status_code != HTTPStatus.ACCEPTED:
-            return text, status_code
-        return entity_hash, status_code
+                                                       mosaics=mosaics,
+                                                       message=message,
+                                                       deadline=deadline)
+        is_sent = network.send_transaction(payload)
+        return entity_hash if is_sent else None
 
     def check_status(self, is_logging):
         if self.account is None:

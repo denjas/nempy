@@ -4,7 +4,9 @@ import os
 import click
 from nempy.wallet import Wallet
 from nempy.account import Account, print_warning, DecoderStatus, GenerationTypes
-from nempy.engine import XYMEngine
+from nempy.engine import XYMEngine, EngineStatusCode
+from .monitoring import connector
+from tabulate import tabulate
 
 
 @click.group('account')
@@ -121,6 +123,71 @@ def get_balance(address):
         exit(0)
     h_balance = engine.mosaic_humanization(balance)
     print(json.dumps(h_balance, sort_keys=True, indent=2))
+
+
+def monitoring_callback(transaction_info: dict):
+    if 'unconfirmedAdded/' in transaction_info['topic']:
+        print('[UNCONFIRMED] Transaction related to the given address enters the unconfirmed state, waiting to be included in a block.')
+    elif 'confirmedAdded/' in transaction_info['topic']:
+        print('[CONFIRMED] Transaction related to the given address is included in a block')
+        exit(0)
+    elif 'status/' in transaction_info['topic']:
+        print(f'[REJECTED] Transaction rejected: {transaction_info["data"]["code"]}')
+        exit(1)
+
+
+def confirmation(address, mosaics, message, is_encrypted, fee, deadline):
+    prepare = list()
+    prepare.append(['Recipient address:', address])
+    for mosaic in mosaics:
+        prepare.append([f'Mosaic: {mosaic[0]}', f'Amount: {mosaic[1]}'])
+    if message:
+        prepare.append([f'Message (encrypted {is_encrypted})', message])
+    prepare.append(['Max Fee:', fee])
+    prepare.append(['Deadline (minutes):', f'{deadline}'])
+    table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
+    print(table)
+    answer = input('Funds will be debited from your balance!\nWe continue? y/N: ')
+    if answer.lower() != 'y':
+        exit(1)
+
+
+@main.command('send')
+@click.option('-a', '--address', type=str, required=True, help='Recipient address')
+@click.option('-pm', '--plain-message', type=str, required=False, default='', help='Plain message')
+@click.option('-em', '--encrypted-message', type=str, required=False, default='', help='Encrypted message')
+@click.option('-d', '--deadline', type=int, required=False, default=3, show_default=True,
+              help='Transaction expiration time in minutes')
+@click.option('-m', '--mosaics', type=str, required=False, multiple=True, default=None,
+              help='Mosaics that you want to send in the format `mosaic:amount` or `mosaic_id:amount` (examples: symbol.xym:1.0 or 091F837E059AE13C:1.0)')
+@click.option('-f', '--fee', type=click.Choice(['slowest', 'slow', 'average', 'fast']), required=False,
+              default='slowest', show_default=True, help='Maximum commission you are willing to pay')
+def send(address, plain_message, encrypted_message, mosaics, fee, deadline):
+    """
+    send mosaics or messages to the addressee
+    """
+    if plain_message == '' and encrypted_message == '' and mosaics is None:
+        print('Specify for sending one of two - mosaic or a messages')
+        exit(1)
+    wallet = Wallet()
+    engine = XYMEngine(wallet.profile.account)
+    mosaics = [(mosaic.split(':')[0], float(mosaic.split(':')[1])) for mosaic in mosaics]
+    message = plain_message or encrypted_message or ''
+    is_encrypted = True if encrypted_message else False
+    confirmation(address, mosaics, message, is_encrypted, fee, deadline)
+    result = engine.send_tokens(recipient_address=address,
+                                mosaics=mosaics,
+                                message=message,
+                                is_encrypted=is_encrypted,
+                                deadline={'minutes': deadline})
+    if isinstance(result, EngineStatusCode):
+        if result == EngineStatusCode.INVALID_ACCOUNT_INFO:
+            print(result.value, '\nThe account either does not exist, or there were no transactions on it.\nUnable to get the public key from the network')
+            exit(1)
+    if result:
+        subscribers = ['confirmedAdded', 'unconfirmedAdded', 'status']
+        subscribers = [os.path.join(subscribe, address) for subscribe in subscribers]
+        connector(engine.node_selector.url, subscribers, formatting=True, callback=monitoring_callback)
 
 
 if __name__ == '__main__':

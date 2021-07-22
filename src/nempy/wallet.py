@@ -1,10 +1,13 @@
 import configparser
+import logging
 import os
 
 import inquirer
 from nempy.config import CONFIG_FILE, PROFILES_FILES
 from nempy.profile import Profile
 from nempy.sym import network
+
+logger = logging.getLogger(__name__)
 
 
 class Wallet:

@@ -12,7 +12,7 @@ from symbolchain.core.facade.SymFacade import SymFacade
 from . import ed25519, network
 from .constants import Fees, FM, TransactionTypes, TransactionMetrics
 
-logger = logging.getLogger(os.path.splitext(os.path.basename(__name__))[0])
+logger = logging.getLogger(__name__)
 
 
 class Dividers:

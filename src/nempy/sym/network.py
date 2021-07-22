@@ -31,10 +31,12 @@ def send_transaction(payload: bytes) -> bool:
     headers = {'Content-type': 'application/json'}
     try:
         answer = requests.put(f'{node_selector.url}/transactions', data=payload, headers=headers, timeout=10)
-    except ConnectionError:
+    except ConnectionError as e:
+        logger.error(str(e))
         return False
     if answer.status_code == HTTPStatus.ACCEPTED:
         return True
+    logger.error(answer.text)
     return False
 
 
@@ -53,6 +55,26 @@ def get_mosaic_names(mosaics: [list, str]) -> Optional[dict]:
     else:
         logger.error(answer.text)
     return None
+
+
+def get_accounts_info(address: str) -> Optional[dict]:
+    if not ed25519.check_address(address):
+        logger.error(f'Incorrect wallet address: `{address}`')
+        return None
+    endpoint = f'{node_selector.url}/accounts/{address}'
+    try:
+        answer = requests.get(endpoint)
+    except Exception as e:
+        logger.error(e)
+        return None
+    if answer.status_code != HTTPStatus.OK:
+        logger.error(answer.text)
+        if answer.status_code == HTTPStatus.NOT_FOUND:
+            logger.error('Invalid recipient account info')
+            return {}
+        return None
+    address_info = json.loads(answer.text)
+    return address_info
 
 
 def check_transaction_state(transaction_hash):
@@ -140,25 +162,11 @@ def get_balance(address: str, mosaic_filter: [list, str] = None, is_linked: bool
         mosaic_filter = [mosaic_filter]
     if mosaic_filter is None:
         mosaic_filter = []
-    if not ed25519.check_address(address):
-        logger.error(f'Incorrect wallet address: `{address}`')
-        return None
     for mosaic_id in mosaic_filter:
         if not ed25519.check_hex(mosaic_id, constants.HexSequenceSizes.mosaic_id):
             logger.error(f'Incorrect mosaic ID: `{mosaic_id}`')
             return None
-    endpoint = f'{node_selector.url}/accounts/{address}'
-    try:
-        answer = requests.get(endpoint)
-    except Exception as e:
-        logger.error(e)
-        return None
-    if answer.status_code != HTTPStatus.OK:
-        logger.error(answer.text)
-        if answer.status_code == HTTPStatus.NOT_FOUND:
-            return {}
-        return None
-    address_info = json.loads(answer.text)
+    address_info = get_accounts_info(address)
     mosaics = address_info['account']['mosaics']
     balance = {}
     for mosaic in mosaics:
