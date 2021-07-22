@@ -10,6 +10,8 @@ from urllib.parse import urlparse
 import click
 import websockets
 from nempy.sym.network import node_selector
+from tabulate import tabulate
+
 
 where_to_subscribe = {
         'confirmedAdded': 'address',
@@ -31,10 +33,14 @@ async def monitoring(url, subscribers, formatting, log, callback):
         response = json.loads(await ws.recv())
         print(f'UID: {response["uid"]}')
         if 'uid' in response:
+            prepare = []
             for subscriber in subscribers:
                 added = json.dumps({"uid": response["uid"], "subscribe": f"{subscriber}"})
                 await ws.send(added)
-                print(f'Subscribed to: {subscriber}')
+                # print(f'Subscribed to: {subscriber}')
+                prepare.append([subscriber])
+            table = tabulate(prepare, headers=['Subscribers'], tablefmt='grid')
+            print(table)
             print('Listening... `Ctrl+C` for abort')
             while True:
                 res = await ws.recv()

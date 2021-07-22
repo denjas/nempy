@@ -9,6 +9,9 @@ from .monitoring import connector
 from tabulate import tabulate
 
 
+addresses = None
+
+
 @click.group('account')
 def main():
     """
@@ -126,12 +129,14 @@ def get_balance(address):
 
 
 def monitoring_callback(transaction_info: dict):
-    if 'unconfirmedAdded/' in transaction_info['topic']:
+    global addresses
+    address = transaction_info['topic'].split('/')[1]
+    if 'unconfirmedAdded/' in transaction_info['topic'] and address in addresses:
         print('[UNCONFIRMED] Transaction related to the given address enters the unconfirmed state, waiting to be included in a block.')
-    elif 'confirmedAdded/' in transaction_info['topic']:
+    elif 'confirmedAdded/' in transaction_info['topic'] and address in addresses:
         print('[CONFIRMED] Transaction related to the given address is included in a block')
         exit(0)
-    elif 'status/' in transaction_info['topic']:
+    elif 'status/' in transaction_info['topic'] and address in addresses:
         print(f'[REJECTED] Transaction rejected: {transaction_info["data"]["code"]}')
         exit(1)
 
@@ -166,6 +171,11 @@ def send(address, plain_message, encrypted_message, mosaics, fee, deadline):
     """
     send mosaics or messages to the addressee
     """
+    global addresses
+    addresses = [address]
+    if plain_message != '' and encrypted_message != '':
+        print('Specify one of the message types.')
+        exit(1)
     if plain_message == '' and encrypted_message == '' and mosaics is None:
         print('Specify for sending one of two - mosaic or a messages')
         exit(1)
