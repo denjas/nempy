@@ -28,8 +28,9 @@ where_to_subscribe = {
 
 async def monitoring(url, subscribers, formatting, log, callback):
     result = urlparse(url)
-    uri = f"ws://{result.hostname}:{result.port}/ws"
-    async with websockets.connect(uri) as ws:
+    url = f"ws://{result.hostname}:{result.port}/ws"
+    print(f'MONITORING: {url}')
+    async with websockets.connect(url) as ws:
         response = json.loads(await ws.recv())
         print(f'UID: {response["uid"]}')
         if 'uid' in response:

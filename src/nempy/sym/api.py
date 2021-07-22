@@ -8,6 +8,7 @@ from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.CryptoTypes import PrivateKey
 from symbolchain.core.CryptoTypes import Signature, PublicKey
 from symbolchain.core.facade.SymFacade import SymFacade
+from symbolchain.core.sym.IdGenerator import generate_namespace_id
 
 from . import ed25519, network
 from .constants import Fees, FM, TransactionTypes, TransactionMetrics
@@ -69,10 +70,47 @@ class EncryptMessage(bytes):
         return bytes.__new__(EncryptMessage, payload_message)
 
 
+def name_of_mosaic(mosaic_names):
+    """
+    https://docs.symbolplatform.com/symbol-openapi/v1.0.0/#operation/getMosaicsNames
+    picks up names for the mosaic
+    :param mosaic_names: list of friendly names for mosaics form get_mosaic_names()
+    [{"mosaicId": "0DC67FBE1CAD29E3", "names": ["symbol.xym"]}, ...]
+    :return: expanded list into dictionary {'name', 'mosaic_id'}
+    """
+    name_mosaic = {}
+    for mosaic_name in mosaic_names:
+        if len(names := mosaic_name['names']) > 0:
+            for name in names:
+                name_mosaic[name] = mosaic_name['mosaicId']
+    return name_mosaic
+
+
+class Namespace(str):
+
+    def __new__(cls, name: str) -> str:
+        ns_sns = name.split('.')
+        if 1 > len(ns_sns) > 2:
+            raise ValueError(f'Invalid name for namespace `{name}`')
+        namespace_id = generate_namespace_id(ns_sns[0])
+        if len(ns_sns) == 2:
+            namespace_id = generate_namespace_id(ns_sns[1], namespace_id)
+        return str.__new__(Namespace, hex(namespace_id).upper()[2:])
+
+
 class Mosaic(tuple):
 
     def __new__(cls, mosaic_id: str, amount: float):
         cls.size = 16
+        if mosaic_id.startswith('@'):
+            name = mosaic_id[1:]
+            namespace_id = Namespace(name)
+            namespace_info = network.get_namespace_info(namespace_id)
+            if namespace_info is None or namespace_info == {}:
+                raise ValueError(f'Failed to get mosaic_id by name `{name}`')
+            mosaic_id = namespace_info['namespace']['alias'].get('mosaicId')
+            if mosaic_id is None:
+                raise ValueError(f'Failed to get mosaic_id by name `{name}`')
         divisibility = Mosaic.get_divisibility(mosaic_id)
         if divisibility is None:
             raise ValueError(f'Failed to get divisibility from network')

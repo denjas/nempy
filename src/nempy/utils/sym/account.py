@@ -164,7 +164,7 @@ def confirmation(address, mosaics, message, is_encrypted, fee, deadline):
 @click.option('-d', '--deadline', type=int, required=False, default=3, show_default=True,
               help='Transaction expiration time in minutes')
 @click.option('-m', '--mosaics', type=str, required=False, multiple=True, default=None,
-              help='Mosaics that you want to send in the format `mosaic:amount` or `mosaic_id:amount` (examples: symbol.xym:1.0 or 091F837E059AE13C:1.0)')
+              help='Mosaic to transfer in the format (mosaicId(hex)|@aliasName)::absoluteAmount.` (examples: @symbol.xym::1.0 or 091F837E059AE13C:1.0)')
 @click.option('-f', '--fee', type=click.Choice(['slowest', 'slow', 'average', 'fast']), required=False,
               default='slowest', show_default=True, help='Maximum commission you are willing to pay')
 def send(address, plain_message, encrypted_message, mosaics, fee, deadline):

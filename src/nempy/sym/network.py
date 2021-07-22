@@ -40,7 +40,12 @@ def send_transaction(payload: bytes) -> bool:
     return False
 
 
-def get_mosaic_names(mosaics: [list, str]) -> Optional[dict]:
+def get_mosaic_names(mosaics: Union[list, str]) -> Optional[dict]:
+    """
+    Get readable names for a set of mosaics
+    :param mosaics:
+    :return:
+    """
     if isinstance(mosaics, str):
         mosaics = [mosaics]
     data = {'mosaicIds': mosaics}
@@ -75,6 +80,23 @@ def get_accounts_info(address: str) -> Optional[dict]:
         return None
     address_info = json.loads(answer.text)
     return address_info
+
+
+def get_namespace_info(namespace_id: str) -> Optional[dict]:
+    endpoint = f'{node_selector.url}/namespaces/{namespace_id}'
+    try:
+        answer = requests.get(endpoint)
+    except Exception as e:
+        logger.error(e)
+        return None
+    if answer.status_code != HTTPStatus.OK:
+        logger.error(answer.text)
+        if answer.status_code == HTTPStatus.NOT_FOUND:
+            logger.error(f'Invalid namespace ID `{namespace_id}`')
+            return {}
+        return None
+    namespace_info = json.loads(answer.text)
+    return namespace_info
 
 
 def check_transaction_state(transaction_hash):
