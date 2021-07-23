@@ -233,6 +233,19 @@ class Timing:
         deadline = int(td.total_seconds() * 1000)
         return deadline
 
+    def deadline_to_date(self, deadline, is_local=False):
+        def utc2local(utc):
+            utc_epoch = time.mktime(utc.timetuple())
+            offset = datetime.datetime.fromtimestamp(utc_epoch) - datetime.datetime.utcfromtimestamp(utc_epoch)
+            return utc + offset
+
+        epoch_timestamp = datetime.datetime.timestamp(self.epoch_time)
+        deadline_date_utc = datetime.datetime.utcfromtimestamp(epoch_timestamp + deadline / 1000)
+        if is_local:
+            local_deadline_date = utc2local(deadline_date_utc)
+            return local_deadline_date
+        return deadline_date_utc
+
 
 class NodeSelector:
     _URL: str = None
