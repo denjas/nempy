@@ -6,7 +6,7 @@ import click
 from nempy.utils.sym.monitoring import main as monitoring_sym
 from nempy.utils.sym.profile import main as profile_sym
 from nempy.utils.sym.account import main as account_sym
-
+from pyfiglet import Figlet
 
 logging.getLogger('asyncio').setLevel(logging.ERROR)
 logging.getLogger('asyncio.coroutines').setLevel(logging.ERROR)
@@ -18,8 +18,14 @@ logging.getLogger('urllib3').setLevel(logging.ERROR)
 @click.option('-d', '--debug', is_flag=True)
 def main(debug):
     if debug:
-        format = "[%(asctime)s][%(levelname)s] %(name)s - %(message)s"
-        logging.basicConfig(level=logging.DEBUG, format=format)
+        log_format = "[%(asctime)s][%(levelname)s] %(name)s - %(message)s"
+        logging.basicConfig(level=logging.DEBUG, format=log_format)
+
+
+@main.command()
+def about():
+    figlet = Figlet()
+    print(figlet.renderText('NEMpy'))
 
 
 main.add_command(monitoring_sym)
