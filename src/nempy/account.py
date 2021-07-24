@@ -290,16 +290,21 @@ class Account:
             transaction.transaction.signer_address = str(facade.network.public_key_to_address(Hash256(transaction.transaction.signerPublicKey)))
             short_name = f'🗸 {direction} {transaction.transaction.recipientAddress} | {height} | {transaction.transaction.deadline} |{message} |{transaction.transaction.mosaics[0]}'
             short_names[short_name] = transaction
-        questions = [
-            inquirer.List(
-                "transaction",
-                message="Select an transaction?",
-                choices=short_names.keys(),
-            ),
-        ]
-        answers = inquirer.prompt(questions)
-        account = answers['transaction']
-        print(short_names[account])
+        _short_names = list(short_names.keys())
+        _short_names.append('Exit')
+        while True:
+            questions = [
+                inquirer.List(
+                    "transaction",
+                    message="Select an transaction?",
+                    choices=_short_names,
+                ),
+            ]
+            answers = inquirer.prompt(questions)
+            transaction = answers['transaction']
+            if transaction == 'Exit':
+                exit(0)
+            print(short_names[transaction])
 
 
     # @staticmethod
