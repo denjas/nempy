@@ -203,5 +203,15 @@ def send(address, plain_message, encrypted_message, mosaics, fee, deadline):
         connector(engine.node_selector.url, subscribers, formatting=True, callback=monitoring_callback)
 
 
+@main.command('history')
+def setdefault():
+    """
+    Show history
+    """
+    wallet = Wallet()
+    engine = XYMEngine(wallet.profile.account)
+    wallet.profile.account.history(engine.timing)
+
+
 if __name__ == '__main__':
     main()

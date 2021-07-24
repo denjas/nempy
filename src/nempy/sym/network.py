@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import inspect
 import json
 import logging
 import multiprocessing
@@ -12,7 +13,8 @@ from typing import Optional, Union
 import requests
 
 from nempy.utils.measure_latency import measure_latency
-from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType
+from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType, Meta, \
+    TransactionResponse, TransactionInfo, MosaicInfo
 from . import ed25519, constants, config
 from .constants import TransactionStatus
 
@@ -80,6 +82,66 @@ def get_accounts_info(address: str) -> Optional[dict]:
         return None
     address_info = json.loads(answer.text)
     return address_info
+
+
+def search_transactions(address: Optional[str] = None,
+                        recipient_address: Optional[str] = None,
+                        signer_public_key: Optional[str] = None,
+                        height: Optional[int] = None,
+                        from_height: Optional[int] = None,
+                        to_height: Optional[str] = None,
+                        from_transfer_amount: Optional[str] = None,
+                        to_transfer_amount: Optional[str] = None,
+                        type: int = 16724,
+                        embedded: bool = False,
+                        transfer_mosaic_id: Optional[str] = None,
+                        page_size: int = 10,
+                        page_number: int = 1,
+                        offset: Optional[str] = None,
+                        order: str = 'desc',
+                        transaction_status: TransactionStatus = TransactionStatus.CONFIRMED_ADDED
+                        ) -> Optional[list]:
+    # default = {k: v.default
+    #            for k, v in inspect.signature(search_transactions).parameters.items()
+    #            if v.default is not inspect.Parameter.empty}
+    params = {
+        'address': address,
+        'recipientAddress': recipient_address,
+        'signerPublicKey': signer_public_key,
+        'height': height,
+        'fromHeight': from_height,
+        'toHeight': to_height,
+        'fromTransferAmount': from_transfer_amount,
+        'toTransferAmount': to_transfer_amount,
+        'type': type,
+        'embedded': str(embedded).lower(),
+        'transferMosaicId': transfer_mosaic_id,
+        'pageSize': page_size,
+        'pageNumber': page_number,
+        'offset': offset,
+        'order': order
+    }
+    params = {key: val for key, val in params.items() if val is not None}
+    endpoint = f'{node_selector.url}/transactions/{transaction_status.value}'
+    try:
+        answer = requests.get(endpoint, params=params)
+    except Exception as e:
+        logger.error(e)
+        return None
+    if answer.status_code != HTTPStatus.OK:
+        logger.error(answer.text)
+        return None
+    transactions = json.loads(answer.text)
+    transactions_response = []
+    for transaction in transactions['data']:
+        mosaics = [MosaicInfo(**mosaic) for mosaic in transaction['transaction']['mosaics']]
+        del(transaction['transaction']['mosaics'])
+        _transaction = TransactionResponse(id=transaction['id'],
+                                           meta=Meta(**transaction['meta']),
+                                           transaction=TransactionInfo(mosaics=mosaics, **transaction['transaction'])
+                                           )
+        transactions_response.append(_transaction)
+    return transactions_response
 
 
 def get_namespace_info(namespace_id: str) -> Optional[dict]:
@@ -239,6 +301,7 @@ class Timing:
             offset = datetime.datetime.fromtimestamp(utc_epoch) - datetime.datetime.utcfromtimestamp(utc_epoch)
             return utc + offset
 
+        deadline = int(deadline)
         epoch_timestamp = datetime.datetime.timestamp(self.epoch_time)
         deadline_date_utc = datetime.datetime.utcfromtimestamp(epoch_timestamp + deadline / 1000)
         if is_local:

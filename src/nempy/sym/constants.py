@@ -1,6 +1,9 @@
-from enum import Enum, EnumMeta
+from enum import Enum, EnumMeta, IntEnum
 import datetime
+from typing import List, Optional, Union
 
+from pydantic import BaseModel
+from tabulate import tabulate
 
 NETWORK_GENERATION_HASH_SEED_PUBLIC = '57F7DA205008026C776CB6AED843393F04CD458E0AA2D9F1D5F31A402072B2D6'
 NETWORK_GENERATION_HASH_SEED_TEST = '3B5E1FA6445653C971A50687E75E6D09FB30481055E3990C84B25E9222DC1155'
@@ -14,11 +17,71 @@ class NetworkType(Enum):
     MAIN_NET = 'public'
 
 
+class Meta(BaseModel):
+    height: int
+    hash: str
+    merkleComponentHash: str
+    index: int
+
+
+class MosaicInfo(BaseModel):
+    id: str
+    amount: Union[int, float]
+
+    def __str__(self):
+        return f'{self.amount}({self.id})'
+
+
+class TransactionInfo(BaseModel):
+    size: int
+    signature: str
+    signerPublicKey: str
+    version: int
+    network: int
+    type: Union[int, str]
+    maxFee: int
+    deadline: Union[int, datetime.datetime]
+    recipientAddress: str
+    message: Optional[str]
+    signer_address: Optional[str]
+    mosaics: List[MosaicInfo]
+
+
+class TransactionResponse(BaseModel):
+    id: str
+    meta: Meta
+    transaction: TransactionInfo
+    status: Optional[str]
+
+    def __str__(self):
+        if self.transaction.signer_address.startswith('T'):
+            test_net_explorer = 'http://explorer.testnet.symboldev.network/transactions/'
+        else:
+            test_net_explorer = 'http://explorer.symbolblockchain.io/transactions/'
+        prepare = list()
+        mosaics = [str(mosaic) for mosaic in self.transaction.mosaics]
+        mosaics = '\n'.join(mosaics)
+        prepare.append(['Type:', self.transaction.type.title()])
+        prepare.append(['Status:', self.status.title()])
+        prepare.append(['Hash:', f'{test_net_explorer}{self.meta.hash}'])
+        prepare.append(['Paid Fee:', f'{self.transaction.maxFee / 1000000}(XYM)'])
+        prepare.append(['Height:', self.meta.height])
+        prepare.append(['Deadline:', self.transaction.deadline])
+        prepare.append(['Signature:', self.transaction.signature])
+        prepare.append(['Signer Public Key:', self.transaction.signerPublicKey])
+        prepare.append(['From:', self.transaction.signer_address])
+        prepare.append(['To:', self.transaction.recipientAddress])
+        prepare.append(['Mosaic:', mosaics])
+        prepare.append(['Message:', self.transaction.message])
+        table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
+        return table
+
+
 class TransactionStatus(Enum):
-    NOT_FOUND = - 1
-    UNCONFIRMED_ADDED = 0
-    CONFIRMED_ADDED = 1
-    PARTIAL_ADDED = 2
+    NOT_FOUND = None
+    UNCONFIRMED_ADDED = 'unconfirmed'
+    CONFIRMED_ADDED = 'confirmed'
+    PARTIAL_ADDED = 'partial'
     # UNCONFIRMED_REMOVED = 3
     # PARTIAL_REMOVED = 4
 
@@ -67,7 +130,7 @@ class TransactionMetrics:
     TRANSACTION_BODY_INDEX = TRANSACTION_HEADER_SIZE + 1 + 1 + 2 + 8 + 8
 
 
-class TransactionTypes:
+class TransactionTypes(IntEnum):
     #  Reserved entity type.
     RESERVED = 0
     #  Transfer Transaction transaction type.
@@ -118,3 +181,9 @@ class TransactionTypes:
     VOTING_KEY_LINK = 16707
     #  Link node key transaction
     NODE_KEY_LINK = 16972
+
+    @staticmethod
+    def get_type_by_id(_id):
+        attributes = TransactionTypes.__dict__
+        attributes = {key: attributes[key] for key in attributes if not key.startswith('_') and key != 'get_type_by_id'}
+        return list(attributes.keys())[list(attributes.values()).index(_id)]

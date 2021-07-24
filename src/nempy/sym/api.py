@@ -127,6 +127,22 @@ class Mosaic(tuple):
                 dividers.set(mosaic_id, divisibility)
             return divisibility
 
+    @staticmethod
+    def human(mosaic_id: str, amount: int):
+        amount = int(amount)
+        divisibility = Mosaic.get_divisibility(mosaic_id)
+        if divisibility is None:
+            raise ValueError(f'Failed to get divisibility from network')
+        divider = 10 ** int(divisibility)
+
+        mn = network.get_mosaic_names(mosaic_id)
+        name = mosaic_id
+        if mn is not None:
+            names = mn['mosaicNames'][0]['names']
+            if len(names) > 0:
+                name = names[0]
+        return name, float(amount / divider)
+
 
 class Transaction:
     # Size of transaction with empty message

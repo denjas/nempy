@@ -4,10 +4,11 @@ import os
 import copy
 import pickle
 import random
-from base64 import b64decode
+from base64 import b64decode, b32encode
 from base64 import b64encode
 from enum import Enum
 from hashlib import blake2b
+from typing import List
 
 import inquirer
 import stdiomask
@@ -16,10 +17,15 @@ from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
 from bip_utils import Bip39MnemonicGenerator, Bip39Languages
 from nempy.config import DEFAULT_ACCOUNTS_DIR
-from nempy.sym.constants import NetworkType
+from nempy.sym import network
+from nempy.sym.api import Mosaic
+from nempy.sym.constants import NetworkType, TransactionStatus, Meta, TransactionResponse, TransactionTypes
+from nempy.sym.network import Timing
 from symbolchain.core.Bip32 import Bip32
+from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.facade.SymFacade import SymFacade
 from tabulate import tabulate
+from binascii import unhexlify, hexlify
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +76,7 @@ class DecoderStatus(Enum):
 
 class Account:
     name = None
-    address = None
+    _address = None
     public_key = None
     private_key = None
     path = None
@@ -102,6 +108,14 @@ class Account:
             prepare.append([key, value])
         table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
         return table
+
+    @property
+    def address(self):
+        return self._address
+
+    @address.setter
+    def address(self, address: str):
+        self._address = address.replace('-', '')
 
     def serialize(self):
         return pickle.dumps(self.__dict__)
@@ -256,6 +270,36 @@ class Account:
         if import_type == 'Private Key':
             return GenerationTypes.PRIVATE_KEY
         return GenerationTypes.MNEMONIC
+
+    def history(self, timing):
+        transactions: List[TransactionResponse] = network.search_transactions(address=self.address, transaction_status=TransactionStatus.CONFIRMED_ADDED)
+        short_names = {}
+        for transaction in transactions:
+            transaction.transaction.type = TransactionTypes.get_type_by_id(transaction.transaction.type)
+            transaction.status = TransactionStatus.CONFIRMED_ADDED.value
+            transaction.transaction.mosaics = [Mosaic.human(mosaic.id, mosaic.amount) for mosaic in transaction.transaction.mosaics]
+            transaction.transaction.recipientAddress = b32encode(unhexlify(transaction.transaction.recipientAddress)).decode('utf-8')[:-1]
+            height = transaction.meta.height
+            message = '🖂' if transaction.transaction.message is not None else ' '
+            if message == '🖂':
+                transaction.transaction.message = unhexlify(transaction.transaction.message)[1:]
+            transaction.transaction.deadline = timing.deadline_to_date(deadline=transaction.transaction.deadline)
+            # direction = '▼' if recipient_address == self.address else '▲'
+            direction = '+' if transaction.transaction.recipientAddress == self.address else '-'
+            facade = SymFacade(self.network_type.value)
+            transaction.transaction.signer_address = str(facade.network.public_key_to_address(Hash256(transaction.transaction.signerPublicKey)))
+            short_name = f'🗸 {direction} {transaction.transaction.recipientAddress} | {height} | {transaction.transaction.deadline} |{message} |{transaction.transaction.mosaics[0]}'
+            short_names[short_name] = transaction
+        questions = [
+            inquirer.List(
+                "transaction",
+                message="Select an transaction?",
+                choices=short_names.keys(),
+            ),
+        ]
+        answers = inquirer.prompt(questions)
+        account = answers['transaction']
+        print(short_names[account])
 
 
     # @staticmethod
