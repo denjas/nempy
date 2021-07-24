@@ -5,6 +5,7 @@ from enum import Enum
 from http import HTTPStatus
 from typing import List, Union, Tuple
 
+import stdiomask
 from nempy.account import Account
 from nempy.sym.constants import BlockchainStatuses
 
@@ -69,10 +70,10 @@ class XYMEngine(NEMEngine):
             if not address_info:
                 return EngineStatusCode.INVALID_ACCOUNT_INFO
             public_key = address_info['account']['publicKey']
-            message = sym.EncryptMessage(self.account.decode(password, 'to encrypt the message').private_key, public_key, message)
+            message = sym.EncryptMessage(self.account.decode(password).private_key, public_key, message)
         else:
             message = sym.PlainMessage(message)
-        entity_hash, payload = self.transaction.create(pr_key=self.account.decode(password, 'to transfer the transaction').private_key,
+        entity_hash, payload = self.transaction.create(pr_key=self.account.decode(password).private_key,
                                                        recipient_address=recipient_address,
                                                        mosaics=mosaics,
                                                        message=message,

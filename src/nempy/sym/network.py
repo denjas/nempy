@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 from typing import Optional, Union
 import requests
 
-from nempy.utils.sym.measure_latency import measure_latency
+from nempy.utils.measure_latency import measure_latency
 from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType
 from . import ed25519, constants, config
 from .constants import TransactionStatus

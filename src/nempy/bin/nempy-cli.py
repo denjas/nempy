@@ -3,9 +3,9 @@
 import logging
 
 import click
-from nempy.utils.sym.monitoring import main as monitoring_sym
-from nempy.utils.sym.profile import main as profile_sym
-from nempy.utils.sym.account import main as account_sym
+from nempy.utils.monitoring import main as monitoring_sym
+from nempy.utils.profile import main as profile_sym
+from nempy.utils.account import main as account_sym
 from pyfiglet import Figlet
 
 logging.getLogger('asyncio').setLevel(logging.ERROR)

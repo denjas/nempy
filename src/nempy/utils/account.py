@@ -2,6 +2,7 @@ import json
 import os
 
 import click
+import stdiomask
 from nempy.wallet import Wallet
 from nempy.account import Account, print_warning, DecoderStatus, GenerationTypes
 from nempy.engine import XYMEngine, EngineStatusCode
@@ -185,10 +186,12 @@ def send(address, plain_message, encrypted_message, mosaics, fee, deadline):
     message = plain_message or encrypted_message or ''
     is_encrypted = True if encrypted_message else False
     confirmation(address, mosaics, message, is_encrypted, fee, deadline)
+    password = stdiomask.getpass(f'Enter your `{wallet.profile.name} [{wallet.profile.network_type.name}]` profile password: ')
     result = engine.send_tokens(recipient_address=address,
                                 mosaics=mosaics,
                                 message=message,
                                 is_encrypted=is_encrypted,
+                                password=password,
                                 deadline={'minutes': deadline})
     if isinstance(result, EngineStatusCode):
         if result == EngineStatusCode.INVALID_ACCOUNT_INFO:

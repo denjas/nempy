@@ -210,9 +210,7 @@ class Account:
             opened_file.write(pickled_data)
         logger.debug(f'Wallet saved along the way: {path}')
 
-    def decode(self, password: str = '', description: str = ''):
-        if not password:
-            password = stdiomask.getpass(f'Enter your `{self.profile} [{self.network_type.name}]` profile password {description}: ')
+    def decode(self, password):
         decoded_account = copy.deepcopy(self)
         decrypted_key = decryption(password, self.private_key)
         if decrypted_key is None:
