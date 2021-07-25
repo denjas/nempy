@@ -1,8 +1,8 @@
 import hashlib
 import logging
-import os
+
 from binascii import unhexlify
-from typing import List
+from typing import Union, Optional
 
 from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.CryptoTypes import PrivateKey
@@ -10,7 +10,7 @@ from symbolchain.core.CryptoTypes import Signature, PublicKey
 from symbolchain.core.facade.SymFacade import SymFacade
 from symbolchain.core.sym.IdGenerator import generate_namespace_id
 from . import ed25519, network
-from .constants import Fees, FM, TransactionTypes, TransactionMetrics, HexSequenceSizes
+from .constants import Fees, FM, TransactionTypes, TransactionMetrics, HexSequenceSizes, NetworkType
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ dividers = Dividers()
 
 class Message(bytes):
 
-    def __new__(cls, message: [str, bytes], is_encrypted: bool):
+    def __new__(cls, message: Union[str, bytes], is_encrypted: bool) -> bytes:
         if is_encrypted and not message:
             raise RuntimeError('Message payload cannot be empty for encrypted message')
         if len(message) > ed25519.SignClass.PLAIN_MESSAGE_SIZE:
@@ -48,7 +48,7 @@ class Message(bytes):
 
 class PlainMessage(bytes):
 
-    def __new__(cls, message: [str, bytes]):
+    def __new__(cls, message: Union[str, bytes]):
         message = Message(message, True)
         # add the message type code to the beginning of the byte sequence
         payload_message = int(0).to_bytes(1, byteorder='big') + message
@@ -69,7 +69,7 @@ class EncryptMessage(bytes):
         return bytes.__new__(EncryptMessage, payload_message)
 
 
-def name_of_mosaic(mosaic_names):
+def name_of_mosaic(mosaic_names: list):
     """
     https://docs.symbolplatform.com/symbol-openapi/v1.0.0/#operation/getMosaicsNames
     picks up names for the mosaic
@@ -150,23 +150,22 @@ class Mosaic(tuple):
 class Transaction:
     # Size of transaction with empty message
     MIN_TRANSACTION_SIZE = 160
-    XYM_ID = int('091F837E059AE13C', 16)  # TODO XYM_ID for main net and select
 
     def __init__(self):
-        self.size = None
-        self.max_fee = None
+        self.size: int = -1
+        self.max_fee: int = -1
 
-        self.network_type = network.get_node_network()
-        self.timing = network.Timing(self.network_type)
-        self.sym_facade = SymFacade(self.network_type.value)
+        self.network_type: NetworkType = network.get_node_network()
+        self.timing: network.Timing = network.Timing(self.network_type)
+        self.sym_facade: SymFacade = SymFacade(self.network_type.value)
 
     def create(self,
                pr_key: str,
                recipient_address: str,
-               mosaics: [Mosaic, List[Mosaic]] = None,
-               message: [PlainMessage, EncryptMessage, None] = None,
+               mosaics: Union[Mosaic, list[Mosaic], None] = None,
+               message: Union[PlainMessage, EncryptMessage, None] = None,
                fee_type: Fees = Fees.SLOWEST,
-               deadline: [dict, None] = None) -> (Hash256, bytes):
+               deadline: Optional[dict] = None) -> tuple[str, bytes]:
 
         if deadline is None:
             deadline = {'minutes': 2}
@@ -176,11 +175,8 @@ class Transaction:
             mosaics = [mosaics]
 
         if len(mosaics) > 1:
+            # sorting mosaic by ID (blockchain requirement)
             mosaics = sorted(mosaics, key=lambda tup: tup[0])
-            # for i, mosaic in enumerate(mosaics):
-            #     if mosaic[0] == self.XYM_ID:
-            #         # Mosaic XYM should be in the first place in the list
-            #         mosaics.insert(0, mosaics.pop(i))
 
         key_pair = self.sym_facade.KeyPair(PrivateKey(unhexlify(pr_key)))
 

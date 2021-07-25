@@ -1,10 +1,8 @@
 import asyncio
 import datetime
-import inspect
 import json
 import logging
 import multiprocessing
-import os
 import threading
 import time
 from base64 import b32encode
@@ -355,7 +353,12 @@ class Monitor:
             'finalizedBlock': None
     }
 
-    def __init__(self, url, subscribers, formatting: bool = False, log: str = '', callback: Optional[Callable] = None):
+    def __init__(self,
+                 url: str,
+                 subscribers: list[str],
+                 formatting: bool = False,
+                 log: str = '',
+                 callback: Optional[Callable] = None):
         self.url = url
         self.subscribers = subscribers
         self.formatting = formatting
@@ -399,12 +402,9 @@ class Monitor:
 
 class Timing:
 
-    def __init__(self, network_type: NetworkType = None):
+    def __init__(self, network_type: Optional[NetworkType] = None):
         if network_type is None:
             network_type = node_selector.network_type
-            # network_properties = get_network_properties()
-            # epoch_adjustment = int(network_properties['network']['epochAdjustment'][0:-1])
-            # self.epoch_time = datetime.datetime.fromtimestamp(epoch_adjustment, tz=datetime.timezone.utc)
         if network_type == NetworkType.TEST_NET:
             self.epoch_time = EPOCH_TIME_TESTNET
         elif network_type == NetworkType.MAIN_NET:
@@ -413,7 +413,7 @@ class Timing:
             raise EnvironmentError('It is not possible to determine the type of network')
 
     def calc_deadline(self, days: float = 0, seconds: float = 0, milliseconds: float = 0,
-                      minutes: float = 0, hours: float = 0, weeks: float = 0):
+                      minutes: float = 0, hours: float = 0, weeks: float = 0) -> int:
 
         if days + seconds + milliseconds + minutes + hours + weeks <= 0:
             raise TimeoutError('Added time must be positive otherwise the transaction will not have time to process')
@@ -429,7 +429,7 @@ class Timing:
         deadline = int(td.total_seconds() * 1000)
         return deadline
 
-    def deadline_to_date(self, deadline, is_local=False):
+    def deadline_to_date(self, deadline: int, is_local: bool = False) -> datetime:
         def utc2local(utc):
             utc_epoch = time.mktime(utc.timetuple())
             offset = datetime.datetime.fromtimestamp(utc_epoch) - datetime.datetime.utcfromtimestamp(utc_epoch)
@@ -445,13 +445,12 @@ class Timing:
 
 
 class NodeSelector:
-    _URL: str = None
-    _URLs: list = None
-    _sorted_URLs = None
-    _re_elections = False
-    _network_type = NetworkType.TEST_NET
+    _URL: Optional[str] = None
+    _URLs: Optional[list] = None
+    _re_elections: Optional[bool] = False
+    _network_type: NetworkType = NetworkType.TEST_NET
 
-    def __init__(self, node_urls: [list[str], str]):
+    def __init__(self, node_urls: Union[list[str], str]):
         self.url = node_urls
 
     @property
@@ -497,12 +496,12 @@ class NodeSelector:
         return self._URL
 
     @url.setter
-    def url(self, value):
+    def url(self, value: Union[list, str]):
         if isinstance(value, str):
             value = [value]
         self._URLs = value
         if len(self._URLs) == 1:
-            self._re_elections = None
+            self._re_elections = None  # stop background iteration of nodes
             self._URL = self._URLs[0]
             logger.debug(f'Selected node: {self._URL}')
         else:
@@ -525,8 +524,8 @@ class NodeSelector:
         urls_p_h = {url: (NodeSelector.ping(url), NodeSelector.simple_health(url)) for url in filtered_by_height}
         # Remove non-working nodes from the dict
         working = {key: val for key, val in urls_p_h.items() if val[1]}
-        self._sorted_URLs = [k for k, v in sorted(working.items(), key=lambda item: item[1][0])]
-        new_url = self._sorted_URLs[0] if len(self._sorted_URLs) > 0 else None
+        _sorted_URLs = [k for k, v in sorted(working.items(), key=lambda item: item[1][0])]
+        new_url = _sorted_URLs[0] if len(_sorted_URLs) > 0 else None
         if self._re_elections is not None:
             if new_url != self._URL and self._URL is not None:
                 logger.warning(f'Reselection node: {self._URL} -> {new_url}')
