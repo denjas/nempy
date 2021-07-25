@@ -19,3 +19,4 @@ class C:
     UNDERLINE = '\033[4m'
     RED = '\033[31m'
     GREY = '\033[90m'
+    INVERT = '\033[7m'

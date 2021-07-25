@@ -7,7 +7,7 @@ import bcrypt
 import inquirer
 import stdiomask
 from nempy.account import Account
-from nempy.config import CONFIG_FILE, PROFILES_FILES, DEFAULT_ACCOUNTS_DIR
+from nempy.config import CONFIG_FILE, PROFILES_FILES, DEFAULT_ACCOUNTS_DIR, C
 from nempy.sym.constants import NetworkType
 from password_strength import PasswordPolicy
 from tabulate import tabulate
@@ -30,7 +30,10 @@ class Profile:
         prepare = [[key.replace('_', ' ').title(), value]
                    for key, value in self.__dict__.items() if key != 'network_type']
         prepare.append(['Network Type', self.network_type.name])
-        table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
+        profile = f'Profile - {self.name}'
+        indent = (len(self.pass_hash) - len(profile)) // 2
+        profile = C.INVERT + ' ' * indent + profile + ' ' * indent + C.END
+        table = tabulate(prepare, headers=['', f'{profile}'], tablefmt='grid')
         return table
 
     def __repr__(self):

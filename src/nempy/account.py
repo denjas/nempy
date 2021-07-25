@@ -99,7 +99,7 @@ class Account:
                 positions = [pos for pos, char in enumerate(value) if char == ' ']
                 value = C.OKBLUE + value[:positions[8]] + f'{C.END}\n' + C.OKBLUE + value[positions[8] + 1:positions[16]] + f'{C.END}\n' + C.OKBLUE + value[positions[16] + 1:] + C.END
             elif key == 'mnemonic' and isinstance(value, bytes):
-                value = '******* **** ********** ******* ***** *********** ******** *****'
+                value = f'{C.OKBLUE}******* **** ********** ******* ***** *********** ******** *****{C.END}'
             if key == 'private_key' and isinstance(value, bytes):
                 value = '*' * 64
             if key == 'private_key' and isinstance(value, str):
@@ -108,7 +108,10 @@ class Account:
                 value = value.name
             key = key.replace('_', ' ').title()
             prepare.append([key, value])
-        table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
+        account = f'Account - {self.name}'
+        indent = (len(self.public_key) - len(account)) // 2
+        account = C.INVERT + ' ' * indent + account + ' ' * indent + C.END
+        table = tabulate(prepare, headers=['', f'{account}'], tablefmt='grid')
         return table
 
     @property
