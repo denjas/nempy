@@ -10,9 +10,6 @@ from nempy.engine import XYMEngine, EngineStatusCode
 from tabulate import tabulate
 
 
-addresses = None
-
-
 @click.group('account')
 def main():
     """
@@ -129,11 +126,12 @@ def get_balance(address):
     print(json.dumps(h_balance, sort_keys=True, indent=2))
 
 
-def monitoring_callback(transaction_info: dict):
-    global addresses
+def monitoring_callback(transaction_info: dict, addresses: list):
     address = transaction_info['topic'].split('/')[1]
     if 'unconfirmedAdded/' in transaction_info['topic'] and address in addresses:
-        print('[UNCONFIRMED] Transaction related to the given address enters the unconfirmed state, waiting to be included in a block...')
+        print(
+            '[UNCONFIRMED] Transaction related to the given address enters the unconfirmed state, '
+            'waiting to be included in a block...')
     elif 'confirmedAdded/' in transaction_info['topic'] and address in addresses:
         print('[CONFIRMED] Transaction related to the given address is included in a block')
         exit(0)
@@ -144,13 +142,14 @@ def monitoring_callback(transaction_info: dict):
 
 def confirmation(address, mosaics, message, is_encrypted, fee, deadline):
     prepare = list()
-    prepare.append(['Recipient address:', address])
-    for mosaic in mosaics:
-        prepare.append([f'Mosaic: {mosaic[0]}', f'Amount: {mosaic[1]}'])
+    prepare.append(['Recipient address:', '-'.join(address[i:i + 6] for i in range(0, len(address), 6))])
     if message:
         prepare.append([f'Message (encrypted {is_encrypted})', message])
     prepare.append(['Max Fee:', fee])
     prepare.append(['Deadline (minutes):', f'{deadline}'])
+    mosaics = [f'`{mosaic[0].replace("@", "")}`: -{mosaic[1]}' for mosaic in mosaics]
+    mosaic_str = '\n'.join(mosaics)
+    prepare.append([f'Mosaics:', mosaic_str])
     table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
     print(table)
     answer = input('Funds will be debited from your balance!\nWe continue? y/N: ')
@@ -165,14 +164,18 @@ def confirmation(address, mosaics, message, is_encrypted, fee, deadline):
 @click.option('-d', '--deadline', type=int, required=False, default=3, show_default=True,
               help='Transaction expiration time in minutes')
 @click.option('-m', '--mosaics', type=str, required=False, multiple=True, default=None,
-              help='Mosaic to transfer in the format (mosaicId(hex)|@aliasName)::absoluteAmount.` (examples: @symbol.xym::1.0 or 091F837E059AE13C:1.0)')
+              help='Mosaic to transfer in the format (mosaicId(hex)|@aliasName)::absoluteAmount.` '
+                   '(examples: @symbol.xym::1.0 or 091F837E059AE13C:1.0)')
 @click.option('-f', '--fee', type=click.Choice(['slowest', 'slow', 'average', 'fast']), required=False,
               default='slowest', show_default=True, help='Maximum commission you are willing to pay')
 def send(address, plain_message, encrypted_message, mosaics, fee, deadline):
     """
     send mosaics or messages to the addressee
     """
-    global addresses
+    #  instead of the global variable 'addresses'
+    def _monitoring_callback(transaction_info: dict):
+        monitoring_callback(transaction_info, addresses)
+
     addresses = [address]
     if plain_message != '' and encrypted_message != '':
         print('Specify one of the message types.')
@@ -195,12 +198,13 @@ def send(address, plain_message, encrypted_message, mosaics, fee, deadline):
                                 deadline={'minutes': deadline})
     if isinstance(result, EngineStatusCode):
         if result == EngineStatusCode.INVALID_ACCOUNT_INFO:
-            print(result.value, '\nThe account either does not exist, or there were no transactions on it.\nUnable to get the public key from the network')
+            print(result.value, '\nThe account either does not exist, or there were no transactions on it.'
+                                '\nUnable to get the public key from the network')
             exit(1)
     if result:
         subscribers = ['confirmedAdded', 'unconfirmedAdded', 'status']
         subscribers = [os.path.join(subscribe, address) for subscribe in subscribers]
-        Monitor(engine.node_selector.url, subscribers, formatting=True, callback=monitoring_callback)
+        Monitor(engine.node_selector.url, subscribers, formatting=True, callback=_monitoring_callback)
 
 
 @main.command('history')
