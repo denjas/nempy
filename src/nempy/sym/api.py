@@ -243,7 +243,7 @@ class Transaction:
 
         max_fee = int(fee_multiplier * transaction_size)
         # ограничение при получении при просчёте слишком высокой комисии
-        # TODO более детально рассмотреть регулирование комисси для транзакций
+        # TODO take a closer look at the regulation of the commission for transactions
         return max_fee
 
     @staticmethod
@@ -251,7 +251,7 @@ class Transaction:
         # https://symbol-docs.netlify.app/concepts/transaction.html
         tr_sr = transaction.serialize()
         is_aggregate = transaction.type in [TransactionTypes.AGGREGATE_BONDED, TransactionTypes.AGGREGATE_COMPLETE]
-        # TODO проверить правильность работы на агрегированных транзакциях
+        # TODO check if it works correctly on aggregated transactions
         if is_aggregate:
             raise RuntimeError('Working with aggregated transactions has not been tested !!!')
         if is_aggregate:
