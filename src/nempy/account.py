@@ -243,18 +243,6 @@ class Account:
         account = Account.deserialize(open(path, 'rb').read())
         return account
 
-
-    # @staticmethod
-    # def read_accounts(profile: str, password: str = None):
-    #     accounts_dir = os.listdir(DEFAULT_ACCOUNTS_DIR)
-    #     accounts = list()
-    #     for account in accounts_dir:
-    #         path = os.path.join(DEFAULT_ACCOUNTS_DIR, account)
-    #         _account = Account.read_account(path, password)
-    #         if _account.profile == profile:
-    #             accounts.append(_account)
-    #     return accounts
-
     @staticmethod
     def get_gen_type() -> GenerationTypes:
         questions = [
@@ -283,9 +271,9 @@ class Account:
         for transaction in transactions:
             mosaic = '∴' if len(transaction.transaction.mosaics) > 1 else ''
             message = '🖂' if transaction.transaction.message is not None else ' '
-            direction = '➕' if transaction.transaction.recipientAddress == self.address else '➖'
+            direction = '+' if transaction.transaction.recipientAddress == self.address else '−'
             status = '🗸' if transaction.status == TransactionStatus.CONFIRMED_ADDED.value else '?'
-            short_name = f'{status} {direction} {transaction.transaction.recipientAddress} | {transaction.meta.height} | {transaction.transaction.deadline} |{message} |{transaction.transaction.mosaics[0]} {mosaic}'
+            short_name = f'{status} {transaction.transaction.recipientAddress} | {transaction.meta.height} | {transaction.transaction.deadline} |{message} |{direction}{transaction.transaction.mosaics[0]} {mosaic}'
             short_names[short_name] = transaction
         _short_names = list(short_names.keys())
         _short_names.append('Exit')
@@ -295,6 +283,7 @@ class Account:
                     "transaction",
                     message="Select an transaction?",
                     choices=_short_names,
+                    carousel=True
                 ),
             ]
             answers = inquirer.prompt(questions)
@@ -303,12 +292,5 @@ class Account:
                 exit(0)
             print(short_names[transaction])
 
-
-    # @staticmethod
-    # def set_default_account(name):
-    #
-    #     config = configparser.ConfigParser()
-    #     config.read(CONFIG_FILE)
-    #     config['account']['default'] = name
-    #     with open(CONFIG_FILE, 'w') as configfile:
-    #         config.write(configfile)
+    def send(self):
+        pass

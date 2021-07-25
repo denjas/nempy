@@ -11,11 +11,12 @@ from base64 import b32encode
 from binascii import unhexlify
 from http import HTTPStatus
 from urllib.parse import urlparse
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Callable
 import requests
+import websockets
 from nempy.sym.api import Mosaic
 
-from nempy.utils.measure_latency import measure_latency
+from websockets import exceptions
 from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType, \
     TransactionTypes
 from pydantic import BaseModel
@@ -341,6 +342,61 @@ def get_balance(address: str, mosaic_filter: [list, str] = None, is_linked: bool
     return balance
 
 
+class Monitor:
+    where_to_subscribe = {
+            'confirmedAdded': 'address',
+            'unconfirmedAdded': 'address',
+            'unconfirmedRemoved': 'address',
+            'partialAdded': 'address',
+            'partialRemoved': 'address',
+            'cosignature': 'address',
+            'status': 'address',
+            'block': None,
+            'finalizedBlock': None
+    }
+
+    def __init__(self, url, subscribers, formatting: bool = False, log: str = '', callback: Optional[Callable] = None):
+        self.url = url
+        self.subscribers = subscribers
+        self.formatting = formatting
+        self.log = log
+        self.callback = callback
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.monitoring())
+
+    async def monitoring(self):
+        result = urlparse(self.url)
+        url = f"ws://{result.hostname}:{result.port}/ws"
+        print(f'MONITORING: {url}')
+        async with websockets.connect(url) as ws:
+            response = json.loads(await ws.recv())
+            print(f'UID: {response["uid"]}')
+            if 'uid' in response:
+                prepare = []
+                for subscriber in self.subscribers:
+                    added = json.dumps({"uid": response["uid"], "subscribe": f"{subscriber}"})
+                    await ws.send(added)
+                    # print(f'Subscribed to: {subscriber}')
+                    prepare.append([subscriber])
+                table = tabulate(prepare, headers=['Subscribers'], tablefmt='grid')
+                print(table)
+                print('Listening... `Ctrl+C` for abort')
+                while True:
+                    res = await ws.recv()
+                    if self.formatting:
+                        res = json.dumps(json.loads(res), indent=4)
+                    if self.callback is not None:
+                        self.callback(json.loads(res))
+                        continue
+                    print(res)
+                    if self.log:
+                        with open(self.log, 'a+') as f:
+                            res += '\n'
+                            f.write(res)
+            else:
+                raise RuntimeError('Server mot response')
+
+
 class Timing:
 
     def __init__(self, network_type: NetworkType = None):
@@ -520,11 +576,59 @@ class NodeSelector:
             asyncio.set_event_loop(asyncio.new_event_loop())
         parse_result = urlparse(url)
         loop = asyncio.get_event_loop()
-        latency = loop.run_until_complete(measure_latency(host=parse_result.hostname, port=parse_result.port, runs=3))
+        latency = loop.run_until_complete(NodeSelector.measure_latency(host=parse_result.hostname, port=parse_result.port, runs=3))
         if (result := len(list(filter(None, latency)))) == 0:
             return None
         average = sum(filter(None, latency)) / result
         return average
+
+    @staticmethod
+    async def measure_latency(
+            host: str,
+            port: int = 443,
+            timeout: float = 5,
+            runs: int = 1,
+            wait: float = 0,
+    ) -> list:
+        """
+        :rtype: list
+        Builds a list composed of latency_points
+        """
+        tasks = []
+        latency_points = []
+        for i in range(runs):
+            await asyncio.sleep(wait)
+            tasks.append(asyncio.create_task(NodeSelector.latency_point(host=host, port=port, timeout=timeout)))
+            # last_latency_point = await latency_point(host=host, port=port, timeout=timeout)
+        for i in range(runs):
+            latency_points.append(await tasks[i])
+        return latency_points
+
+    @staticmethod
+    async def latency_point(host: str, port: int = 443, timeout: float = 5) -> [float, None]:
+        '''
+        :rtype: Returns float if possible
+        Calculate a latency point using sockets. If something bad happens the point returned is None
+        '''
+        # New Socket and Time out
+        # Start a timer
+        s_start = time.time()
+
+        # Try to Connect
+        uri = f"ws://{host}:{port}"
+        try:
+            async with websockets.connect(uri, timeout=timeout):
+                pass
+        except exceptions.InvalidMessage:
+            pass
+        except exceptions.InvalidStatusCode:
+            pass
+        except Exception as e:
+            return None
+
+        # Stop Timer
+        s_runtime = (time.time() - s_start) * 1000
+        return float(s_runtime)
 
 
 # singleton for background work with the list of nodes

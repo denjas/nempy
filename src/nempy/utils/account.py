@@ -3,10 +3,10 @@ import os
 
 import click
 import stdiomask
+from nempy.sym.network import Monitor
 from nempy.wallet import Wallet
 from nempy.account import Account, print_warning, DecoderStatus, GenerationTypes
 from nempy.engine import XYMEngine, EngineStatusCode
-from .monitoring import connector
 from tabulate import tabulate
 
 
@@ -133,7 +133,7 @@ def monitoring_callback(transaction_info: dict):
     global addresses
     address = transaction_info['topic'].split('/')[1]
     if 'unconfirmedAdded/' in transaction_info['topic'] and address in addresses:
-        print('[UNCONFIRMED] Transaction related to the given address enters the unconfirmed state, waiting to be included in a block.')
+        print('[UNCONFIRMED] Transaction related to the given address enters the unconfirmed state, waiting to be included in a block...')
     elif 'confirmedAdded/' in transaction_info['topic'] and address in addresses:
         print('[CONFIRMED] Transaction related to the given address is included in a block')
         exit(0)
@@ -200,7 +200,7 @@ def send(address, plain_message, encrypted_message, mosaics, fee, deadline):
     if result:
         subscribers = ['confirmedAdded', 'unconfirmedAdded', 'status']
         subscribers = [os.path.join(subscribe, address) for subscribe in subscribers]
-        connector(engine.node_selector.url, subscribers, formatting=True, callback=monitoring_callback)
+        Monitor(engine.node_selector.url, subscribers, formatting=True, callback=monitoring_callback)
 
 
 @main.command('history')

@@ -42,7 +42,7 @@ class BlockchainStatuses(Enum):
     NO_NODES_AVAILABLE = 'No nodes available in the picklist (URL is None)'
 
 
-class HexSequenceSizes:
+class HexSequenceSizes(IntEnum):
     address = 39
     public_key = private_key = 64
     mosaic_id = namespace_id = 16

@@ -9,9 +9,8 @@ from symbolchain.core.CryptoTypes import PrivateKey
 from symbolchain.core.CryptoTypes import Signature, PublicKey
 from symbolchain.core.facade.SymFacade import SymFacade
 from symbolchain.core.sym.IdGenerator import generate_namespace_id
-
 from . import ed25519, network
-from .constants import Fees, FM, TransactionTypes, TransactionMetrics
+from .constants import Fees, FM, TransactionTypes, TransactionMetrics, HexSequenceSizes
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +110,10 @@ class Mosaic(tuple):
             mosaic_id = namespace_info['namespace']['alias'].get('mosaicId')
             if mosaic_id is None:
                 raise ValueError(f'Failed to get mosaic_id by name `{name}`')
+        is_valid = ed25519.check_hex(mosaic_id, HexSequenceSizes.mosaic_id)
+        if not is_valid:
+            logger.error(f'`{mosaic_id}` cannot be a mosaic index. You may have forgotten to put `@` in front of the alias name (example: @symbol.xym)')
+            exit(1)
         divisibility = Mosaic.get_divisibility(mosaic_id)
         if divisibility is None:
             raise ValueError(f'Failed to get divisibility from network')
@@ -147,7 +150,7 @@ class Mosaic(tuple):
 class Transaction:
     # Size of transaction with empty message
     MIN_TRANSACTION_SIZE = 160
-    XYM_ID = int('091F837E059AE13C', 16)
+    XYM_ID = int('091F837E059AE13C', 16)  # TODO XYM_ID for main net and select
 
     def __init__(self):
         self.size = None
@@ -173,10 +176,11 @@ class Transaction:
             mosaics = [mosaics]
 
         if len(mosaics) > 1:
-            for i, mosaic in enumerate(mosaics):
-                if mosaic[0] == self.XYM_ID:
-                    # Mosaic XYM should be in the first place in the list
-                    mosaics.insert(0, mosaics.pop(i))
+            mosaics = sorted(mosaics, key=lambda tup: tup[0])
+            # for i, mosaic in enumerate(mosaics):
+            #     if mosaic[0] == self.XYM_ID:
+            #         # Mosaic XYM should be in the first place in the list
+            #         mosaics.insert(0, mosaics.pop(i))
 
         key_pair = self.sym_facade.KeyPair(PrivateKey(unhexlify(pr_key)))
 
