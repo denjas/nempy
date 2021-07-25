@@ -19,8 +19,8 @@ from bip_utils import Bip39MnemonicGenerator, Bip39Languages
 from nempy.config import DEFAULT_ACCOUNTS_DIR
 from nempy.sym import network
 from nempy.sym.api import Mosaic
-from nempy.sym.constants import NetworkType, TransactionStatus, Meta, TransactionResponse, TransactionTypes
-from nempy.sym.network import Timing
+from nempy.sym.network import TransactionResponse
+from nempy.sym.constants import NetworkType, TransactionStatus, TransactionTypes
 from symbolchain.core.Bip32 import Bip32
 from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.facade.SymFacade import SymFacade
@@ -93,7 +93,7 @@ class Account:
     def __str__(self):
         prepare = list()
         for key, value in self.__dict__.items():
-            if key == 'address':
+            if key == '_address':
                 value = '-'.join(value[i:i + 6] for i in range(0, len(value), 6))
             if key == 'mnemonic' and not isinstance(value, bytes):
                 positions = [pos for pos, char in enumerate(value) if char == ' ']
@@ -271,24 +271,21 @@ class Account:
             return GenerationTypes.PRIVATE_KEY
         return GenerationTypes.MNEMONIC
 
-    def history(self, timing):
-        transactions: List[TransactionResponse] = network.search_transactions(address=self.address, transaction_status=TransactionStatus.CONFIRMED_ADDED)
+    def history(self, page_size):
+        conf_transactions: List[TransactionResponse] = network.search_transactions(address=self.address,
+                                                                                   page_size=page_size,
+                                                                                   transaction_status=TransactionStatus.CONFIRMED_ADDED)
+        unconf_transactions: List[TransactionResponse] = network.search_transactions(address=self.address,
+                                                                                     page_size=page_size,
+                                                                                     transaction_status=TransactionStatus.UNCONFIRMED_ADDED)
+        transactions = unconf_transactions + conf_transactions
         short_names = {}
         for transaction in transactions:
-            transaction.transaction.type = TransactionTypes.get_type_by_id(transaction.transaction.type)
-            transaction.status = TransactionStatus.CONFIRMED_ADDED.value
-            transaction.transaction.mosaics = [Mosaic.human(mosaic.id, mosaic.amount) for mosaic in transaction.transaction.mosaics]
-            transaction.transaction.recipientAddress = b32encode(unhexlify(transaction.transaction.recipientAddress)).decode('utf-8')[:-1]
-            height = transaction.meta.height
+            mosaic = '∴' if len(transaction.transaction.mosaics) > 1 else ''
             message = '🖂' if transaction.transaction.message is not None else ' '
-            if message == '🖂':
-                transaction.transaction.message = unhexlify(transaction.transaction.message)[1:]
-            transaction.transaction.deadline = timing.deadline_to_date(deadline=transaction.transaction.deadline)
-            # direction = '▼' if recipient_address == self.address else '▲'
-            direction = '+' if transaction.transaction.recipientAddress == self.address else '-'
-            facade = SymFacade(self.network_type.value)
-            transaction.transaction.signer_address = str(facade.network.public_key_to_address(Hash256(transaction.transaction.signerPublicKey)))
-            short_name = f'🗸 {direction} {transaction.transaction.recipientAddress} | {height} | {transaction.transaction.deadline} |{message} |{transaction.transaction.mosaics[0]}'
+            direction = '➕' if transaction.transaction.recipientAddress == self.address else '➖'
+            status = '🗸' if transaction.status == TransactionStatus.CONFIRMED_ADDED.value else '?'
+            short_name = f'{status} {direction} {transaction.transaction.recipientAddress} | {transaction.meta.height} | {transaction.transaction.deadline} |{message} |{transaction.transaction.mosaics[0]} {mosaic}'
             short_names[short_name] = transaction
         _short_names = list(short_names.keys())
         _short_names.append('Exit')

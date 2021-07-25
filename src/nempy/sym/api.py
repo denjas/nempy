@@ -155,7 +155,7 @@ class Transaction:
 
         self.network_type = network.get_node_network()
         self.timing = network.Timing(self.network_type)
-        self.sym_facade = SymFacade(self.network_type)
+        self.sym_facade = SymFacade(self.network_type.value)
 
     def create(self,
                pr_key: str,

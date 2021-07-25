@@ -204,13 +204,14 @@ def send(address, plain_message, encrypted_message, mosaics, fee, deadline):
 
 
 @main.command('history')
-def setdefault():
+@click.option('-ps', '-page-size', 'page_size', type=int, required=False, default=10, show_default=True,
+              help='Select the number of entries to return.')
+def setdefault(page_size):
     """
     Show history
     """
     wallet = Wallet()
-    engine = XYMEngine(wallet.profile.account)
-    wallet.profile.account.history(engine.timing)
+    wallet.profile.account.history(page_size)
 
 
 if __name__ == '__main__':

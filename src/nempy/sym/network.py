@@ -7,19 +7,97 @@ import multiprocessing
 import os
 import threading
 import time
+from base64 import b32encode
+from binascii import unhexlify
 from http import HTTPStatus
 from urllib.parse import urlparse
-from typing import Optional, Union
+from typing import Optional, Union, List
 import requests
+from nempy.sym.api import Mosaic
 
 from nempy.utils.measure_latency import measure_latency
-from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType, Meta, \
-    TransactionResponse, TransactionInfo, MosaicInfo
+from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType, \
+    TransactionTypes
+from pydantic import BaseModel
+from symbolchain.core.CryptoTypes import Hash256
+from symbolchain.core.facade.SymFacade import SymFacade
+from tabulate import tabulate
+
 from . import ed25519, constants, config
 from .constants import TransactionStatus
 
 
-logger = logging.getLogger(os.path.splitext(os.path.basename(__name__))[0])
+logger = logging.getLogger(__name__)
+
+
+class Meta(BaseModel):
+    height: int
+    hash: str
+    merkleComponentHash: str
+    index: int
+
+
+class MosaicInfo(BaseModel):
+    id: str
+    amount: Union[int, float]
+
+    def __str__(self):
+        return f'{self.amount}({self.id})'
+
+
+class TransactionInfo(BaseModel):
+    size: int
+    signature: str
+    signerPublicKey: str
+    version: int
+    network: int
+    type: Union[int, str]
+    maxFee: int
+    deadline: Union[int, datetime.datetime]
+    recipientAddress: str
+    message: Optional[str]
+    signer_address: Optional[str]
+    mosaics: List[MosaicInfo]
+
+    def humanization(self):
+        self.deadline = Timing().deadline_to_date(self.deadline)
+        if self.message is not None:
+            self.message = unhexlify(self.message)[1:].decode('utf-8')
+        self.recipientAddress = b32encode(unhexlify(self.recipientAddress)).decode('utf-8')[:-1]
+        self.mosaics = [Mosaic.human(mosaic.id, mosaic.amount) for mosaic in self.mosaics]
+        self.type = TransactionTypes.get_type_by_id(self.type)
+        facade = SymFacade(node_selector.network_type.value)
+        self.signer_address = str(facade.network.public_key_to_address(Hash256(self.signerPublicKey)))
+
+
+class TransactionResponse(BaseModel):
+    id: str
+    meta: Meta
+    transaction: TransactionInfo
+    status: Optional[str]
+
+    def __str__(self):
+        if self.transaction.signer_address.startswith('T'):
+            test_net_explorer = 'http://explorer.testnet.symboldev.network/transactions/'
+        else:
+            test_net_explorer = 'http://explorer.symbolblockchain.io/transactions/'
+        prepare = list()
+        mosaics = [str(mosaic) for mosaic in self.transaction.mosaics]
+        mosaics = '\n'.join(mosaics)
+        prepare.append(['Type:', self.transaction.type.title()])
+        prepare.append(['Status:', self.status.title()])
+        prepare.append(['Hash:', f'{test_net_explorer}{self.meta.hash}'])
+        prepare.append(['Paid Fee:', f'{self.transaction.maxFee / 1000000}(XYM)'])
+        prepare.append(['Height:', self.meta.height])
+        prepare.append(['Deadline:', self.transaction.deadline])
+        prepare.append(['Signature:', self.transaction.signature])
+        prepare.append(['Signer Public Key:', self.transaction.signerPublicKey])
+        prepare.append(['From:', self.transaction.signer_address])
+        prepare.append(['To:', self.transaction.recipientAddress])
+        prepare.append(['Mosaic:', mosaics])
+        prepare.append(['Message:', self.transaction.message])
+        table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
+        return table
 
 
 class SymbolNetworkException(Exception):
@@ -101,9 +179,6 @@ def search_transactions(address: Optional[str] = None,
                         order: str = 'desc',
                         transaction_status: TransactionStatus = TransactionStatus.CONFIRMED_ADDED
                         ) -> Optional[list]:
-    # default = {k: v.default
-    #            for k, v in inspect.signature(search_transactions).parameters.items()
-    #            if v.default is not inspect.Parameter.empty}
     params = {
         'address': address,
         'recipientAddress': recipient_address,
@@ -140,7 +215,9 @@ def search_transactions(address: Optional[str] = None,
                                            meta=Meta(**transaction['meta']),
                                            transaction=TransactionInfo(mosaics=mosaics, **transaction['transaction'])
                                            )
+        _transaction.status = transaction_status.value
         transactions_response.append(_transaction)
+        _transaction.transaction.humanization()
     return transactions_response
 
 
@@ -198,9 +275,9 @@ def get_node_network():
         fee_info = json.loads(answer.text)
         network_generation_hash_seed = fee_info['networkGenerationHashSeed']
         if network_generation_hash_seed == constants.NETWORK_GENERATION_HASH_SEED_TEST:
-            return 'public_test'
+            return NetworkType.TEST_NET
         elif network_generation_hash_seed == constants.NETWORK_GENERATION_HASH_SEED_PUBLIC:
-            return 'public'
+            return NetworkType.MAIN_NET
         else:
             return None
     answer.raise_for_status()
@@ -266,17 +343,18 @@ def get_balance(address: str, mosaic_filter: [list, str] = None, is_linked: bool
 
 class Timing:
 
-    def __init__(self, network_type: str = None):
+    def __init__(self, network_type: NetworkType = None):
         if network_type is None:
-            network_properties = get_network_properties()
-            epoch_adjustment = int(network_properties['network']['epochAdjustment'][0:-1])
-            self.epoch_time = datetime.datetime.fromtimestamp(epoch_adjustment, tz=datetime.timezone.utc)
-        elif network_type == 'public_test':
+            network_type = node_selector.network_type
+            # network_properties = get_network_properties()
+            # epoch_adjustment = int(network_properties['network']['epochAdjustment'][0:-1])
+            # self.epoch_time = datetime.datetime.fromtimestamp(epoch_adjustment, tz=datetime.timezone.utc)
+        if network_type == NetworkType.TEST_NET:
             self.epoch_time = EPOCH_TIME_TESTNET
-        elif network_type == 'public':
+        elif network_type == NetworkType.MAIN_NET:
             self.epoch_time = EPOCH_TIME_MAINNET
         else:
-            raise EnvironmentError()
+            raise EnvironmentError('It is not possible to determine the type of network')
 
     def calc_deadline(self, days: float = 0, seconds: float = 0, milliseconds: float = 0,
                       minutes: float = 0, hours: float = 0, weeks: float = 0):

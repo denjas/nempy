@@ -17,66 +17,6 @@ class NetworkType(Enum):
     MAIN_NET = 'public'
 
 
-class Meta(BaseModel):
-    height: int
-    hash: str
-    merkleComponentHash: str
-    index: int
-
-
-class MosaicInfo(BaseModel):
-    id: str
-    amount: Union[int, float]
-
-    def __str__(self):
-        return f'{self.amount}({self.id})'
-
-
-class TransactionInfo(BaseModel):
-    size: int
-    signature: str
-    signerPublicKey: str
-    version: int
-    network: int
-    type: Union[int, str]
-    maxFee: int
-    deadline: Union[int, datetime.datetime]
-    recipientAddress: str
-    message: Optional[str]
-    signer_address: Optional[str]
-    mosaics: List[MosaicInfo]
-
-
-class TransactionResponse(BaseModel):
-    id: str
-    meta: Meta
-    transaction: TransactionInfo
-    status: Optional[str]
-
-    def __str__(self):
-        if self.transaction.signer_address.startswith('T'):
-            test_net_explorer = 'http://explorer.testnet.symboldev.network/transactions/'
-        else:
-            test_net_explorer = 'http://explorer.symbolblockchain.io/transactions/'
-        prepare = list()
-        mosaics = [str(mosaic) for mosaic in self.transaction.mosaics]
-        mosaics = '\n'.join(mosaics)
-        prepare.append(['Type:', self.transaction.type.title()])
-        prepare.append(['Status:', self.status.title()])
-        prepare.append(['Hash:', f'{test_net_explorer}{self.meta.hash}'])
-        prepare.append(['Paid Fee:', f'{self.transaction.maxFee / 1000000}(XYM)'])
-        prepare.append(['Height:', self.meta.height])
-        prepare.append(['Deadline:', self.transaction.deadline])
-        prepare.append(['Signature:', self.transaction.signature])
-        prepare.append(['Signer Public Key:', self.transaction.signerPublicKey])
-        prepare.append(['From:', self.transaction.signer_address])
-        prepare.append(['To:', self.transaction.recipientAddress])
-        prepare.append(['Mosaic:', mosaics])
-        prepare.append(['Message:', self.transaction.message])
-        table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
-        return table
-
-
 class TransactionStatus(Enum):
     NOT_FOUND = None
     UNCONFIRMED_ADDED = 'unconfirmed'
