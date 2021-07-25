@@ -3,6 +3,7 @@ import os
 
 import click
 import stdiomask
+from nempy.config import C
 from nempy.sym.network import Monitor
 from nempy.wallet import Wallet
 from nempy.account import Account, print_warning, DecoderStatus, GenerationTypes
@@ -69,9 +70,9 @@ def setdefault():
 
 @main.command('info')
 @click.option('-n', '--name', type=str, required=False, default='', help='Account name. If not set, the default account name will be used')
-@click.option('--decode', required=False, is_flag=True, help='Decode secret data')
-@click.option('--list', 'is_list', required=False, is_flag=True, help='List of all accounts of the current profile')
-def info(name, decode, is_list):
+@click.option('-d', '--decrypt', required=False, is_flag=True, help='Decrypt secret data')
+@click.option('-l', '--list', 'is_list', required=False, is_flag=True, help='List of all accounts of the current profile')
+def info(name, decrypt, is_list):
     """
     Account Information
     """
@@ -92,19 +93,19 @@ def info(name, decode, is_list):
             account = wallet.profile.account
         accounts = {name: account}
     password = None
-    if decode:
+    if decrypt:
         print('Attention! Hide information received after entering a password from prying eyes')
         password = wallet.profile.check_pass(attempts=3)
         if password is None:
             exit(1)
     for account in accounts.values():
-        if decode:
+        if decrypt:
             account = account.decode(password)
             if isinstance(account, DecoderStatus):
                 exit(1)
         print(account)
-        print('###################################################################################')
-    if decode:
+        print(f'{C.GREY}###################################################################################{C.END}')
+    if decrypt:
         print_warning()
 
 
@@ -147,10 +148,10 @@ def confirmation(address, mosaics, message, is_encrypted, fee, deadline):
         prepare.append([f'Message (encrypted {is_encrypted})', message])
     prepare.append(['Max Fee:', fee])
     prepare.append(['Deadline (minutes):', f'{deadline}'])
-    mosaics = [f'`{mosaic[0].replace("@", "")}`: -{mosaic[1]}' for mosaic in mosaics]
+    mosaics = [f'`{mosaic[0].replace("@", "")}`: {C.RED}- {mosaic[1]}{C.END}' for mosaic in mosaics]
     mosaic_str = '\n'.join(mosaics)
     prepare.append([f'Mosaics:', mosaic_str])
-    table = tabulate(prepare, headers=['Property', 'Value'], tablefmt='grid')
+    table = tabulate(prepare, tablefmt='grid')
     print(table)
     answer = input('Funds will be debited from your balance!\nWe continue? y/N: ')
     if answer.lower() != 'y':

@@ -25,18 +25,18 @@ from symbolchain.core.Bip32 import Bip32
 from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.facade.SymFacade import SymFacade
 from tabulate import tabulate
-from binascii import unhexlify, hexlify
+from nempy.config import C
 
 logger = logging.getLogger(__name__)
 
 
 def print_warning():
-    print("""
+    print(f""" {C.ORANGE}
                                 !!! Important !!!
  Save the mnemonic, it will be needed to restore access to the wallet in case of password loss
        Where to store can be found here - https://en.bitcoinwiki.org/wiki/Mnemonic_phrase
 !!!Do not share your secret key and mnemonic with anyone, it guarantees access to your funds!!!
-                                       !!!
+                                       !!!{C.END}
     """)
 
 
@@ -97,11 +97,13 @@ class Account:
                 value = '-'.join(value[i:i + 6] for i in range(0, len(value), 6))
             if key == 'mnemonic' and not isinstance(value, bytes):
                 positions = [pos for pos, char in enumerate(value) if char == ' ']
-                value = value[:positions[8]] + '\n' + value[positions[8] + 1:positions[16]] + '\n' + value[positions[16] + 1:]
+                value = C.OKBLUE + value[:positions[8]] + f'{C.END}\n' + C.OKBLUE + value[positions[8] + 1:positions[16]] + f'{C.END}\n' + C.OKBLUE + value[positions[16] + 1:] + C.END
             elif key == 'mnemonic' and isinstance(value, bytes):
                 value = '******* **** ********** ******* ***** *********** ******** *****'
             if key == 'private_key' and isinstance(value, bytes):
                 value = '*' * 64
+            if key == 'private_key' and isinstance(value, str):
+                value = C.OKBLUE + value + C.END
             if isinstance(value, NetworkType):
                 value = value.name
             key = key.replace('_', ' ').title()
