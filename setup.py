@@ -42,8 +42,8 @@ setup(
     ],
     package_dir={"": "src"},
     packages=(find_packages(where="src")),
-    # install_requires=get_packages_from_pipfile_lock('Pipfile.lock', version),
-    install_requires=open('requirements.txt').read(),
+    # install_requires=open('requirements.txt').read(),
+    install_requires=get_packages_from_pipfile_lock('Pipfile.lock', version),
     scripts=['src/nempy/bin/nempy-cli.py', ],
     test_suite='tests',
     include_package_data=True
