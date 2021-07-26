@@ -3,7 +3,7 @@ import logging
 import os
 
 import inquirer
-from nempy.config import CONFIG_FILE, PROFILES_FILES
+from nempy.config import CONFIG_FILE, PROFILES_DIR
 from nempy.profile import Profile
 from nempy.sym import network
 
@@ -32,9 +32,9 @@ class Wallet:
         self._profile = profile
 
     def load_profiles(self):
-        profiles_paths = os.listdir(PROFILES_FILES)
+        profiles_paths = os.listdir(PROFILES_DIR)
         for pp in profiles_paths:
-            path = os.path.join(PROFILES_FILES, pp)
+            path = os.path.join(PROFILES_DIR, pp)
             profile = Profile().loaf_profile(path)
             self.profiles[os.path.splitext(pp)[0]] = profile
 

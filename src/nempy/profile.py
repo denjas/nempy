@@ -7,7 +7,7 @@ import bcrypt
 import inquirer
 import stdiomask
 from nempy.account import Account
-from nempy.config import CONFIG_FILE, PROFILES_FILES, DEFAULT_ACCOUNTS_DIR, C
+from nempy.config import CONFIG_FILE, PROFILES_DIR, ACCOUNTS_DIR, C
 from nempy.sym.constants import NetworkType
 from password_strength import PasswordPolicy
 from tabulate import tabulate
@@ -22,7 +22,7 @@ class Profile:
     pass_hash = None
 
     def __init__(self, profile: dict = None):
-        os.makedirs(PROFILES_FILES, exist_ok=True)
+        os.makedirs(PROFILES_DIR, exist_ok=True)
         if profile is not None:
             [setattr(self, key, value) for key, value in profile.items()]
 
@@ -49,9 +49,9 @@ class Profile:
 
     def load_accounts(self) -> dict:
         accounts = {}
-        accounts_paths = os.listdir(DEFAULT_ACCOUNTS_DIR)
+        accounts_paths = os.listdir(ACCOUNTS_DIR)
         for account_path in accounts_paths:
-            path = os.path.join(DEFAULT_ACCOUNTS_DIR, account_path)
+            path = os.path.join(ACCOUNTS_DIR, account_path)
             account = Account.read_account(path)
             if account.profile == self.name:
                 accounts[os.path.splitext(account_path)[0]] = account
@@ -159,7 +159,7 @@ class Profile:
     def input_profile_name():
         while True:
             name = input('Enter profile name: ')
-            path = os.path.join(PROFILES_FILES, f'{name}.profile')
+            path = os.path.join(PROFILES_DIR, f'{name}.profile')
             if name == '':
                 print('The name cannot be empty')
             elif os.path.exists(path):

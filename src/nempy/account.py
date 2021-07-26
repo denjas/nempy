@@ -16,7 +16,7 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
 from bip_utils import Bip39MnemonicGenerator, Bip39Languages
-from nempy.config import DEFAULT_ACCOUNTS_DIR
+from nempy.config import ACCOUNTS_DIR
 from nempy.sym import network
 from nempy.sym.api import Mosaic
 from nempy.sym.network import TransactionResponse
@@ -132,7 +132,7 @@ class Account:
 
     @staticmethod
     def build_account_path(name):
-        account_path = os.path.join(DEFAULT_ACCOUNTS_DIR, name + '.account')
+        account_path = os.path.join(ACCOUNTS_DIR, name + '.account')
         return account_path
 
     @staticmethod
