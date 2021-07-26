@@ -6,7 +6,7 @@ import stdiomask
 from nempy.config import C
 from nempy.sym.network import Monitor
 from nempy.wallet import Wallet
-from nempy.account import Account, print_warning, DecoderStatus, GenerationTypes
+from nempy.account import Account, print_warning, DecoderStatus, GenerationType
 from nempy.engine import XYMEngine, EngineStatusCode
 from tabulate import tabulate
 
@@ -30,12 +30,11 @@ def import_account():
     if is_default:
         wallet.profile.set_default_account(name)
     password = wallet.profile.check_pass(attempts=3)
-    gen_type = Account.get_gen_type()
-    if gen_type == GenerationTypes.MNEMONIC:
+    gen_type = Account.get_generation_type()
+    if gen_type == GenerationType.MNEMONIC:
         account = Account.account_by_mnemonic(wallet.profile.network_type, bip32_coin_id)
-    if gen_type == GenerationTypes.PRIVATE_KEY:
+    if gen_type == GenerationType.PRIVATE_KEY:
         raise NotImplemented('The functionality of building an account from a private key is not implemented')
-    account = Account(account)
     account.name = name
     account.profile = wallet.profile.name
     account.account_creation(account_path, password)
@@ -53,7 +52,6 @@ def create_account():
     password = wallet.profile.check_pass(attempts=3)
     if password is not None:
         account = Account.account_by_mnemonic(wallet.profile.network_type, bip32_coin_id, is_generate=True)
-        account = Account(account)
         account.name = name
         account.profile = wallet.profile.name
         account.account_creation(account_path, password)

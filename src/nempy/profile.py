@@ -52,7 +52,7 @@ class Profile:
         accounts_paths = os.listdir(ACCOUNTS_DIR)
         for account_path in accounts_paths:
             path = os.path.join(ACCOUNTS_DIR, account_path)
-            account = Account.read_account(path)
+            account = Account.read(path)
             if account.profile == self.name:
                 accounts[os.path.splitext(account_path)[0]] = account
         return accounts

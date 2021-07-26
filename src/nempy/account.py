@@ -8,7 +8,7 @@ from base64 import b64decode, b32encode
 from base64 import b64encode
 from enum import Enum
 from hashlib import blake2b
-from typing import List
+from typing import List, Union
 
 import inquirer
 import stdiomask
@@ -63,7 +63,7 @@ def decryption(password: str, encrypted_data: bytes) -> [bytes, None]:
         return None
 
 
-class GenerationTypes(Enum):
+class GenerationType(Enum):
     MNEMONIC = 0
     PRIVATE_KEY = 1
 
@@ -115,28 +115,51 @@ class Account:
         return table
 
     @property
-    def address(self):
+    def address(self) -> str:
         return self._address
 
     @address.setter
     def address(self, address: str):
         self._address = address.replace('-', '')
 
-    def serialize(self):
-        return pickle.dumps(self.__dict__)
+    def serialize(self) -> bytes:
+        sdate = pickle.dumps(self.__dict__)
+        return sdate
 
     @staticmethod
-    def deserialize(data):
-        des_date = pickle.loads(data)
-        return Account(des_date)
+    def deserialize(data) -> 'Account':
+        ddate = pickle.loads(data)
+        return Account(ddate)
 
     @staticmethod
-    def build_account_path(name):
+    def build_account_path(name: str) -> str:
         account_path = os.path.join(ACCOUNTS_DIR, name + '.account')
         return account_path
 
     @staticmethod
-    def init_general_params(network_type) -> (str, str, NetworkType, int, str):
+    def read(path: str) -> Union['Account', DecoderStatus]:
+        if not os.path.exists(path):
+            logger.error(DecoderStatus.NO_DATA.value)
+            return DecoderStatus.NO_DATA
+        account = Account.deserialize(open(path, 'rb').read())
+        return account
+
+    def write(self, path: str, password: str):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        pickle_private_key = pickle.dumps(self.private_key)
+        # encrypt the private key
+        self.private_key = encryption(password=password, data=pickle_private_key)
+        if self.mnemonic is not None:
+            pickle_mnemonic = pickle.dumps(self.mnemonic)
+            # encrypt the mnemonic
+            self.mnemonic = encryption(password=password, data=pickle_mnemonic)
+        pickled_data = self.serialize()
+        with open(path, 'wb') as opened_file:
+            opened_file.write(pickled_data)
+        logger.debug(f'Wallet saved along the way: {path}')
+
+    @staticmethod
+    def init_general_params(network_type: NetworkType) -> tuple[str, str, int, bool]:
         while True:
             name = input('Enter the account name: ')
             if name != '':
@@ -159,7 +182,7 @@ class Account:
         return account_path, name, bip32_coin_id, is_default
 
     @staticmethod
-    def account_by_mnemonic(network_type, bip32_coin_id, is_generate=False):
+    def account_by_mnemonic(network_type, bip32_coin_id, is_generate=False) -> 'Account':
         if is_generate:
             random_char_set = ''
             print('Write something (random character set), the input will be interrupted automatically')
@@ -175,7 +198,7 @@ class Account:
             mnemonic = Bip39MnemonicGenerator(Bip39Languages.ENGLISH).FromEntropy(binascii.unhexlify(entropy_bytes_hex))
         else:
             mnemonic = stdiomask.getpass('Enter a mnemonic passphrase. Words must be separated by spaces: ')
-        accounts = Account.derive_key_by_mnemonic(network_type, bip32_coin_id, mnemonic)
+        accounts = Account._accounts_pool_by_mnemonic(network_type, bip32_coin_id, mnemonic)
         addresses = [account for account in accounts.keys()]
         questions = [
             inquirer.List(
@@ -189,7 +212,7 @@ class Account:
         return accounts[account]
 
     @staticmethod
-    def derive_key_by_mnemonic(network_type, bip32_coin_id, mnemonic):
+    def _accounts_pool_by_mnemonic(network_type, bip32_coin_id, mnemonic) -> dict[str, 'Account']:
         facade = SymFacade(network_type.value)
 
         bip = Bip32(facade.BIP32_CURVE_NAME)
@@ -202,54 +225,35 @@ class Account:
             private_key = str(child_key_pair.private_key).upper()
             public_key = str(child_key_pair.public_key).upper()
             address = str(facade.network.public_key_to_address(child_key_pair.public_key)).upper()
-            accounts[address] = ({'address': address,
-                                  'public_key': public_key,
-                                  'private_key': private_key,
-                                  'mnemonic': mnemonic,
-                                  'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'",
-                                  'network_type': network_type})
+            accounts[address] = Account({'address': address,
+                                         'public_key': public_key,
+                                         'private_key': private_key,
+                                         'mnemonic': mnemonic,
+                                         'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'",
+                                         'network_type': network_type})
         return accounts
 
-    def account_creation(self, account_path, password):
-        self.write_account(account_path, password)
+    def account_creation(self, account_path: str, password: str):
+        self.write(account_path, password)
         print(f'\nAccount created at: {account_path}')
-        account = Account.read_account(account_path).decode(password)
+        # checking the ability to read and display information about the account
+        account = Account.read(account_path).decrypt(password)
         print(account)
         print_warning()
 
-    def write_account(self, path, password):
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        pickle_private_key = pickle.dumps(self.private_key)
-        self.private_key = encryption(password=password, data=pickle_private_key)
-        if self.mnemonic is not None:
-            pickle_mnemonic = pickle.dumps(self.mnemonic)
-            self.mnemonic = encryption(password=password, data=pickle_mnemonic)
-        pickled_data = self.serialize()
-        with open(path, 'wb') as opened_file:
-            opened_file.write(pickled_data)
-        logger.debug(f'Wallet saved along the way: {path}')
-
-    def decode(self, password):
-        decoded_account = copy.deepcopy(self)
+    def decrypt(self, password: str) -> 'Account':
+        decrypted_account = copy.deepcopy(self)
         decrypted_key = decryption(password, self.private_key)
         if decrypted_key is None:
             logger.error(DecoderStatus.WRONG_PASS.value)
             raise SystemExit(DecoderStatus.WRONG_PASS.value)
-        decoded_account.private_key = pickle.loads(decrypted_key)
-        if decoded_account.mnemonic is not None:
-            decoded_account.mnemonic = pickle.loads(decryption(password, self.mnemonic))
-        return decoded_account
+        decrypted_account.private_key = pickle.loads(decrypted_key)
+        if decrypted_account.mnemonic is not None:
+            decrypted_account.mnemonic = pickle.loads(decryption(password, self.mnemonic))
+        return decrypted_account
 
     @staticmethod
-    def read_account(path: str):
-        if not os.path.exists(path):
-            logger.error(DecoderStatus.NO_DATA.value)
-            return DecoderStatus.NO_DATA
-        account = Account.deserialize(open(path, 'rb').read())
-        return account
-
-    @staticmethod
-    def get_gen_type() -> GenerationTypes:
+    def get_generation_type() -> GenerationType:
         questions = [
             inquirer.List(
                 "type",
@@ -261,10 +265,10 @@ class Account:
         answers = inquirer.prompt(questions)
         import_type = answers['type']
         if import_type == 'Private Key':
-            return GenerationTypes.PRIVATE_KEY
-        return GenerationTypes.MNEMONIC
+            return GenerationType.PRIVATE_KEY
+        return GenerationType.MNEMONIC
 
-    def history(self, page_size):
+    def history(self, page_size: int):
         conf_transactions: List[TransactionResponse] = network.search_transactions(address=self.address,
                                                                                    page_size=page_size,
                                                                                    transaction_status=TransactionStatus.CONFIRMED_ADDED)
@@ -296,6 +300,3 @@ class Account:
             if transaction == 'Exit':
                 exit(0)
             print(short_names[transaction])
-
-    def send(self):
-        pass
