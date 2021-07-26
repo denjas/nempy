@@ -20,6 +20,6 @@ class TemplateTestCase(unittest.TestCase):
         pass
 
     def test_hello_world(self):
-        wallet = Wallet()
+        wallet = Wallet(skip_checks=True)
         result = init()
         self.assertEqual(result, 'Hello NEMpy!')
