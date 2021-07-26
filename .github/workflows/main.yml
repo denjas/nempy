@@ -32,7 +32,7 @@ jobs:
       # Runs a single command using the runners shell
       - name: Install dependencies
         run: |
-          set -xe && apt update apt install python3-pip -y
+          set -xe && apt update && apt install python3-pip -y
           pip install pip==21.1.2 pipenv==2021.5.29
           set -ex && pipenv install --deploy --system
           pip install --use-feature=in-tree-build --no-dependencies .
