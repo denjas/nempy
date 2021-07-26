@@ -1,6 +1,7 @@
 import unittest
 
 from nempy import init
+from nempy.wallet import Wallet
 
 
 class TemplateTestCase(unittest.TestCase):
@@ -19,5 +20,6 @@ class TemplateTestCase(unittest.TestCase):
         pass
 
     def test_hello_world(self):
+        wallet = Wallet()
         result = init()
         self.assertEqual(result, 'Hello NEMpy!')
