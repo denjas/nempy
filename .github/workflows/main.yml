@@ -34,7 +34,7 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Install dependencies
-        runa: |
+        run: |
           set -xe && apt update && apt install python3-pip -y
           python3 -m pip install pip==21.1.2 pipenv==2021.5.29
           python3 -m pip --version
