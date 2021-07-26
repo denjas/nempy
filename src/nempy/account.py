@@ -210,7 +210,7 @@ class Account:
         return accounts[account]
 
     @staticmethod
-    def _accounts_pool_by_mnemonic(network_type, bip32_coin_id, mnemonic) -> dict[str, 'Account']:
+    def _accounts_pool_by_mnemonic(network_type, bip32_coin_id, mnemonic) -> Dict[str, 'Account']:
         facade = SymFacade(network_type.value)
 
         bip = Bip32(facade.BIP32_CURVE_NAME)
