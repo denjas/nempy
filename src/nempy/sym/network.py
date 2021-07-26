@@ -356,7 +356,7 @@ class Monitor:
 
     def __init__(self,
                  url: str,
-                 subscribers: list[str],
+                 subscribers: List[str],
                  formatting: bool = False,
                  log: str = '',
                  callback: Optional[Callable] = None):
@@ -451,7 +451,7 @@ class NodeSelector:
     _re_elections: Optional[bool] = False
     _network_type: NetworkType = NetworkType.TEST_NET
 
-    def __init__(self, node_urls: Union[list[str], str]):
+    def __init__(self, node_urls: Union[List[str], str]):
         self.url = node_urls
 
     @property

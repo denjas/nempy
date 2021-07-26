@@ -8,7 +8,7 @@ from base64 import b64decode
 from base64 import b64encode
 from enum import Enum
 from hashlib import blake2b
-from typing import List, Union
+from typing import List, Union, Tuple, Dict
 
 import inquirer
 import stdiomask
@@ -157,7 +157,7 @@ class Account:
         logger.debug(f'Wallet saved along the way: {path}')
 
     @staticmethod
-    def init_general_params(network_type: NetworkType) -> tuple[str, str, int, bool]:
+    def init_general_params(network_type: NetworkType) -> Tuple[str, str, int, bool]:
         while True:
             name = input('Enter the account name: ')
             if name != '':
@@ -210,7 +210,7 @@ class Account:
         return accounts[account]
 
     @staticmethod
-    def _accounts_pool_by_mnemonic(network_type, bip32_coin_id, mnemonic) -> dict[str, 'Account']:
+    def _accounts_pool_by_mnemonic(network_type, bip32_coin_id, mnemonic) -> Dict[str, 'Account']:
         facade = SymFacade(network_type.value)
 
         bip = Bip32(facade.BIP32_CURVE_NAME)

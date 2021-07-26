@@ -1,7 +1,7 @@
 import abc
 import logging
 from enum import Enum
-from typing import List, Tuple
+from typing import List, Tuple, Union, Dict
 
 from nempy.account import Account
 from nempy.sym.constants import BlockchainStatuses
@@ -32,7 +32,7 @@ class NEMEngine:
         yield 'public_key', self.account.public_key
 
     @abc.abstractmethod
-    def send_tokens(self, recipient_address: str, mosaics: list[(str, float)], message: [str, bytes] = ''):
+    def send_tokens(self, recipient_address: str, mosaics: List[Tuple[str, float]], message: Union[str, bytes] = ''):
         pass
 
     @abc.abstractmethod
@@ -90,7 +90,7 @@ class XYMEngine(NEMEngine):
         return amount
 
     @staticmethod
-    def mosaic_humanization(mosaics: dict[str, float]):
+    def mosaic_humanization(mosaics: Dict[str, float]):
         mosaics_ids = list(mosaics.keys())
         mosaic_names = network.get_mosaic_names(mosaics_ids)
         if mosaic_names is not None:

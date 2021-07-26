@@ -2,7 +2,7 @@ import configparser
 import logging
 import os
 import pickle
-from typing import Optional
+from typing import Optional, Dict, Tuple
 
 import bcrypt
 import inquirer
@@ -54,7 +54,7 @@ class Profile(BaseModel):
         accounts = self.load_accounts()
         return accounts.get(account_name)
 
-    def load_accounts(self) -> dict[str: Account]:
+    def load_accounts(self) -> Dict[str, Account]:
         accounts = {}
         accounts_paths = os.listdir(ACCOUNTS_DIR)
         for account_path in accounts_paths:
@@ -112,7 +112,7 @@ class Profile(BaseModel):
         return None
 
     @staticmethod
-    def create_profile() -> tuple['Profile', bool]:
+    def create_profile() -> Tuple['Profile', bool]:
         name, path = Profile.input_profile_name()
         network_type = Profile.input_network_type()
         new_pass = Profile.input_new_pass(10)

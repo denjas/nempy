@@ -1,7 +1,7 @@
 import hashlib
 import logging
 from binascii import unhexlify
-from typing import Union, Optional
+from typing import Union, Optional, List, Tuple
 
 from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.CryptoTypes import PrivateKey
@@ -162,10 +162,10 @@ class Transaction:
     def create(self,
                pr_key: str,
                recipient_address: str,
-               mosaics: Union[Mosaic, list[Mosaic], None] = None,
+               mosaics: Union[Mosaic, List[Mosaic], None] = None,
                message: Union[PlainMessage, EncryptMessage, None] = None,
                fee_type: Fees = Fees.SLOWEST,
-               deadline: Optional[dict] = None) -> tuple[str, bytes]:
+               deadline: Optional[dict] = None) -> Tuple[str, bytes]:
 
         if deadline is None:
             deadline = {'minutes': 2}
