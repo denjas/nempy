@@ -1,9 +1,5 @@
-from enum import Enum, EnumMeta, IntEnum
 import datetime
-from typing import List, Optional, Union
-
-from pydantic import BaseModel
-from tabulate import tabulate
+from enum import Enum, EnumMeta, IntEnum
 
 NETWORK_GENERATION_HASH_SEED_PUBLIC = '57F7DA205008026C776CB6AED843393F04CD458E0AA2D9F1D5F31A402072B2D6'
 NETWORK_GENERATION_HASH_SEED_TEST = '3B5E1FA6445653C971A50687E75E6D09FB30481055E3990C84B25E9222DC1155'
@@ -24,12 +20,6 @@ class TransactionStatus(Enum):
     PARTIAL_ADDED = 'partial'
     # UNCONFIRMED_REMOVED = 3
     # PARTIAL_REMOVED = 4
-
-
-class DecoderStatus(Enum):
-    DECRYPTED = None
-    NO_DATA = 'Missing data to decode'
-    WRONG_PASS = 'Wrong password'
 
 
 class BlockchainStatuses(Enum):

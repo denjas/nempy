@@ -1,10 +1,10 @@
 import binascii
+import copy
 import logging
 import os
-import copy
 import pickle
 import random
-from base64 import b64decode, b32encode
+from base64 import b64decode
 from base64 import b64encode
 from enum import Enum
 from hashlib import blake2b
@@ -17,15 +17,13 @@ from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
 from bip_utils import Bip39MnemonicGenerator, Bip39Languages
 from nempy.config import ACCOUNTS_DIR
+from nempy.config import C
 from nempy.sym import network
-from nempy.sym.api import Mosaic
+from nempy.sym.constants import NetworkType, TransactionStatus
 from nempy.sym.network import TransactionResponse
-from nempy.sym.constants import NetworkType, TransactionStatus, TransactionTypes
 from symbolchain.core.Bip32 import Bip32
-from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.facade.SymFacade import SymFacade
 from tabulate import tabulate
-from nempy.config import C
 
 logger = logging.getLogger(__name__)
 

@@ -8,23 +8,22 @@ import time
 from base64 import b32encode
 from binascii import unhexlify
 from http import HTTPStatus
-from urllib.parse import urlparse
 from typing import Optional, Union, List, Callable
+from urllib.parse import urlparse
+
 import requests
 import websockets
 from nempy.sym.api import Mosaic
-
-from websockets import exceptions
 from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType, \
     TransactionTypes
 from pydantic import BaseModel
 from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.facade.SymFacade import SymFacade
 from tabulate import tabulate
+from websockets import exceptions
 
 from . import ed25519, constants, config
 from .constants import TransactionStatus
-
 
 logger = logging.getLogger(__name__)
 
@@ -327,6 +326,8 @@ def get_balance(address: str, mosaic_filter: [list, str] = None, is_linked: bool
             logger.error(f'Incorrect mosaic ID: `{mosaic_id}`')
             return None
     address_info = get_accounts_info(address)
+    if address_info == {}:
+        return address_info
     mosaics = address_info['account']['mosaics']
     balance = {}
     for mosaic in mosaics:

@@ -4,8 +4,7 @@ import logging
 import os.path
 
 import click
-from nempy.sym.network import Monitor
-from nempy.sym.network import node_selector
+from nempy.sym.network import Monitor, node_selector
 
 
 @click.command('monitoring', help='- Monitor blocks, transactions and errors', context_settings=dict(max_content_width=300))

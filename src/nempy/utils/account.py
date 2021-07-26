@@ -3,20 +3,17 @@ import os
 
 import click
 import stdiomask
+from nempy.account import Account, print_warning, DecoderStatus, GenerationType
 from nempy.config import C
+from nempy.engine import XYMEngine, EngineStatusCode
 from nempy.sym.network import Monitor
 from nempy.wallet import Wallet
-from nempy.account import Account, print_warning, DecoderStatus, GenerationType
-from nempy.engine import XYMEngine, EngineStatusCode
 from tabulate import tabulate
 
 
-@click.group('account')
+@click.group('account', help='- Interactive account management')
 def main():
-    """
-    Interactive account management
-    :return:
-    """
+    Wallet(skip_checks=True)
     print('|Interactive account management|')
 
 
@@ -119,7 +116,7 @@ def get_balance(address):
         address = wallet.profile.account.address
     balance = engine.get_balance(address)
     if balance == {}:
-        print('There is no account, or there was no movement of funds on it')
+        print(f'Account `{address}` does not exist, or there was no movement of funds on it')
         exit(0)
     h_balance = engine.mosaic_humanization(balance)
     print(json.dumps(h_balance, sort_keys=True, indent=2))
@@ -139,19 +136,25 @@ def monitoring_callback(transaction_info: dict, addresses: list):
         exit(1)
 
 
-def confirmation(address, mosaics, message, is_encrypted, fee, deadline):
+def confirmation(address, mosaics, message, is_encrypted, fee, deadline, balance):
     prepare = list()
     prepare.append(['Recipient address:', '-'.join(address[i:i + 6] for i in range(0, len(address), 6))])
     if message:
         prepare.append([f'Message (encrypted {is_encrypted})', message])
     prepare.append(['Max Fee:', fee])
     prepare.append(['Deadline (minutes):', f'{deadline}'])
-    mosaics = [f'`{mosaic[0].replace("@", "")}`: {C.RED}- {mosaic[1]}{C.END}' for mosaic in mosaics]
-    mosaic_str = '\n'.join(mosaics)
+    mosaics = {mosaic[0].replace("@", ""): {'amount': mosaic[1], 'balance': balance.get(mosaic[0].replace("@", ""), 0)}
+               for mosaic in mosaics}
+    mosaics_str_list = [f'`{k}`: {C.RED}- {v["amount"]}{C.END} (balance: {v["balance"]})' for k, v in mosaics.items()]
+    mosaic_str = '\n'.join(mosaics_str_list)
     prepare.append([f'Mosaics:', mosaic_str])
     table = tabulate(prepare, tablefmt='grid')
     print(table)
-    answer = input('Funds will be debited from your balance!\nWe continue? y/N: ')
+    for v in mosaics.values():
+        if v['amount'] > v['balance']:
+            print(f'Amount {C.ORANGE}{v["amount"]}{C.END} being sent exceeds the available balance {C.ORANGE}{v["balance"]}{C.END}')
+            exit(1)
+    answer = input(f'{C.ORANGE}Funds will be debited from your balance!{C.END}\nWe continue? y/N: ')
     if answer.lower() != 'y':
         exit(1)
 
@@ -163,11 +166,11 @@ def confirmation(address, mosaics, message, is_encrypted, fee, deadline):
 @click.option('-d', '--deadline', type=int, required=False, default=3, show_default=True,
               help='Transaction expiration time in minutes')
 @click.option('-m', '--mosaics', type=str, required=False, multiple=True, default=None,
-              help='Mosaic to transfer in the format (mosaicId(hex)|@aliasName)::absoluteAmount.` '
-                   '(examples: @symbol.xym::1.0 or 091F837E059AE13C:1.0)')
+              help='Mosaic to transfer in the format (mosaicId(hex)|@aliasName):amount.` '
+                   '(examples: @symbol.xym:0.1 or 091F837E059AE13C:1.1)')
 @click.option('-f', '--fee', type=click.Choice(['slowest', 'slow', 'average', 'fast']), required=False,
               default='slowest', show_default=True, help='Maximum commission you are willing to pay')
-def send(address, plain_message, encrypted_message, mosaics, fee, deadline):
+def send(address: str, plain_message: str, encrypted_message: str, mosaics: str, fee: str, deadline: int):
     """
     send mosaics or messages to the addressee
     """
@@ -175,6 +178,7 @@ def send(address, plain_message, encrypted_message, mosaics, fee, deadline):
     def _monitoring_callback(transaction_info: dict):
         monitoring_callback(transaction_info, addresses)
 
+    address = address.replace('-', '')
     addresses = [address]
     if plain_message != '' and encrypted_message != '':
         print('Specify one of the message types.')
@@ -184,10 +188,11 @@ def send(address, plain_message, encrypted_message, mosaics, fee, deadline):
         exit(1)
     wallet = Wallet()
     engine = XYMEngine(wallet.profile.account)
+    balance = engine.get_balance(engine.account.address, humanization=True)
     mosaics = [(mosaic.split(':')[0], float(mosaic.split(':')[1])) for mosaic in mosaics]
     message = plain_message or encrypted_message or ''
     is_encrypted = True if encrypted_message else False
-    confirmation(address, mosaics, message, is_encrypted, fee, deadline)
+    confirmation(address, mosaics, message, is_encrypted, fee, deadline, balance)
     password = stdiomask.getpass(f'Enter your `{wallet.profile.name} [{wallet.profile.network_type.name}]` profile password: ')
     result = engine.send_tokens(recipient_address=address,
                                 mosaics=mosaics,

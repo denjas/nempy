@@ -1,17 +1,13 @@
 import abc
 import logging
-import os
 from enum import Enum
-from http import HTTPStatus
-from typing import List, Union, Tuple
+from typing import List, Tuple
 
-import stdiomask
 from nempy.account import Account
 from nempy.sym.constants import BlockchainStatuses
 
 from .sym import api as sym
 from .sym import network
-
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +60,7 @@ class XYMEngine(NEMEngine):
                     is_encrypted=False,
                     password: str = '',
                     deadline: dict = None):
+        recipient_address = recipient_address.replace('-', '')
         mosaics = [sym.Mosaic(mosaic_id=mosaic[0], amount=mosaic[1]) for mosaic in mosaics]
         if is_encrypted:
             address_info = network.get_accounts_info(address=recipient_address)
@@ -86,8 +83,10 @@ class XYMEngine(NEMEngine):
             return BlockchainStatuses.NOT_INITIALIZED
         return network.NodeSelector.health(self.node_selector.url)
 
-    def get_balance(self, nem_address, test=False):
+    def get_balance(self, nem_address, humanization=False):
         amount = network.get_balance(nem_address)
+        if humanization:
+            amount = XYMEngine.mosaic_humanization(amount)
         return amount
 
     @staticmethod

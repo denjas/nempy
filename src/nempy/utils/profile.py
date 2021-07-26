@@ -4,18 +4,10 @@ import click
 from nempy.wallet import Wallet, Profile
 
 
-@click.group('profile')
+@click.group('profile', help='- Interactive account management')
 def main():
-    """
-    Interactive account management
-    :return:
-    """
+    Wallet(skip_checks=True)
     print('Interactive account management:')
-
-
-@main.command('import')
-def import_account():
-    pass
 
 
 @main.command('create')
@@ -23,8 +15,10 @@ def create_profile():
     """
     Create a new profile
     """
-    profile = Profile()
-    profile.create_profile()
+    profile, is_default = Profile.create_profile()
+    if is_default:
+        wallet = Wallet()
+        wallet.set_default_profile(profile)
 
 
 @main.command('setdefault')

@@ -24,6 +24,9 @@ def main(debug):
 
 @main.command()
 def about():
+    """
+    - About the program
+    """
     figlet = Figlet()
     print(figlet.renderText('NEMpy'))
 

@@ -1,6 +1,5 @@
 import hashlib
 import logging
-
 from binascii import unhexlify
 from typing import Union, Optional
 
@@ -9,6 +8,7 @@ from symbolchain.core.CryptoTypes import PrivateKey
 from symbolchain.core.CryptoTypes import Signature, PublicKey
 from symbolchain.core.facade.SymFacade import SymFacade
 from symbolchain.core.sym.IdGenerator import generate_namespace_id
+
 from . import ed25519, network
 from .constants import Fees, FM, TransactionTypes, TransactionMetrics, HexSequenceSizes, NetworkType
 
@@ -49,7 +49,7 @@ class Message(bytes):
 class PlainMessage(bytes):
 
     def __new__(cls, message: Union[str, bytes]):
-        message = Message(message, True)
+        message = Message(message, False)
         # add the message type code to the beginning of the byte sequence
         payload_message = int(0).to_bytes(1, byteorder='big') + message
         cls.size = len(payload_message)
