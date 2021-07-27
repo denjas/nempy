@@ -43,4 +43,4 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Test with unittest
         run: |
-          python -m unittest discover -s tests
+          pytest
