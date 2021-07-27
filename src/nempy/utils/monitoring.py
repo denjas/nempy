@@ -43,6 +43,3 @@ def main(url, channels, address, formatting, log):
 
 if __name__ == '__main__':
     main()
-
-
-

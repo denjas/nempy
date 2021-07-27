@@ -3,6 +3,7 @@ import logging
 from binascii import unhexlify
 from typing import Union, Optional, List, Tuple
 
+from nempy.sym.network import mosaic_id_to_name_n_real
 from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.CryptoTypes import PrivateKey
 from symbolchain.core.CryptoTypes import Signature, PublicKey
@@ -51,7 +52,10 @@ class PlainMessage(bytes):
     def __new__(cls, message: Union[str, bytes]):
         message = Message(message, False)
         # add the message type code to the beginning of the byte sequence
-        payload_message = b'\x00' + message
+        if message:
+            payload_message = b'\x00' + message
+        else:
+            payload_message = message
         cls.size = len(payload_message)
         return bytes.__new__(PlainMessage, payload_message)
 
@@ -133,18 +137,7 @@ class Mosaic(tuple):
     @staticmethod
     def human(mosaic_id: str, amount: int):
         amount = int(amount)
-        divisibility = Mosaic.get_divisibility(mosaic_id)
-        if divisibility is None:
-            raise ValueError(f'Failed to get divisibility from network')
-        divider = 10 ** int(divisibility)
-
-        mn = network.get_mosaic_names(mosaic_id)
-        name = mosaic_id
-        if mn is not None:
-            names = mn['mosaicNames'][0]['names']
-            if len(names) > 0:
-                name = names[0]
-        return name, float(amount / divider)
+        return mosaic_id_to_name_n_real(mosaic_id, amount)
 
 
 class Transaction:

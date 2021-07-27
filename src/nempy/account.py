@@ -294,11 +294,12 @@ class Account:
         transactions = unconf_transactions + conf_transactions
         short_names = {}
         for transaction in transactions:
-            mosaic = '∴' if len(transaction.transaction.mosaics) > 1 else ''
+            is_mosaic = '∴' if len(transaction.transaction.mosaics) > 1 else ''
             message = '🖂' if transaction.transaction.message is not None else ' '
             direction = '+' if transaction.transaction.recipientAddress == self.address else '−'
             status = '🗸' if transaction.status == TransactionStatus.CONFIRMED_ADDED.value else '?'
-            short_name = f'{status} {transaction.transaction.recipientAddress} | {transaction.meta.height} | {transaction.transaction.deadline} |{message} |{direction}{transaction.transaction.mosaics[0]} {mosaic}'
+            mosaic = next(iter(transaction.transaction.mosaics), '')
+            short_name = f'{status} {transaction.transaction.recipientAddress} | {transaction.meta.height} | {transaction.transaction.deadline} |{message} |{direction}{mosaic} {is_mosaic}'
             short_names[short_name] = transaction
         _short_names = list(short_names.keys())
         _short_names.append('Exit')

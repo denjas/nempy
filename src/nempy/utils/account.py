@@ -31,7 +31,7 @@ def import_account():
     if gen_type == GenerationType.MNEMONIC:
         account = Account.account_by_mnemonic(wallet.profile.network_type, bip32_coin_id)
     if gen_type == GenerationType.PRIVATE_KEY:
-        raise NotImplemented('The functionality of building an account from a private key is not implemented')
+        raise NotImplementedError('The functionality of building an account from a private key is not implemented')
     account.name = name
     account.profile = wallet.profile.name
     account.account_creation(account_path, password)
@@ -52,15 +52,6 @@ def create_account():
         account.name = name
         account.profile = wallet.profile.name
         account.account_creation(account_path, password)
-
-
-@main.command('setdefault')
-def setdefault():
-    """
-    Change the default account
-    """
-    wallet = Wallet()
-    wallet.profile.input_default_account()
 
 
 @main.command('info')
@@ -147,7 +138,7 @@ def confirmation(address, mosaics, message, is_encrypted, fee, deadline, balance
                for mosaic in mosaics}
     mosaics_str_list = [f'`{k}`: {C.RED}- {v["amount"]}{C.END} (balance: {v["balance"]})' for k, v in mosaics.items()]
     mosaic_str = '\n'.join(mosaics_str_list)
-    prepare.append([f'Mosaics:', mosaic_str])
+    prepare.append(['Mosaics:', mosaic_str])
     table = tabulate(prepare, tablefmt='grid')
     print(table)
     for v in mosaics.values():

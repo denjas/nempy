@@ -8,7 +8,7 @@ import time
 from base64 import b32encode
 from binascii import unhexlify
 from http import HTTPStatus
-from typing import Optional, Union, List, Callable
+from typing import Optional, Union, List, Callable, Tuple, Dict
 from urllib.parse import urlparse
 
 import requests
@@ -28,6 +28,23 @@ from .constants import TransactionStatus
 logger = logging.getLogger(__name__)
 
 
+def mosaic_id_to_name_n_real(mosaic_id: str, amount: int) -> Dict[str, float]:
+    if not isinstance(amount, int):
+        raise TypeError('To avoid confusion, automatic conversion to integer is prohibited')
+    divisibility = get_divisibility(mosaic_id)
+    if divisibility is None:
+        raise ValueError(f'Failed to get divisibility from network')
+    divider = 10 ** int(divisibility)
+
+    mn = get_mosaic_names(mosaic_id)
+    name = mosaic_id
+    if mn is not None:
+        names = mn['mosaicNames'][0]['names']
+        if len(names) > 0:
+            name = names[0]
+    return {'id': name, 'amount': float(amount / divider)}
+
+
 class Meta(BaseModel):
     height: int
     hash: str
@@ -37,7 +54,12 @@ class Meta(BaseModel):
 
 class MosaicInfo(BaseModel):
     id: str
-    amount: Union[int, float]
+    amount: int
+
+
+class HumMosaicInfo(MosaicInfo):
+    id: str
+    amount: float
 
     def __str__(self):
         return f'{self.amount}({self.id})'
@@ -55,14 +77,14 @@ class TransactionInfo(BaseModel):
     recipientAddress: str
     message: Optional[str]
     signer_address: Optional[str]
-    mosaics: List[MosaicInfo]
+    mosaics: List[Union[MosaicInfo, HumMosaicInfo]]
 
     def humanization(self):
         self.deadline = Timing().deadline_to_date(self.deadline)
         if self.message is not None:
             self.message = unhexlify(self.message)[1:].decode('utf-8')
         self.recipientAddress = b32encode(unhexlify(self.recipientAddress)).decode('utf-8')[:-1]
-        self.mosaics = [Mosaic.human(mosaic.id, mosaic.amount) for mosaic in self.mosaics]
+        self.mosaics = [HumMosaicInfo(**mosaic_id_to_name_n_real(mosaic.id, mosaic.amount)) for mosaic in self.mosaics]
         self.type = TransactionTypes.get_type_by_id(self.type)
         facade = SymFacade(node_selector.network_type.value)
         self.signer_address = str(facade.network.public_key_to_address(Hash256(self.signerPublicKey)))
@@ -564,7 +586,7 @@ class NodeSelector:
     def get_height(url):
         try:
             answer = requests.get(f'{url}/chain/info', timeout=1)
-        except:
+        except Exception:
             return 0
         node_info = json.loads(answer.text)
         height = node_info['height']
@@ -623,7 +645,7 @@ class NodeSelector:
             pass
         except exceptions.InvalidStatusCode:
             pass
-        except Exception as e:
+        except Exception:
             return None
 
         # Stop Timer
