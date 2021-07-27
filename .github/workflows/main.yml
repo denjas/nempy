@@ -38,7 +38,7 @@ jobs:
           set -xe && apt update && apt install python3-pip -y
           python3 -m pip install pip==21.1.2 pipenv==2021.5.29
           python3 -m pip --version
-          set -ex && python3 -m pipenv install --deploy --system
+          set -ex && python3 -m pipenv install --deploy --system --dev
           python3 -m pip install --use-feature=in-tree-build --no-dependencies .
       # Runs a set of commands using the runners shell
       - name: Test with unittest
