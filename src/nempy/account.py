@@ -134,6 +134,19 @@ class Account:
         account_path = os.path.join(ACCOUNTS_DIR, name + '.account')
         return account_path
 
+    def decrypt(self, password: str) -> 'Account':
+        if not isinstance(self.private_key, bytes):
+            logger.error('Unencrypted account!')
+        decrypted_account = copy.deepcopy(self)
+        decrypted_key = decryption(password, self.private_key)
+        if decrypted_key is None:
+            logger.error(DecoderStatus.WRONG_PASS.value)
+            raise SystemExit(DecoderStatus.WRONG_PASS.value)
+        decrypted_account.private_key = pickle.loads(decrypted_key)
+        if decrypted_account.mnemonic is not None:
+            decrypted_account.mnemonic = pickle.loads(decryption(password, self.mnemonic))
+        return decrypted_account
+
     @staticmethod
     def read(path: str) -> Union['Account', DecoderStatus]:
         if not os.path.exists(path):
@@ -142,8 +155,7 @@ class Account:
         account = Account.deserialize(open(path, 'rb').read())
         return account
 
-    def write(self, path: str, password: str):
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+    def encrypt(self, password: str) -> 'Account':
         pickle_private_key = pickle.dumps(self.private_key)
         # encrypt the private key
         self.private_key = encryption(password=password, data=pickle_private_key)
@@ -151,6 +163,13 @@ class Account:
             pickle_mnemonic = pickle.dumps(self.mnemonic)
             # encrypt the mnemonic
             self.mnemonic = encryption(password=password, data=pickle_mnemonic)
+        return self
+
+    def write(self, path: str):
+        if not isinstance(self.private_key, bytes):
+            raise ValueError('Account data is recorded unencrypted')
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+
         pickled_data = self.serialize()
         with open(path, 'wb') as opened_file:
             opened_file.write(pickled_data)
@@ -168,7 +187,7 @@ class Account:
                 break
             print('The name cannot be empty.')
         is_default = False
-        answer = input(f'Set `{name}` account as default? Y/n: ') or 'y'
+        answer = input(f'Set `{name}` account as default? [Y/n]: ') or 'y'
         if answer.lower() == 'y':
             is_default = True
         if network_type == NetworkType.MAIN_NET:
@@ -180,24 +199,22 @@ class Account:
         return account_path, name, bip32_coin_id, is_default
 
     @staticmethod
-    def account_by_mnemonic(network_type, bip32_coin_id, is_generate=False) -> 'Account':
-        if is_generate:
-            random_char_set = ''
-            print('Write something (random character set), the input will be interrupted automatically')
-            attempts = list(range(random.randint(3, 5)))
-            for i in attempts:
-                something = input(f'Something else ({len(attempts) - i}): ')
-                if not something:
-                    print('Only a non-empty line will have to be repeated :(')
-                    attempts.append(len(attempts))
-                    continue
-                random_char_set += something
-            entropy_bytes_hex = blake2b(random_char_set.encode(), digest_size=32).hexdigest().encode()
-            mnemonic = Bip39MnemonicGenerator(Bip39Languages.ENGLISH).FromEntropy(binascii.unhexlify(entropy_bytes_hex))
-        else:
-            mnemonic = stdiomask.getpass('Enter a mnemonic passphrase. Words must be separated by spaces: ')
-        accounts = Account._accounts_pool_by_mnemonic(network_type, bip32_coin_id, mnemonic)
-        addresses = [account for account in accounts.keys()]
+    def input_keyprint_entropy():
+        random_char_set = ''
+        print('Write something (random character set), the input will be interrupted automatically')
+        attempts = list(range(random.randint(3, 5)))
+        for i in attempts:
+            something = input(f'Something else ({len(attempts) - i}): ')
+            if not something:
+                print('Only a non-empty line will have to be repeated :(')
+                attempts.append(len(attempts))
+                continue
+            random_char_set += something
+        return random_char_set
+
+    @staticmethod
+    def inquirer_account(accounts_names):
+        addresses = [account for account in accounts_names]
         questions = [
             inquirer.List(
                 "address",
@@ -206,11 +223,23 @@ class Account:
             ),
         ]
         answers = inquirer.prompt(questions)
-        account = answers['address']
-        return accounts[account]
+        account_name = answers['address']
+        return account_name
 
     @staticmethod
-    def _accounts_pool_by_mnemonic(network_type, bip32_coin_id, mnemonic) -> Dict[str, 'Account']:
+    def account_by_mnemonic(network_type: NetworkType, bip32_coin_id: int, is_generate: bool = False) -> 'Account':
+        if is_generate:
+            random_char_set = Account.input_keyprint_entropy()
+            entropy_bytes_hex = blake2b(random_char_set.encode(), digest_size=32).hexdigest().encode()
+            mnemonic = Bip39MnemonicGenerator(Bip39Languages.ENGLISH).FromEntropy(binascii.unhexlify(entropy_bytes_hex))
+        else:
+            mnemonic = stdiomask.getpass('Enter a mnemonic passphrase. Words must be separated by spaces: ')
+        accounts = Account._accounts_pool_by_mnemonic(network_type, bip32_coin_id, mnemonic)
+        account_name = Account.inquirer_account(accounts.keys())
+        return accounts[account_name]
+
+    @staticmethod
+    def _accounts_pool_by_mnemonic(network_type: NetworkType, bip32_coin_id: int, mnemonic: str) -> Dict[str, 'Account']:
         facade = SymFacade(network_type.value)
 
         bip = Bip32(facade.BIP32_CURVE_NAME)
@@ -232,23 +261,12 @@ class Account:
         return accounts
 
     def account_creation(self, account_path: str, password: str):
-        self.write(account_path, password)
+        self.encrypt(password).write(account_path)
         print(f'\nAccount created at: {account_path}')
         # checking the ability to read and display information about the account
         account = Account.read(account_path).decrypt(password)
         print(account)
         print_warning()
-
-    def decrypt(self, password: str) -> 'Account':
-        decrypted_account = copy.deepcopy(self)
-        decrypted_key = decryption(password, self.private_key)
-        if decrypted_key is None:
-            logger.error(DecoderStatus.WRONG_PASS.value)
-            raise SystemExit(DecoderStatus.WRONG_PASS.value)
-        decrypted_account.private_key = pickle.loads(decrypted_key)
-        if decrypted_account.mnemonic is not None:
-            decrypted_account.mnemonic = pickle.loads(decryption(password, self.mnemonic))
-        return decrypted_account
 
     @staticmethod
     def get_generation_type() -> GenerationType:

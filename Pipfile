@@ -22,6 +22,9 @@ pyfiglet = "==0.7.6"
 pydantic = "==1.8.2"
 
 [dev-packages]
+pytest = "==6.2.4"
+mock = "==4.0.3"
+coverage = "==5.5"
 
 [scripts]
 tests = "./setup.py test"

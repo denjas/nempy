@@ -120,7 +120,7 @@ class Profile(BaseModel):
             exit(1)
         pass_hash = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt(12))
         is_default = False
-        answer = input(f'Set `{name}` profile as default? Y/n: ') or 'y'
+        answer = input(f'Set `{name}` profile as default? [Y/n]: ') or 'y'
         if answer.lower() == 'y':
             is_default = True
         profile = Profile(name=name, network_type=network_type, pass_hash=pass_hash)
