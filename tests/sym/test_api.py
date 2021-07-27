@@ -48,6 +48,8 @@ def test_plain_message():
     message = PlainMessage(_messages)
     assert message == b'\x00Hello NEM!'
     assert message.size == len(_messages) + 1
+    message = PlainMessage('')
+    assert message == b''
 
 
 def test_encrypt_message():
