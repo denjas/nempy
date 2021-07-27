@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 
 import requests
 import websockets
-from nempy.sym.api import Mosaic
+# from nempy.sym.api import Mosaic
 from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType, \
     TransactionTypes
 from pydantic import BaseModel

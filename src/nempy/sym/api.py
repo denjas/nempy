@@ -51,20 +51,20 @@ class PlainMessage(bytes):
     def __new__(cls, message: Union[str, bytes]):
         message = Message(message, False)
         # add the message type code to the beginning of the byte sequence
-        payload_message = int(0).to_bytes(1, byteorder='big') + message
+        payload_message = b'\x00' + message
         cls.size = len(payload_message)
         return bytes.__new__(PlainMessage, payload_message)
 
 
 class EncryptMessage(bytes):
 
-    def __new__(cls, sender_private_key: str, recipient_pub: str, message: str):
+    def __new__(cls, message: Union[str, bytes], sender_private_key: str, recipient_pub: str):
         #  https://docs.symbolplatform.com/concepts/transfer-transaction.html#encrypted-message
         message = Message(message, True)
         hex_encrypted_message = ed25519.Ed25519.encrypt(sender_private_key, recipient_pub, message)
         if len(hex_encrypted_message) > ed25519.SignClass.PLAIN_MESSAGE_SIZE:
             raise OverflowError(f'Encrypted message length cannot exceed {ed25519.SignClass.PLAIN_MESSAGE_SIZE} bytes. Current length: {len(hex_encrypted_message)}')
-        payload_message = int(1).to_bytes(1, byteorder='big') + hex_encrypted_message
+        payload_message = b'\x01' + hex_encrypted_message
         cls.size = len(payload_message)
         return bytes.__new__(EncryptMessage, payload_message)
 

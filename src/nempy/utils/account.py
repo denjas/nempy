@@ -95,7 +95,7 @@ def info(name, decrypt, is_list):
             exit(1)
     for account in accounts.values():
         if decrypt:
-            account = account.decode(password)
+            account = account.decrypt(password)
             if isinstance(account, DecoderStatus):
                 exit(1)
         print(account)

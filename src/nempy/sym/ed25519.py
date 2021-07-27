@@ -118,7 +118,7 @@ class Ed25519:
 
     @staticmethod
     def str2bytes(string):
-        return string if type(string) is bytes else string.encode('utf8')
+        return string if isinstance(string, bytes) else string.encode('utf8')
 
     @staticmethod
     def encrypt(private_key, public_key, message):
@@ -258,7 +258,9 @@ class SignClass:
             return True
 
     def inv(self, z):
-        """$= z^{-1} \mod q$, for z != 0"""
+        """
+        $= z^{-1} \\ mod q$, for z != 0
+        """
         # Adapted from curve25519_athlon.c in djb's Curve25519.
         z2 = z * z % q  # 2
         z9 = self.pow2(z2, 2) * z % q  # 9
