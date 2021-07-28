@@ -99,17 +99,14 @@ class TestMosaic:
 
     @staticmethod
     def test_alias_to_mosaic_id():
-        mosaic_id = 'eh434g57dz6sd76ffsdgs76sd6fsd65f'
+        mosaic_id = '.'.join(['eh434g57dz6sd76fogs76sd6fsd65f'] * 3)
         is_joke = False
         try:
             Mosaic.alias_to_mosaic_id(mosaic_id)
         except ValueError:
-            #  if someone has created a mosaic named eh434g57dz6sd76ffsdgs76sd6fsd65f
+            #  if someone has created namespace named eh434g57dz6sd76fogs76sd6fsd65f * 3
             is_joke = True
         if not is_joke:
             with pytest.raises(ValueError):
                 mosaic = Mosaic.alias_to_mosaic_id(mosaic_id)
                 print(mosaic)
-
-
-
