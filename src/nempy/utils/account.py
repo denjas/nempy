@@ -6,6 +6,8 @@ import stdiomask
 from nempy.account import Account, print_warning, DecoderStatus, GenerationType
 from nempy.config import C
 from nempy.engine import XYMEngine, EngineStatusCode
+from nempy.sym import ed25519
+from nempy.sym.constants import HexSequenceSizes
 from nempy.sym.network import Monitor
 from nempy.wallet import Wallet
 from tabulate import tabulate
@@ -177,6 +179,10 @@ def send(address: str, plain_message: str, encrypted_message: str, mosaics: str,
     if plain_message == '' and encrypted_message == '' and mosaics is None:
         print('Specify for sending one of two - mosaic or a messages')
         exit(1)
+    for mosaic in mosaics:
+        if not ed25519.check_hex(mosaic[0], HexSequenceSizes.mosaic_id) and not mosaic[0].startswith('@'):
+            print(f'`{mosaic[0]}` cannot be a mosaic index. You may have forgotten to put `@` in front of the alias name (example: @symbol.xym)')
+            exit(1)
     wallet = Wallet()
     engine = XYMEngine(wallet.profile.account)
     balance = engine.get_balance(engine.account.address, humanization=True)

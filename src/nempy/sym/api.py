@@ -113,18 +113,7 @@ class Mosaic(tuple):
     def __new__(cls, mosaic_id: str, amount: float):
         cls.size = 16
         if mosaic_id.startswith('@'):
-            name = mosaic_id[1:]
-            namespace_id = Namespace(name)
-            namespace_info = network.get_namespace_info(namespace_id)
-            if namespace_info is None or namespace_info == {}:
-                raise ValueError(f'Failed to get mosaic_id by name `{name}`')
-            mosaic_id = namespace_info['namespace']['alias'].get('mosaicId')
-            if mosaic_id is None:
-                raise ValueError(f'Failed to get mosaic_id by name `{name}`')
-        is_valid = ed25519.check_hex(mosaic_id, HexSequenceSizes.mosaic_id)
-        if not is_valid:
-            logger.error(f'`{mosaic_id}` cannot be a mosaic index. You may have forgotten to put `@` in front of the alias name (example: @symbol.xym)')
-            exit(1)
+            mosaic_id = Mosaic.alias_to_mosaic_id(mosaic_id[1:])
         divisibility = Mosaic.get_divisibility(mosaic_id)
         if divisibility is None:
             raise ValueError(f'Failed to get divisibility from network')
@@ -140,6 +129,15 @@ class Mosaic(tuple):
             if divisibility is not None:
                 dividers.set(mosaic_id, divisibility)
             return divisibility
+
+    @staticmethod
+    def alias_to_mosaic_id(alis):
+        namespace_id = Namespace(alis)
+        namespace_info = network.get_namespace_info(namespace_id)
+        if namespace_info is None or namespace_info == {}:
+            raise ValueError(f'Failed to get mosaic_id by name `{alis}`')
+        mosaic_id = namespace_info['namespace']['alias']['mosaicId']
+        return mosaic_id
 
     @staticmethod
     def human(mosaic_id: str, amount: int):
