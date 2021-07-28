@@ -1,9 +1,13 @@
+from binascii import hexlify
 
 import pytest
-from nempy.sym import ed25519
-from nempy.sym.api import Message, PlainMessage, EncryptMessage, Namespace, Mosaic
-from ..test_account import test_account
+from nempy.sym import ed25519, network
+from nempy.sym.api import Message, PlainMessage, EncryptMessage, Namespace, Mosaic, Transaction, dividers
+from nempy.sym.constants import NetworkType, Fees, TransactionTypes
+from nempy.sym.network import Timing
 
+from ..test_account import test_account
+from unittest.mock import patch
 
 # def setup():
 #     print("basic setup into module")
@@ -27,6 +31,7 @@ from ..test_account import test_account
 #
 # def teardown_function(function):
 #     print("function teardown")
+
 
 class TestMessage:
 
@@ -62,7 +67,7 @@ class TestMessage:
 
         enc_message = EncryptMessage(_message, sender_private_key, recipient_pub)
         with pytest.raises(OverflowError):
-            EncryptMessage('#' * 1024, sender_private_key, recipient_pub)
+            EncryptMessage('#' * 1023, sender_private_key, recipient_pub)
 
         assert enc_message.size == 77
         recipient_priv = account1.private_key
@@ -84,16 +89,21 @@ class TestNamespace:
             Namespace('test@')
         with pytest.raises(ValueError):
             Namespace('t' * 65)
+        with pytest.raises(ValueError):
+            Namespace('gtns.gt.gt.gt')
 
 
 class TestMosaic:
 
     @staticmethod
-    def test_new():
+    @patch(__name__ + '.Mosaic.get_divisibility', return_value=6)
+    @patch(__name__ + '.Mosaic.alias_to_mosaic_id', return_value='091F837E059AE13C')
+    def test_new(mock_alias, mock_div):
         mosaic = Mosaic('091F837E059AE13C', 0.123)
         assert mosaic == (657388647902535996, 123000)
         mosaic = Mosaic('@symbol.xym', 0.123)
         assert mosaic == (657388647902535996, 123000)
+        mock_div.return_value = None
         with pytest.raises(ValueError):
             Mosaic('', 0.123)
 
@@ -108,5 +118,67 @@ class TestMosaic:
             is_joke = True
         if not is_joke:
             with pytest.raises(ValueError):
-                mosaic = Mosaic.alias_to_mosaic_id(mosaic_id)
-                print(mosaic)
+                Mosaic.alias_to_mosaic_id(mosaic_id)
+        mosaic_id = Mosaic.alias_to_mosaic_id('symbol.xym')
+        assert mosaic_id == '091F837E059AE13C'
+
+
+class TestDividers:
+
+    def test_dividers(self):
+        mosaic = 'symbol-.xym'
+        div = 6
+        dividers.set(mosaic, div)
+        assert dividers.get(mosaic) == div
+        for key in dividers:
+            if key == mosaic:
+                assert dividers.get(mosaic) == div
+
+
+class TestTransaction:
+
+    def setup(self):
+        self.transaction = Transaction()
+        self.transaction.network_type = NetworkType.TEST_NET
+        self.transaction.timing = Timing(self.transaction.network_type)
+        self.account0, self.account1 = test_account()
+
+    def test_create(self):
+        self.transaction.create(pr_key=self.account0.private_key,
+                                recipient_address=self.account1.address)
+
+        with pytest.raises(ValueError):
+            self.transaction.create(pr_key=self.account0.private_key,
+                                    recipient_address=self.account1.address,
+                                    mosaics=('symbol.xym', 0000))
+
+        payload_bytes = self.transaction.create(pr_key=self.account0.private_key,
+                                                recipient_address=self.account1.address,
+                                                mosaics=[Mosaic('63BD920B6562A692', 0.0001),
+                                                         Mosaic('091F837E059AE13C', 0.00001)])
+
+        payload_bytes = self.transaction.create(pr_key=self.account0.private_key,
+                                                recipient_address=self.account1.address,
+                                                mosaics=Mosaic('63BD920B6562A692', 0.0001))
+
+    def test_calc_max_fee(self):
+        fast = Transaction.calc_max_fee(160, Fees.FAST)
+        average = Transaction.calc_max_fee(160, Fees.AVERAGE)
+        slow = Transaction.calc_max_fee(160, Fees.SLOW)
+        slowest = Transaction.calc_max_fee(160, Fees.SLOWEST)
+        zero = Transaction.calc_max_fee(160, Fees.ZERO)
+        assert zero < slowest < slow < average < fast
+
+        with patch.object(network, 'get_fee_multipliers', return_value=None):
+            with pytest.raises(ValueError):
+                Transaction.calc_max_fee(160, Fees.FAST)
+
+    def test_entity_hash_gen(self):
+        class T:
+            type = TransactionTypes.AGGREGATE_BONDED
+
+            def serialize(self):
+                return None
+        with pytest.raises(NotImplementedError):
+            Transaction.entity_hash_gen(None, None, T(), None)
+
