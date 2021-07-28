@@ -1,32 +1,32 @@
 
 import pytest
 from nempy.sym import ed25519
-from nempy.sym.api import Message, PlainMessage, EncryptMessage
+from nempy.sym.api import Message, PlainMessage, EncryptMessage, Namespace
 from ..test_account import test_account
 
 
-def setup():
-    print("basic setup into module")
-
-
-def teardown():
-    print("basic teardown into module")
-
-
-def setup_module(module):
-    print("module setup")
-
-
-def teardown_module(module):
-    print("module teardown")
-
-
-def setup_function(function):
-    print("function setup")
-
-
-def teardown_function(function):
-    print("function teardown")
+# def setup():
+#     print("basic setup into module")
+#
+#
+# def teardown():
+#     print("basic teardown into module")
+#
+#
+# def setup_module(module):
+#     print("module setup")
+#
+#
+# def teardown_module(module):
+#     print("module teardown")
+#
+#
+# def setup_function(function):
+#     print("function setup")
+#
+#
+# def teardown_function(function):
+#     print("function teardown")
 
 
 @pytest.mark.parametrize('is_encrypted', [True, False])
@@ -68,3 +68,14 @@ def test_encrypt_message():
 
     message = ed25519.Ed25519.decrypt(recipient_priv, sender_pub, enc_message[1:])
     assert message == b'Hello NEM!'
+
+
+def test_namespace():
+    namespace = Namespace('gtns.gt.gt-')
+    assert namespace == '93EB2CE4539AB443'
+    with pytest.raises(ValueError):
+        Namespace('')
+    with pytest.raises(ValueError):
+        Namespace('test@')
+    with pytest.raises(ValueError):
+        Namespace('t' * 65)
