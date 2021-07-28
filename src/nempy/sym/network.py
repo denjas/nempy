@@ -639,7 +639,7 @@ class NodeSelector:
         # Try to Connect
         uri = f"ws://{host}:{port}"
         try:
-            async with websockets.connect(uri, timeout=timeout):
+            async with websockets.connect(uri, close_timeout=timeout):
                 pass
         except exceptions.InvalidMessage:
             pass
