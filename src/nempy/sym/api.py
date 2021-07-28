@@ -99,11 +99,11 @@ class Namespace(str):
             raise ValueError(f'Invalid name for namespace `{name}` - namespaces can have up to 3 levels—a namespace and its two levels of subnamespace domains')
         namespace_id = 0
         for ns in ns_sns:
-            result = re.match('^[a-zA-Z0-9_-]+$', ns)
+            result = re.match('^[a-z0-9][a-z0-9_-]+$', ns)
             if len(ns) > 64:
                 raise ValueError(f'Invalid name for namespace `{name}` - maximum length of 64 characters')
             if result is None:
-                raise ValueError(f'Invalid name for namespace `{name}` - allowed characters are a, b, c, …, z, 0, 1, 2, …, 9, _ , -')
+                raise ValueError(f'Invalid name for namespace `{name}` - start with number or letter allowed characters are a, b, c, …, z, 0, 1, 2, …, 9, _ , -')
             namespace_id = generate_namespace_id(ns, namespace_id)
         return str.__new__(Namespace, hex(namespace_id).upper()[2:])
 
