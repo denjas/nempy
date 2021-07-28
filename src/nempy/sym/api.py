@@ -1,5 +1,7 @@
 import hashlib
 import logging
+import re
+
 from binascii import unhexlify
 from typing import Union, Optional, List, Tuple
 
@@ -93,11 +95,16 @@ class Namespace(str):
 
     def __new__(cls, name: str) -> str:
         ns_sns = name.split('.')
-        if 1 > len(ns_sns) > 2:
-            raise ValueError(f'Invalid name for namespace `{name}`')
-        namespace_id = generate_namespace_id(ns_sns[0])
-        if len(ns_sns) == 2:
-            namespace_id = generate_namespace_id(ns_sns[1], namespace_id)
+        if len(ns_sns) > 3:
+            raise ValueError(f'Invalid name for namespace `{name}` - namespaces can have up to 3 levels—a namespace and its two levels of subnamespace domains')
+        namespace_id = 0
+        for ns in ns_sns:
+            result = re.match('^[a-zA-Z0-9_-]+$', ns)
+            if len(ns) > 64:
+                raise ValueError(f'Invalid name for namespace `{name}` - maximum length of 64 characters')
+            if result is None:
+                raise ValueError(f'Invalid name for namespace `{name}` - allowed characters are a, b, c, …, z, 0, 1, 2, …, 9, _ , -')
+            namespace_id = generate_namespace_id(ns, namespace_id)
         return str.__new__(Namespace, hex(namespace_id).upper()[2:])
 
 
