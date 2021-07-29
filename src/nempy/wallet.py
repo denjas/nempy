@@ -25,7 +25,13 @@ class Wallet:
             if not self.profiles:
                 print('No profiles have been created. To create a profile, run the command `nempy-cli.py profile create`')
                 exit(1)
-            self.init_default_profile()
+            config = configparser.ConfigParser()
+            config.read(CONFIG_FILE)
+            default_profile = self.profiles.get(config['profile']['default'])
+            if default_profile is None:
+                self.profile = self.inquirer_default_profile()
+            else:
+                self.profile = default_profile
 
     @property
     def profile(self):
@@ -49,25 +55,21 @@ class Wallet:
             print(profile)
             print(f'{C.GREY}###################################################################################{C.END}')
 
-    def init_default_profile(self):
-        config = configparser.ConfigParser()
-        config.read(CONFIG_FILE)
-        default_profile = self.profiles.get(config['profile']['default'])
-        if default_profile is None:
-            names = {profile.name + f' [{profile.network_type.name}]': profile.name for profile in self.profiles.values()}
-            questions = [
-                inquirer.List(
-                    "name",
-                    message="Select default profile",
-                    choices=names.keys(),
-                ),
-            ]
-            answers = inquirer.prompt(questions)
-            name = names[answers['name']]
-            self.set_default_profile(self.profiles[name])
-        else:
-            self.profile = default_profile
+    def inquirer_default_profile(self):
+        names = {profile.name + f' [{profile.network_type.name}]': profile.name for profile in self.profiles.values()}
+        questions = [
+            inquirer.List(
+                "name",
+                message="Select default profile",
+                choices=names.keys(),
+            ),
+        ]
+        answers = inquirer.prompt(questions)
+        name = names[answers['name']]
+        profile = self.profiles[name]
+        self.set_default_profile(profile)
         network.node_selector.network_type = self.profile.network_type
+        return profile
 
     def set_default_profile(self, profile: Profile):
         config = configparser.ConfigParser()
