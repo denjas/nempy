@@ -8,7 +8,7 @@ from base64 import b64decode
 from base64 import b64encode
 from enum import Enum
 from hashlib import blake2b
-from typing import List, Union, Tuple, Dict
+from typing import List, Union, Tuple, Dict, _GenericAlias, Optional
 
 import inquirer
 import stdiomask
@@ -24,6 +24,7 @@ from nempy.sym.network import TransactionResponse
 from symbolchain.core.Bip32 import Bip32
 from symbolchain.core.facade.SymFacade import SymFacade
 from tabulate import tabulate
+# from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -72,21 +73,46 @@ class DecoderStatus(Enum):
     WRONG_PASS = 'Wrong password'
 
 
-class Account:
-    name = None
-    _address = None
-    public_key = None
-    private_key = None
-    path = None
-    mnemonic = None
-    network_type: NetworkType = None
-    profile = None
+class NotSet:
+    pass
 
-    def __init__(self, account: dict = None):
-        if account is not None:
-            [setattr(self, key, value) for key, value in account.items()]
-            if self.private_key is None:
-                raise AttributeError('The private key is required for the account')
+
+# pydantic didn't use because it doesn't work with getter and setter
+# plus practiced with the definition of types
+class FromTypingDict:
+    """
+    Sets the attributes of the class to be the types in the dictionary if allowed when declared
+    """
+    def __init__(self, args: dict):
+        for name, value in args.items():
+            if self.__annotations__.get('_'+name) is not None:
+                name = '_' + name
+            class_var_type = self.__annotations__.get(name)
+            if isinstance(class_var_type, _GenericAlias):
+                if type(value) in class_var_type.__args__:
+                    class_var_type = type(value)
+                else:
+                    class_var_type = None
+            if class_var_type is not None:
+                if isinstance(value, class_var_type):
+                    setattr(self, name, value)
+                    continue
+            raise TypeError(f'The type of the `{name}` variable {type(value)} does not match the default `{self.__annotations__.get(name)}`')
+        for v in self.__annotations__:
+            ga = getattr(self, v, NotSet)
+            if isinstance(ga, type(NotSet)):
+                raise TypeError(f'Not all required variables are set: `{v}`')
+
+
+class Account(FromTypingDict):
+    name: str = None
+    _address: str
+    public_key: str
+    private_key: Union[str, bytes]
+    path: Optional[str] = None
+    mnemonic: Union[str, bytes] = None
+    network_type: NetworkType
+    profile: str = None
 
     def __str__(self):
         prepare = list()
