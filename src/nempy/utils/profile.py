@@ -27,7 +27,7 @@ def setdefault():
     Change the default profile
     """
     wallet = Wallet()
-    wallet.set_default_profile()
+    wallet.inquirer_default_profile()
 
 
 @main.command('info')
