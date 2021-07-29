@@ -113,7 +113,7 @@ class TransactionTypes(IntEnum):
     NODE_KEY_LINK = 16972
 
     @staticmethod
-    def get_type_by_id(_id):
+    def get_type_by_id(_id) -> 'TransactionTypes':
         attributes = TransactionTypes.__dict__
         attributes = {key: attributes[key] for key in attributes if not key.startswith('_') and key != 'get_type_by_id'}
-        return list(attributes.keys())[list(attributes.values()).index(_id)]
+        return TransactionTypes[list(attributes.keys())[list(attributes.values()).index(_id)]]

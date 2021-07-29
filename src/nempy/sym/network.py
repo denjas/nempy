@@ -84,7 +84,7 @@ class TransactionInfo(BaseModel):
             self.message = unhexlify(self.message)[1:].decode('utf-8')
         self.recipientAddress = b32encode(unhexlify(self.recipientAddress)).decode('utf-8')[:-1]
         self.mosaics = [HumMosaicInfo(**mosaic_id_to_name_n_real(mosaic.id, mosaic.amount)) for mosaic in self.mosaics]
-        self.type = TransactionTypes.get_type_by_id(self.type)
+        self.type = TransactionTypes.get_type_by_id(self.type).name
         facade = SymFacade(node_selector.network_type.value)
         self.signer_address = str(facade.network.public_key_to_address(Hash256(self.signerPublicKey)))
 
