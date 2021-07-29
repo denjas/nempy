@@ -107,12 +107,11 @@ def get_balance(address):
     engine = XYMEngine(wallet.profile.account)
     if not address:
         address = wallet.profile.account.address
-    balance = engine.get_balance(address)
+    balance = engine.get_balance(address, humanization=True)
     if balance == {}:
         print(f'Account `{address}` does not exist, or there was no movement of funds on it')
         exit(0)
-    h_balance = engine.mosaic_humanization(balance)
-    print(json.dumps(h_balance, sort_keys=True, indent=2))
+    print(json.dumps(balance, sort_keys=True, indent=2))
 
 
 def monitoring_callback(transaction_info: dict, addresses: list):
@@ -211,12 +210,21 @@ def send(address: str, plain_message: str, encrypted_message: str, mosaics: str,
 @main.command('history')
 @click.option('-ps', '-page-size', 'page_size', type=int, required=False, default=10, show_default=True,
               help='Select the number of entries to return.')
-def setdefault(page_size):
+def history(page_size):
     """
     Show history
     """
     wallet = Wallet()
     wallet.profile.account.history(page_size)
+
+
+@main.command('setdefault')
+def setdefault():
+    """
+    Set default account
+    """
+    wallet = Wallet()
+    wallet.profile.input_default_account()
 
 
 if __name__ == '__main__':
