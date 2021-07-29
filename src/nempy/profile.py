@@ -22,11 +22,6 @@ class Profile(BaseModel):
     network_type: NetworkType
     pass_hash: bytes
 
-    # def __init__(self, profile: dict = None):
-    #     os.makedirs(PROFILES_DIR, exist_ok=True)
-    #     if profile is not None:
-    #         [setattr(self, key, value) for key, value in profile.items()]
-
     def __str__(self):
         prepare = [[key.replace('_', ' ').title(), value]
                    for key, value in self.__dict__.items() if key not in ['network_type', 'pass_hash']]

@@ -27,7 +27,7 @@ coverage = "==5.5"
 flake8 = "==3.9.2"
 
 [scripts]
-tests = "./setup.py test"
+tests = "pytest"
 
 [requires]
 python_version = "*"
