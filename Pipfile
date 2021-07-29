@@ -24,6 +24,7 @@ pydantic = "==1.8.2"
 [dev-packages]
 pytest = "==6.2.4"
 coverage = "==5.5"
+pytest-cov = "==2.12.1"
 flake8 = "==3.9.2"
 
 [scripts]
