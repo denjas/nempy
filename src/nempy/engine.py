@@ -40,15 +40,15 @@ class NEMEngine:
                     is_encrypted=False,
                     password: str = '',
                     deadline: Optional[dict] = None):
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def check_status(self):
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def get_balance(self, nem_address, test=False):
-        pass
+        raise NotImplementedError
 
 
 class XYMEngine(NEMEngine):
@@ -90,7 +90,9 @@ class XYMEngine(NEMEngine):
             return BlockchainStatuses.NOT_INITIALIZED
         return network.NodeSelector.health(self.node_selector.url)
 
-    def get_balance(self, nem_address, humanization=False):
+    def get_balance(self, nem_address: str = '', humanization: bool = False):
+        if not nem_address:
+            nem_address = self.account.address
         amount = network.get_balance(nem_address)
         if humanization:
             amount = XYMEngine.mosaic_humanization(amount)

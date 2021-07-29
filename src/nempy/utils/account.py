@@ -105,8 +105,6 @@ def get_balance(address):
     """
     wallet = Wallet()
     engine = XYMEngine(wallet.profile.account)
-    if not address:
-        address = wallet.profile.account.address
     balance = engine.get_balance(address, humanization=True)
     if balance == {}:
         print(f'Account `{address}` does not exist, or there was no movement of funds on it')
@@ -184,7 +182,7 @@ def send(address: str, plain_message: str, encrypted_message: str, mosaics: str,
             exit(1)
     wallet = Wallet()
     engine = XYMEngine(wallet.profile.account)
-    balance = engine.get_balance(engine.account.address, humanization=True)
+    balance = engine.get_balance(humanization=True)
     mosaics = [(mosaic.split(':')[0], float(mosaic.split(':')[1])) for mosaic in mosaics]
     message = plain_message or encrypted_message or ''
     is_encrypted = True if encrypted_message else False
