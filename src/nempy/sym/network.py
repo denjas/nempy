@@ -350,9 +350,11 @@ def get_divisibility(mosaic_id: str):
     return None
 
 
-def get_divisibilities():
+def get_divisibilities(n_pages: int = 0):
     mosaics = {}
     params = {'pageSize': 100}
+
+    page_count = 1
     while True:
         try:
             answer = requests.get(f'{node_selector.url}/mosaics', params=params)
@@ -370,6 +372,9 @@ def get_divisibilities():
                 mosaics[mosaic_id] = divisibility
                 last_page = page
             params['offset'] = last_page['id']
+            page_count = page_count + 1 if n_pages else page_count
+            if page_count > n_pages:
+                return mosaics
 
 
 def get_balance(address: str, mosaic_filter: Union[list, str] = None, is_linked: bool = False) -> Optional[dict]:
@@ -573,7 +578,6 @@ class NodeSelector:
                 break
 
     def reelection_node(self):
-        time.sleep(1)
         asyncio.set_event_loop(asyncio.new_event_loop())
         logger.debug('Node reselecting...')
         heights = [NodeSelector.get_height(url) for url in self._URLs]

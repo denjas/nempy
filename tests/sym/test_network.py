@@ -4,6 +4,7 @@ from unittest.mock import patch, PropertyMock
 
 import pytest
 from nempy.sym import network
+from nempy.sym.constants import NetworkType
 
 
 def test_search_transactions():
@@ -31,4 +32,14 @@ def test_node_selector():
     with patch.object(threading.Event, 'wait', return_value=False):
         with pytest.raises(RuntimeError):
             network.node_selector.url = urls
+
+
+def test_get_divisibilities():
+    network.node_selector.network_type = NetworkType.MAIN_NET
+    network.node_selector.thread.wait()
+    mosaics = network.get_divisibilities(2)
+    assert len(mosaics) == 200
+    network.node_selector.network_type = NetworkType.TEST_NET
+    mosaics = network.get_divisibilities(2)
+    assert len(mosaics) == 200
 
