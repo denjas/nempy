@@ -529,8 +529,9 @@ class NodeSelector:
             raise TypeError('Unknown network type')
 
     def node_actualizer(self, interval):
-        asyncio.set_event_loop(asyncio.new_event_loop())
         while True:
+            if self._re_elections is None:
+                break
             self._re_elections = False
             self.reelection_node()
             if self._re_elections is None:
@@ -575,6 +576,7 @@ class NodeSelector:
             self.actualizer.start()
 
     def reelection_node(self):
+        asyncio.set_event_loop(asyncio.new_event_loop())
         logger.debug('Node reselecting...')
         heights = [NodeSelector.get_height(url) for url in self._URLs]
         max_height = max(heights)
