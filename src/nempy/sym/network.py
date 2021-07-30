@@ -501,14 +501,97 @@ class Timing:
         return deadline_date_utc
 
 
+class Thread:
+
+    def __init__(self):
+        self.stop_event: Optional[threading.Event] = None
+        self.thread: Optional[threading.Thread] = None
+        self.is_started = False
+        self.updated = threading.Event()
+
+    def stop(self):
+        if self.thread is not None and self.thread.is_alive():
+            self.stop_event.set()
+            self.thread.join()
+            self.is_started = False
+            logger.debug(f'The node actualization thread {self.thread.name} has been stopped.')
+
+    def start(self, func: Callable, interval: int = 3600):
+        self.is_started = True
+        self.stop_event = threading.Event()
+        self.updated = threading.Event()
+        params = {'interval': interval, 'stop_event': self.stop_event, 'updated': self.updated}
+        self.thread = threading.Thread(target=func, kwargs=params, daemon=True)
+        self.thread.start()
+        logger.debug(f'New actualizer thread started: {self.thread.name}')
+        return self
+
+    def wait(self):
+        updated_is_set = self.updated.wait(60)
+        if not updated_is_set:
+            raise RuntimeError('Very long waiting time for node selection')
+
+
 class NodeSelector:
     _URL: Optional[str] = None
     _URLs: Optional[list] = None
-    _re_elections: Optional[bool] = False
+    is_elections: bool = False
     _network_type: NetworkType = NetworkType.TEST_NET
 
     def __init__(self, node_urls: Union[List[str], str]):
+        self.thread = Thread()
         self.url = node_urls
+
+    @property
+    def url(self):
+        while self.is_elections:
+            time.sleep(0.1)
+        return self._URL
+
+    @url.setter
+    def url(self, urls: Union[list, str]):
+        self.is_elections = True
+        self.thread.stop()
+        if isinstance(urls, str):
+            urls = [urls]
+        for url in urls:
+            url_validation(url)
+        self._URLs = urls
+        if len(self._URLs) == 1:
+            self._URL = self._URLs[0]  # setting a single URL value
+            logger.debug(f'Installed node: {self._URL}')
+        else:
+            self.thread.start(self.node_actualizer, interval=2).wait()
+        self.is_elections = False
+
+    def node_actualizer(self, interval, stop_event, updated):
+        while True:
+            self.reelection_node()
+            updated.set()
+            event_is_set = stop_event.wait(interval)
+            if event_is_set:
+                break
+
+    def reelection_node(self):
+        time.sleep(1)
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        logger.debug('Node reselecting...')
+        heights = [NodeSelector.get_height(url) for url in self._URLs]
+        max_height = max(heights)
+        heights_filter = [True if height >= max_height * 0.97 else False for height in heights]
+        # filtered by block height - 97%
+        filtered_by_height = [url for i, url in enumerate(self._URLs) if heights_filter[i]]
+        urls_p_h = {url: (NodeSelector.ping(url), NodeSelector.simple_health(url)) for url in filtered_by_height}
+        # Remove non-working nodes from the dict
+        working = {key: val for key, val in urls_p_h.items() if val[1]}
+        _sorted_URLs = [k for k, v in sorted(working.items(), key=lambda item: item[1][0])]
+        new_url = _sorted_URLs[0] if len(_sorted_URLs) > 0 else None
+        if new_url != self._URL and self._URL is not None:
+            logger.warning(f'Reselection node: {self._URL} -> {new_url}')
+        if new_url is None:
+            logger.error('It was not possible to select the current node from the list of available ones')
+        self._URL = new_url
+        logger.debug(f'Selected node: {self._URL}')
 
     @property
     def network_type(self):
@@ -527,74 +610,6 @@ class NodeSelector:
             self.url = config.TEST_NODE_URLs
         else:
             raise TypeError('Unknown network type')
-
-    def node_actualizer(self, interval):
-        while True:
-            if self._re_elections is None:
-                break
-            self._re_elections = False
-            self.reelection_node()
-            if self._re_elections is None:
-                break
-            self._re_elections = True
-            time.sleep(interval)
-            if self._re_elections is None:
-                break
-        logger.debug('The node actualization thread has been stopped.')
-
-    @property
-    def url(self):
-        if self._re_elections is None:
-            return self._URL
-        # waiting for the node re-election
-        while not self._re_elections:
-            time.sleep(0.5)
-        if len(self._URLs) > 1:
-            if self.health(self._URL) != BlockchainStatuses.OK:
-                self.reelection_node()
-        return self._URL
-
-    @url.setter
-    def url(self, urls: Union[list, str]):
-        if isinstance(urls, str):
-            urls = [urls]
-        for url in urls:
-            url_validation(url)
-        self._URLs = urls
-        if len(self._URLs) == 1:
-            self._re_elections = None  # stop background iteration of nodes
-            self._URL = self._URLs[0]  # setting a single URL value
-            logger.debug(f'Selected node: {self._URL}')
-        else:
-            #  if the daemon is running and not actualizing right now
-            if self._re_elections:  # not started and not waiting
-                # actualize and exit
-                self.reelection_node()
-                return
-            # hourly update of the node in case it appears more relevant
-            self.actualizer = threading.Thread(target=self.node_actualizer, kwargs={'interval': 3600}, daemon=True)
-            self.actualizer.start()
-
-    def reelection_node(self):
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        logger.debug('Node reselecting...')
-        heights = [NodeSelector.get_height(url) for url in self._URLs]
-        max_height = max(heights)
-        heights_filter = [True if height >= max_height * 0.97 else False for height in heights]
-        # filtered by block height - 97%
-        filtered_by_height = [url for i, url in enumerate(self._URLs) if heights_filter[i]]
-        urls_p_h = {url: (NodeSelector.ping(url), NodeSelector.simple_health(url)) for url in filtered_by_height}
-        # Remove non-working nodes from the dict
-        working = {key: val for key, val in urls_p_h.items() if val[1]}
-        _sorted_URLs = [k for k, v in sorted(working.items(), key=lambda item: item[1][0])]
-        new_url = _sorted_URLs[0] if len(_sorted_URLs) > 0 else None
-        if self._re_elections is not None:
-            if new_url != self._URL and self._URL is not None:
-                logger.warning(f'Reselection node: {self._URL} -> {new_url}')
-            if new_url is None:
-                logger.error('It was not possible to select the current node from the list of available ones')
-            self._URL = new_url
-            logger.debug(f'Selected node: {self._URL}')
 
     @staticmethod
     def health(url):

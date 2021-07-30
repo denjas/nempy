@@ -1,5 +1,6 @@
+import threading
 import time
-from unittest.mock import patch
+from unittest.mock import patch, PropertyMock
 
 import pytest
 from nempy.sym import network
@@ -25,3 +26,9 @@ def test_node_selector():
     not_worked_url = 'http://sdfgdfg.sdfgdsgdgfd.sdfgd.sdfgsdg:3000'
     network.node_selector.url = not_worked_url
     assert network.node_selector.url == not_worked_url
+    network.node_selector.url = urls
+    assert network.node_selector.url in urls
+    with patch.object(threading.Event, 'wait', return_value=False):
+        with pytest.raises(RuntimeError):
+            network.node_selector.url = urls
+
