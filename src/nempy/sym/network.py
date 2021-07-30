@@ -57,7 +57,6 @@ class MosaicInfo(BaseModel):
 
 
 class HumMosaicInfo(MosaicInfo):
-    id: str
     amount: float
 
     def __str__(self):
@@ -337,7 +336,29 @@ def get_divisibility(mosaic_id: str):
     return None
 
 
-def get_balance(address: str, mosaic_filter: [list, str] = None, is_linked: bool = False) -> Optional[dict]:
+def get_divisibilities():
+    mosaics = {}
+    params = {'pageSize': 100}
+    while True:
+        try:
+            answer = requests.get(f'{node_selector.url}/mosaics', params=params)
+        except Exception as e:
+            logger.error(e)
+            return None
+        if answer.status_code == HTTPStatus.OK:
+            mosaics_pages = json.loads(answer.text)['data']
+            if len(mosaics_pages) == 0:
+                return mosaics
+            last_page = None
+            for page in mosaics_pages:
+                mosaic_id = page['mosaic']['id']
+                divisibility = page['mosaic']['divisibility']
+                mosaics[mosaic_id] = divisibility
+                last_page = page
+            params['offset'] = last_page['id']
+
+
+def get_balance(address: str, mosaic_filter: Union[list, str] = None, is_linked: bool = False) -> Optional[dict]:
     if isinstance(mosaic_filter, str):
         mosaic_filter = [mosaic_filter]
     if mosaic_filter is None:
