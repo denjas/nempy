@@ -5,10 +5,11 @@ import logging
 import multiprocessing
 import threading
 import time
+import re
 from base64 import b32encode
 from binascii import unhexlify
 from http import HTTPStatus
-from typing import Optional, Union, List, Callable, Tuple, Dict
+from typing import Optional, Union, List, Callable, Dict
 from urllib.parse import urlparse
 
 import requests
@@ -25,6 +26,19 @@ from . import ed25519, constants, config
 from .constants import TransactionStatus
 
 logger = logging.getLogger(__name__)
+
+
+def url_validation(url):
+    # django url validation regex
+    regex = re.compile(
+        r'^(?:http|ftp)s?://'  # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+        r'localhost|'  # localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+        r'(?::\d+)?'  # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+    if re.match(regex, url) is None:
+        raise ValueError(f'`{url}` is not a valid URL')
 
 
 def mosaic_id_to_name_n_real(mosaic_id: str, amount: int) -> Dict[str, float]:
@@ -534,18 +548,21 @@ class NodeSelector:
         # waiting for the node re-election
         while not self._re_elections:
             time.sleep(0.5)
-        if self.health(self._URL) != BlockchainStatuses.OK:
-            self.reelection_node()
+        if len(self._URLs) > 1:
+            if self.health(self._URL) != BlockchainStatuses.OK:
+                self.reelection_node()
         return self._URL
 
     @url.setter
-    def url(self, value: Union[list, str]):
-        if isinstance(value, str):
-            value = [value]
-        self._URLs = value
+    def url(self, urls: Union[list, str]):
+        if isinstance(urls, str):
+            urls = [urls]
+        for url in urls:
+            url_validation(url)
+        self._URLs = urls
         if len(self._URLs) == 1:
             self._re_elections = None  # stop background iteration of nodes
-            self._URL = self._URLs[0]
+            self._URL = self._URLs[0]  # setting a single URL value
             logger.debug(f'Selected node: {self._URL}')
         else:
             #  if the daemon is running and not actualizing right now
@@ -665,7 +682,8 @@ class NodeSelector:
             pass
         except exceptions.InvalidStatusCode:
             pass
-        except Exception:
+        except Exception as e:
+            logger.debug(str(e))
             return None
 
         # Stop Timer
