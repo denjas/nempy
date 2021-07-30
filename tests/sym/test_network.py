@@ -43,3 +43,15 @@ def test_get_divisibilities():
     mosaics = network.get_divisibilities(2)
     assert len(mosaics) == 200
 
+
+def test_get_network_properties():
+    np = network.get_network_properties()
+    for key in ['network', 'chain', 'plugins']:
+        assert key in np
+
+
+def test_get_block_information():
+    bn = network.get_block_information(1)
+    assert bn['meta']['hash'] == 'AAF1AE7E0E03D4CC0B3B73DB56530C06465AE8229B1A85C3CA22EC114189AD00'
+
+
