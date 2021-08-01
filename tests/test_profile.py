@@ -1,11 +1,11 @@
 import os
-import tempfile
-from unittest.mock import patch, PropertyMock
 import shutil
+import tempfile
+from unittest.mock import patch
 
 import stdiomask
 from nempy.profile import Profile
-from sym.constants import NetworkType
+from nempy.sym.constants import NetworkType
 
 
 class TestProfile:

@@ -1,12 +1,9 @@
 import os
-import tempfile
-from unittest.mock import patch, PropertyMock
 import shutil
+import tempfile
+from unittest.mock import patch
 
-import stdiomask
 from nempy.wallet import Wallet
-import profile
-from sym.constants import NetworkType
 
 
 class TestWallet:
@@ -19,4 +16,7 @@ class TestWallet:
         shutil.rmtree(self.wallet_dir)
 
     def test_init(self):
-        wallet = Wallet(self.wallet_dir, skip_checks=True)
+        Wallet(self.wallet_dir, skip_checks=True)
+        with patch('nempy.wallet.input', return_value='y'):
+            wallet = Wallet(self.wallet_dir, skip_checks=True)
+            print(wallet)

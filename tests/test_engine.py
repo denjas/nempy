@@ -1,12 +1,11 @@
 from unittest.mock import patch, PropertyMock
 
 import pytest
+from nempy.engine import XYMEngine, EngineStatusCode, NEMEngine
 from nempy.sym import network
 from nempy.sym.constants import BlockchainStatuses, TransactionStatus
 
 from .test_account import test_account
-from nempy.engine import XYMEngine, EngineStatusCode, NEMEngine
-from nempy.sym.api import PlainMessage, Mosaic
 
 
 class TestEngine:
