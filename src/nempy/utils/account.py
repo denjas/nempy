@@ -77,7 +77,7 @@ def info(name, decrypt, is_list):
         account = accounts.get(name, {})
         if not account:
             # print(f'The account named `{name}` does not exist in profile `{wallet.profile.name}`')
-            wallet.profile.input_default_account()
+            wallet.profile.inquirer_default_account()
             account = wallet.profile.account
         accounts = {name: account}
     password = None
@@ -222,7 +222,7 @@ def setdefault():
     Set default account
     """
     wallet = Wallet()
-    wallet.profile.input_default_account()
+    wallet.profile.inquirer_default_account()
 
 
 if __name__ == '__main__':

@@ -17,6 +17,14 @@ from tabulate import tabulate
 logger = logging.getLogger(__name__)
 
 
+class PasswordPolicyError(Exception):
+    pass
+
+
+class RepeatPasswordError(Exception):
+    pass
+
+
 class Profile(BaseModel):
     name: str
     network_type: NetworkType
@@ -60,7 +68,7 @@ class Profile(BaseModel):
                 accounts[os.path.splitext(account_path)[0]] = account
         return accounts
 
-    def input_default_account(self):
+    def inquirer_default_account(self):
         accounts = self.load_accounts()
         if not accounts:
             print(f'There are no accounts for the {self.name} profile. To create an account, run the command: `nempy-cli.py account create`')
@@ -106,23 +114,25 @@ class Profile(BaseModel):
         logger.error('Incorrect password')
         return None
 
-    @staticmethod
-    def create_profile() -> Tuple['Profile', bool]:
-        name, path = Profile.input_profile_name()
-        network_type = Profile.input_network_type()
-        new_pass = Profile.input_new_pass(10)
-        if new_pass is None:
-            exit(1)
+    @classmethod
+    def create_profile_by_input(cls) -> 'Profile':
+        name, path = cls.input_profile_name()
+        network_type = cls.input_network_type()
+        new_pass = cls.input_new_pass(10)
         pass_hash = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt(12))
+
+        profile = Profile(name=name, network_type=network_type, pass_hash=pass_hash)
+        profile.save_profile(path)
+        print(f'Profile {profile.name} successful created by path: {path}')
+        return profile
+
+    @staticmethod
+    def input_is_default(name):
         is_default = False
         answer = input(f'Set `{name}` profile as default? [Y/n]: ') or 'y'
         if answer.lower() == 'y':
             is_default = True
-        profile = Profile(name=name, network_type=network_type, pass_hash=pass_hash)
-        profile.save_profile(path)
-        print(f'Profile {profile.name} successful created by path: {path}')
-        print(profile)
-        return profile, is_default
+        return is_default
 
     @staticmethod
     def input_profile_name():
@@ -165,6 +175,7 @@ class Profile(BaseModel):
             nonletters=2,  # need min. 2 non-letter characters (digits, specials, anything)
         )
         new_password = None
+        in_policies = None
         for i in range(n_attempts):
             new_password = stdiomask.getpass(f'Enter your new account password {policy.test("")}: ')
             in_policies = policy.test(new_password)
@@ -173,29 +184,29 @@ class Profile(BaseModel):
             else:
                 break
         if new_password is None:
-            return None
+            raise PasswordPolicyError(print(in_policies))
         for i in range(n_attempts):
             repeat_password = stdiomask.getpass(f'Repeat password for confirmation: ')
             if repeat_password != new_password:
                 print(f'Try again, attempts left {n_attempts - i}')
             else:
                 return new_password
-        return None
+        raise RepeatPasswordError('Failed to confirm password on re-entry')
 
     def save_profile(self, path):
         pickled = self.serialize()
         with open(path, 'wb') as opened_file:
             opened_file.write(pickled)
 
-    @staticmethod
-    def loaf_profile(path) -> 'Profile':
+    @classmethod
+    def loaf_profile(cls, path) -> 'Profile':
         with open(path, 'rb') as opened_file:
-            return Profile.deserialize(opened_file.read())
+            return cls.deserialize(opened_file.read())
 
     def serialize(self):
         return pickle.dumps(self.__dict__)
 
-    @staticmethod
-    def deserialize(data) -> 'Profile':
+    @classmethod
+    def deserialize(cls, data) -> 'Profile':
         des_date = pickle.loads(data)
-        return Profile(**des_date)
+        return cls(**des_date)

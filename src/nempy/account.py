@@ -150,10 +150,10 @@ class Account(FromTypingDict):
         sdate = pickle.dumps(self.__dict__)
         return sdate
 
-    @staticmethod
-    def deserialize(data) -> 'Account':
+    @classmethod
+    def deserialize(cls, data) -> 'Account':
         ddate = pickle.loads(data)
-        return Account(ddate)
+        return cls(ddate)
 
     @staticmethod
     def build_account_path(name: str) -> str:
@@ -173,12 +173,12 @@ class Account(FromTypingDict):
             decrypted_account.mnemonic = pickle.loads(decryption(password, self.mnemonic))
         return decrypted_account
 
-    @staticmethod
-    def read(path: str) -> Union['Account', DecoderStatus]:
+    @classmethod
+    def read(cls, path: str) -> Union['Account', DecoderStatus]:
         if not os.path.exists(path):
             logger.error(DecoderStatus.NO_DATA.value)
             return DecoderStatus.NO_DATA
-        account = Account.deserialize(open(path, 'rb').read())
+        account = cls.deserialize(open(path, 'rb').read())
         return account
 
     def encrypt(self, password: str) -> 'Account':
@@ -201,12 +201,12 @@ class Account(FromTypingDict):
             opened_file.write(pickled_data)
         logger.debug(f'Wallet saved along the way: {path}')
 
-    @staticmethod
-    def init_general_params(network_type: NetworkType) -> Tuple[str, str, int, bool]:
+    @classmethod
+    def init_general_params(cls, network_type: NetworkType) -> Tuple[str, str, int, bool]:
         while True:
             name = input('Enter the account name: ')
             if name != '':
-                account_path = Account.build_account_path(name)
+                account_path = cls.build_account_path(name)
                 if os.path.exists(account_path):
                     print('An account with the same name already exists, please select a different name')
                     continue
@@ -252,20 +252,20 @@ class Account(FromTypingDict):
         account_name = answers['address']
         return account_name
 
-    @staticmethod
-    def account_by_mnemonic(network_type: NetworkType, bip32_coin_id: int, is_generate: bool = False) -> 'Account':
+    @classmethod
+    def account_by_mnemonic(cls, network_type: NetworkType, bip32_coin_id: int, is_generate: bool = False) -> 'Account':
         if is_generate:
-            random_char_set = Account.input_keyprint_entropy()
+            random_char_set = cls.input_keyprint_entropy()
             entropy_bytes_hex = blake2b(random_char_set.encode(), digest_size=32).hexdigest().encode()
             mnemonic = Bip39MnemonicGenerator(Bip39Languages.ENGLISH).FromEntropy(binascii.unhexlify(entropy_bytes_hex))
         else:
             mnemonic = stdiomask.getpass('Enter a mnemonic passphrase. Words must be separated by spaces: ')
-        accounts = Account._accounts_pool_by_mnemonic(network_type, bip32_coin_id, mnemonic)
-        account_name = Account.inquirer_account(accounts.keys())
+        accounts = cls._accounts_pool_by_mnemonic(network_type, bip32_coin_id, mnemonic)
+        account_name = cls.inquirer_account(accounts.keys())
         return accounts[account_name]
 
-    @staticmethod
-    def _accounts_pool_by_mnemonic(network_type: NetworkType, bip32_coin_id: int, mnemonic: str) -> Dict[str, 'Account']:
+    @classmethod
+    def _accounts_pool_by_mnemonic(cls, network_type: NetworkType, bip32_coin_id: int, mnemonic: str) -> Dict[str, 'Account']:
         facade = SymFacade(network_type.value)
 
         bip = Bip32(facade.BIP32_CURVE_NAME)
@@ -278,12 +278,12 @@ class Account(FromTypingDict):
             private_key = str(child_key_pair.private_key).upper()
             public_key = str(child_key_pair.public_key).upper()
             address = str(facade.network.public_key_to_address(child_key_pair.public_key)).upper()
-            accounts[address] = Account({'address': address,
-                                         'public_key': public_key,
-                                         'private_key': private_key,
-                                         'mnemonic': mnemonic,
-                                         'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'",
-                                         'network_type': network_type})
+            accounts[address] = cls({'address': address,
+                                     'public_key': public_key,
+                                     'private_key': private_key,
+                                     'mnemonic': mnemonic,
+                                     'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'",
+                                     'network_type': network_type})
         return accounts
 
     def account_creation(self, account_path: str, password: str):

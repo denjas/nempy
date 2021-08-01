@@ -167,6 +167,7 @@ class TestTransaction:
         slow = Transaction.calc_max_fee(160, Fees.SLOW)
         slowest = Transaction.calc_max_fee(160, Fees.SLOWEST)
         zero = Transaction.calc_max_fee(160, Fees.ZERO)
+        print(zero, slowest, slow, average, fast)
         assert zero < slowest < slow < average < fast
 
         with patch.object(network, 'get_fee_multipliers', return_value=None):

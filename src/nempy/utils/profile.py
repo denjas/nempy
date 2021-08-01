@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import click
-from nempy.wallet import Wallet, Profile
+from nempy.wallet import Wallet
+from nempy.profile import Profile, PasswordPolicyError, RepeatPasswordError
 
 
 @click.group('profile', help='- Interactive account management')
@@ -15,10 +16,16 @@ def create_profile():
     """
     Create a new profile
     """
-    profile, is_default = Profile.create_profile()
+    try:
+        profile = Profile.create_profile_by_input()
+    except (PasswordPolicyError, RepeatPasswordError) as e:
+        print(e)
+        exit(1)
+    is_default = Profile.input_is_default(profile.name)
     if is_default:
         wallet = Wallet()
         wallet.set_default_profile(profile)
+    print(profile)
 
 
 @main.command('setdefault')
