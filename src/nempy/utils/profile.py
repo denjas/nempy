@@ -16,15 +16,8 @@ def create_profile():
     """
     Create a new profile
     """
-    try:
-        profile = Profile.create_profile_by_input()
-    except (PasswordPolicyError, RepeatPasswordError) as e:
-        print(e)
-        exit(1)
-    is_default = Profile.input_is_default(profile.name)
-    if is_default:
-        wallet = Wallet()
-        wallet.set_default_profile(profile)
+    wallet = Wallet()
+    profile = wallet.create_profile()
     print(profile)
 
 
@@ -38,7 +31,7 @@ def setdefault():
 
 
 @main.command('info')
-@click.option('-n', '--name', type=str, required=False, default='', help='Account name')
+@click.option('-n', '--name', type=str, required=False, default='', help='Profile name')
 @click.option('--list', 'is_list', required=False, is_flag=True, help='List of all profile of the current wallet')
 def profile_info(name, is_list):
     """

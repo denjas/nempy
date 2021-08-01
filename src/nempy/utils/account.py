@@ -25,7 +25,7 @@ def import_account():
     Create a new account with existing private key or mnemonic
     """
     wallet = Wallet()
-    account_path, name, bip32_coin_id, is_default = Account.init_general_params(wallet.profile.network_type)
+    account_path, name, bip32_coin_id, is_default = Account.init_general_params(wallet.profile.network_type, wallet.accounts_dir)
     if is_default:
         wallet.profile.set_default_account(name)
     password = wallet.profile.check_pass(attempts=3)
@@ -45,7 +45,7 @@ def create_account():
     Create a new account
     """
     wallet = Wallet()
-    account_path, name, bip32_coin_id, is_default = Account.init_general_params(wallet.profile.network_type)
+    account_path, name, bip32_coin_id, is_default = Account.init_general_params(wallet.profile.network_type, wallet.accounts_dir)
     if is_default:
         wallet.profile.set_default_account(name)
     password = wallet.profile.check_pass(attempts=3)

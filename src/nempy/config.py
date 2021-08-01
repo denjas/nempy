@@ -1,9 +1,6 @@
 import os
 
 WALLET_DIR = os.getenv('WALLET_DIR', os.path.expanduser('~/.config/nempy'))
-PROFILES_DIR = os.path.join(WALLET_DIR, os.path.expanduser('profiles'))
-ACCOUNTS_DIR = os.path.join(WALLET_DIR, os.path.expanduser('accounts'))
-CONFIG_FILE = os.path.join(WALLET_DIR, os.path.expanduser('config.ini'))
 
 
 class C:

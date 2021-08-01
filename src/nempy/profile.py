@@ -8,7 +8,7 @@ import bcrypt
 import inquirer
 import stdiomask
 from nempy.account import Account
-from nempy.config import CONFIG_FILE, PROFILES_DIR, ACCOUNTS_DIR, C
+from nempy.config import C
 from nempy.sym.constants import NetworkType
 from password_strength import PasswordPolicy
 from pydantic import BaseModel
@@ -29,12 +29,14 @@ class Profile(BaseModel):
     name: str
     network_type: NetworkType
     pass_hash: bytes
+    accounts_dir: str
 
     def __str__(self):
         prepare = [[key.replace('_', ' ').title(), value]
                    for key, value in self.__dict__.items() if key not in ['network_type', 'pass_hash']]
         prepare.append(['Network Type', self.network_type.name])
         prepare.append(['Pass Hash', C.OKBLUE + '*' * len(self.pass_hash) + C.END ])
+        prepare.append(['Accounts Directory', self.accounts_dir])
         profile = f'Profile - {self.name}'
         indent = (len(self.pass_hash) - len(profile)) // 2
         profile = C.INVERT + ' ' * indent + profile + ' ' * indent + C.END
@@ -54,14 +56,14 @@ class Profile(BaseModel):
         config = configparser.ConfigParser()
         config.read(CONFIG_FILE)
         account_name = config['account']['default']
-        accounts = self.load_accounts()
+        accounts = self.load_accounts(self.accounts_dir)
         return accounts.get(account_name)
 
-    def load_accounts(self) -> Dict[str, Account]:
+    def load_accounts(self, accounts_dir: str) -> Dict[str, Account]:
         accounts = {}
-        accounts_paths = os.listdir(ACCOUNTS_DIR)
+        accounts_paths = os.listdir(accounts_dir)
         for account_path in accounts_paths:
-            path = os.path.join(ACCOUNTS_DIR, account_path)
+            path = os.path.join(accounts_dir, account_path)
             account = Account.read(path)
             # select all accounts of the current profile
             if account.profile == self.name:
@@ -69,7 +71,7 @@ class Profile(BaseModel):
         return accounts
 
     def inquirer_default_account(self):
-        accounts = self.load_accounts()
+        accounts = self.load_accounts(self.accounts_dir)
         if not accounts:
             print(f'There are no accounts for the {self.name} profile. To create an account, run the command: `nempy-cli.py account create`')
             exit(1)
@@ -115,16 +117,16 @@ class Profile(BaseModel):
         return None
 
     @classmethod
-    def create_profile_by_input(cls) -> 'Profile':
-        name, path = cls.input_profile_name()
+    def create_profile_by_input(cls, profiles_dir) -> Tuple['Profile', str]:
+        name, path = cls.input_profile_name(profiles_dir)
         network_type = cls.input_network_type()
         new_pass = cls.input_new_pass(10)
         pass_hash = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt(12))
-
-        profile = Profile(name=name, network_type=network_type, pass_hash=pass_hash)
+        accounts_dir = os.path.join(os.path.dirname(profiles_dir), 'accounts')
+        profile = Profile(name=name, network_type=network_type, pass_hash=pass_hash, accounts_dir=accounts_dir)
         profile.save_profile(path)
         print(f'Profile {profile.name} successful created by path: {path}')
-        return profile
+        return profile, path
 
     @staticmethod
     def input_is_default(name):
@@ -135,10 +137,10 @@ class Profile(BaseModel):
         return is_default
 
     @staticmethod
-    def input_profile_name():
+    def input_profile_name(profiles_dir):
         while True:
             name = input('Enter profile name: ')
-            path = os.path.join(PROFILES_DIR, f'{name}.profile')
+            path = os.path.join(profiles_dir, f'{name}.profile')
             if name == '':
                 print('The name cannot be empty')
             elif os.path.exists(path):

@@ -16,7 +16,6 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
 from bip_utils import Bip39MnemonicGenerator, Bip39Languages
-from nempy.config import ACCOUNTS_DIR
 from nempy.config import C
 from nempy.sym import network
 from nempy.sym.constants import NetworkType, TransactionStatus
@@ -155,11 +154,6 @@ class Account(FromTypingDict):
         ddate = pickle.loads(data)
         return cls(ddate)
 
-    @staticmethod
-    def build_account_path(name: str) -> str:
-        account_path = os.path.join(ACCOUNTS_DIR, name + '.account')
-        return account_path
-
     def decrypt(self, password: str) -> 'Account':
         if not isinstance(self.private_key, bytes):
             logger.error('Unencrypted account!')
@@ -202,11 +196,11 @@ class Account(FromTypingDict):
         logger.debug(f'Wallet saved along the way: {path}')
 
     @classmethod
-    def init_general_params(cls, network_type: NetworkType) -> Tuple[str, str, int, bool]:
+    def init_general_params(cls, network_type: NetworkType, accounts_dir: str) -> Tuple[str, str, int, bool]:
         while True:
             name = input('Enter the account name: ')
             if name != '':
-                account_path = cls.build_account_path(name)
+                account_path = os.path.join(accounts_dir, name + '.account')
                 if os.path.exists(account_path):
                     print('An account with the same name already exists, please select a different name')
                     continue
