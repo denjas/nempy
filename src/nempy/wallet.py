@@ -1,6 +1,7 @@
 import configparser
 import logging
 import os
+from typing import Optional
 
 import inquirer
 from nempy.config import WALLET_DIR, C
@@ -13,11 +14,11 @@ logger = logging.getLogger(__name__)
 class Wallet:
 
     profiles = dict()
-    _profile: Profile = None
+    _profile: Optional[Profile] = None
 
     def __init__(self,
                  wallet_dir: str = WALLET_DIR,
-                 skip_checks: bool = False):
+                 init_only: bool = False):
         self.wallet_dir = wallet_dir
         self.profiles_dir = os.path.join(self.wallet_dir, 'profiles')
         self.accounts_dir = os.path.join(self.wallet_dir, 'accounts')
@@ -28,13 +29,13 @@ class Wallet:
         os.makedirs(self.accounts_dir, exist_ok=True)
 
         self.init_config_file()
-        if not skip_checks:
+        if not init_only:
             self.load_profiles()
             if not self.profiles:
                 print('No profiles have been created')
                 answer = input('Create new profile? [Y/n]') or 'y'
                 if answer.lower() != 'y':
-                    exit(1)
+                    return
                 self.create_profile(is_default=True)
             config = configparser.ConfigParser()
             config.read(self.config_file)
@@ -56,7 +57,7 @@ class Wallet:
 
     def create_profile(self, is_default: bool = False):
         try:
-            profile, _ = Profile.create_profile_by_input(self.profiles_dir)
+            profile, _ = Profile.create_profile_by_input(self.profiles_dir, self.config_file)
             if not is_default:
                 is_default = Profile.input_is_default(profile.name)
             if is_default:

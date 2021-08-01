@@ -15,7 +15,7 @@ from tabulate import tabulate
 
 @click.group('account', help='- Interactive account management')
 def main():
-    Wallet(skip_checks=True)
+    Wallet(init_only=True)
     print('|Interactive account management|')
 
 

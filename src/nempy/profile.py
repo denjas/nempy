@@ -30,12 +30,13 @@ class Profile(BaseModel):
     network_type: NetworkType
     pass_hash: bytes
     accounts_dir: str
+    config_file: str
 
     def __str__(self):
         prepare = [[key.replace('_', ' ').title(), value]
                    for key, value in self.__dict__.items() if key not in ['network_type', 'pass_hash']]
         prepare.append(['Network Type', self.network_type.name])
-        prepare.append(['Pass Hash', C.OKBLUE + '*' * len(self.pass_hash) + C.END ])
+        prepare.append(['Pass Hash', C.OKBLUE + '*' * len(self.pass_hash) + C.END])
         prepare.append(['Accounts Directory', self.accounts_dir])
         profile = f'Profile - {self.name}'
         indent = (len(self.pass_hash) - len(profile)) // 2
@@ -54,7 +55,7 @@ class Profile(BaseModel):
         :return: Account
         """
         config = configparser.ConfigParser()
-        config.read(CONFIG_FILE)
+        config.read(self.config_file)
         account_name = config['account']['default']
         accounts = self.load_accounts(self.accounts_dir)
         return accounts.get(account_name)
@@ -86,12 +87,11 @@ class Profile(BaseModel):
         account = accounts[answers['name']]
         Profile.set_default_account(account.name)
 
-    @staticmethod
-    def set_default_account(name: str):
+    def set_default_account(self, name: str):
         config = configparser.ConfigParser()
-        config.read(CONFIG_FILE)
+        config.read(self.config_file)
         config['account']['default'] = name
-        with open(CONFIG_FILE, 'w') as configfile:
+        with open(self.config_file, 'w') as configfile:
             config.write(configfile)
 
     def check_pass(self, password: str = None, attempts: int = 1) -> Optional[str]:
@@ -117,13 +117,17 @@ class Profile(BaseModel):
         return None
 
     @classmethod
-    def create_profile_by_input(cls, profiles_dir) -> Tuple['Profile', str]:
+    def create_profile_by_input(cls, profiles_dir: str, config_file: str) -> Tuple['Profile', str]:
         name, path = cls.input_profile_name(profiles_dir)
         network_type = cls.input_network_type()
         new_pass = cls.input_new_pass(10)
         pass_hash = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt(12))
         accounts_dir = os.path.join(os.path.dirname(profiles_dir), 'accounts')
-        profile = Profile(name=name, network_type=network_type, pass_hash=pass_hash, accounts_dir=accounts_dir)
+        profile = Profile(name=name,
+                          network_type=network_type,
+                          pass_hash=pass_hash,
+                          accounts_dir=accounts_dir,
+                          config_file=config_file)
         profile.save_profile(path)
         print(f'Profile {profile.name} successful created by path: {path}')
         return profile, path

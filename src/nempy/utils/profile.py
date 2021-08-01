@@ -7,7 +7,7 @@ from nempy.profile import Profile, PasswordPolicyError, RepeatPasswordError
 
 @click.group('profile', help='- Interactive account management')
 def main():
-    Wallet(skip_checks=True)
+    Wallet(init_only=True)
     print('Interactive account management:')
 
 
