@@ -198,10 +198,11 @@ class Transaction:
         # https://github.com/nemgrouplimited/symbol-desktop-wallet/blob/507d4694a0ff55b0b039be0b5d061b47b2386fde/src/services/TransactionCommand.ts#L200
         fast_fee_multiplier = nfm[FM.min] if nfm[FM.average] < nfm[FM.min] else nfm[FM.average]
         average_fee_multiplier = nfm[FM.min] + nfm[FM.average] * 0.65
-        if fast_fee_multiplier < average_fee_multiplier:
-            fast_fee_multiplier, average_fee_multiplier = average_fee_multiplier, fast_fee_multiplier
         slow_fee_multiplier = nfm[FM.min] + nfm[FM.average] * 0.35
         slowest_fee_multiplier = nfm[FM.min]
+        # sometimes the average is less than fast
+        slowest_fee_multiplier, slow_fee_multiplier, average_fee_multiplier, fast_fee_multiplier = sorted(
+            [slowest_fee_multiplier, slow_fee_multiplier, average_fee_multiplier, fast_fee_multiplier])
 
         div = 1000000
         logger.debug(f'Fees.FAST.name: {fast_fee_multiplier * transaction_size / div}')
