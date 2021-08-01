@@ -60,6 +60,17 @@ class Profile(BaseModel):
         accounts = self.load_accounts(self.accounts_dir)
         return accounts.get(account_name)
 
+    def create_account(self):
+        account_path, name, bip32_coin_id, is_default = Account.init_general_params(self.network_type, self.accounts_dir)
+        if is_default:
+            self.set_default_account(name)
+        password = self.check_pass(attempts=3)
+        if password is not None:
+            account = Account.account_by_mnemonic(self.network_type, bip32_coin_id, is_generate=True)
+            account.name = name
+            account.profile = self.name
+            account.account_creation(account_path, password)
+
     def load_accounts(self, accounts_dir: str) -> Dict[str, Account]:
         accounts = {}
         accounts_paths = os.listdir(accounts_dir)
@@ -74,8 +85,11 @@ class Profile(BaseModel):
     def inquirer_default_account(self):
         accounts = self.load_accounts(self.accounts_dir)
         if not accounts:
-            print(f'There are no accounts for the {self.name} profile. To create an account, run the command: `nempy-cli.py account create`')
-            exit(1)
+            answer = input(f'There are no accounts for the {self.name} profile. Create new? [Y/n]: ') or 'y'
+            if answer.lower() != 'y':
+                return
+            self.create_account()
+            accounts = self.load_accounts(self.accounts_dir)
         questions = [
             inquirer.List(
                 "name",
@@ -85,7 +99,7 @@ class Profile(BaseModel):
         ]
         answers = inquirer.prompt(questions)
         account = accounts[answers['name']]
-        Profile.set_default_account(account.name)
+        self.set_default_account(account.name)
 
     def set_default_account(self, name: str):
         config = configparser.ConfigParser()
@@ -134,16 +148,16 @@ class Profile(BaseModel):
 
     @staticmethod
     def input_is_default(name):
-        is_default = False
         answer = input(f'Set `{name}` profile as default? [Y/n]: ') or 'y'
         if answer.lower() == 'y':
-            is_default = True
-        return is_default
+            return True
+        return False
 
     @staticmethod
-    def input_profile_name(profiles_dir):
-        while True:
-            name = input('Enter profile name: ')
+    def input_profile_name(profiles_dir, attempts: int = 5):
+        name = None
+        for i in range(attempts):
+            name = input(f'({attempts-i}) Enter profile name: ')
             path = os.path.join(profiles_dir, f'{name}.profile')
             if name == '':
                 print('The name cannot be empty')
@@ -151,6 +165,7 @@ class Profile(BaseModel):
                 print(f'A profile named `{name}` already exists')
             else:
                 return name, path
+        raise ValueError(f'Incorrect name for new profile - `{name}`')
 
     @staticmethod
     def input_network_type() -> NetworkType:
@@ -181,22 +196,26 @@ class Profile(BaseModel):
             nonletters=2,  # need min. 2 non-letter characters (digits, specials, anything)
         )
         new_password = None
-        in_policies = None
+        not_in_policies = True
         for i in range(n_attempts):
             new_password = stdiomask.getpass(f'Enter your new account password {policy.test("")}: ')
-            in_policies = policy.test(new_password)
-            if in_policies:
-                print(in_policies)
+            not_in_policies = policy.test(new_password)
+            if not_in_policies:
+                print(not_in_policies)
             else:
                 break
-        if new_password is None:
-            raise PasswordPolicyError(print(in_policies))
+        if not_in_policies:
+            raise PasswordPolicyError(print(not_in_policies))
+        return Profile.repeat_password(n_attempts, new_password)
+
+    @staticmethod
+    def repeat_password(n_attempts: int, password):
         for i in range(n_attempts):
             repeat_password = stdiomask.getpass(f'Repeat password for confirmation: ')
-            if repeat_password != new_password:
+            if repeat_password != password:
                 print(f'Try again, attempts left {n_attempts - i}')
             else:
-                return new_password
+                return password
         raise RepeatPasswordError('Failed to confirm password on re-entry')
 
     def save_profile(self, path):

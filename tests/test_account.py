@@ -27,5 +27,7 @@ def test_account(mock_keyprint_entropy):
     account0.encrypt(password).write(path)
     account0_.read(path).decrypt(password)
     assert account0.address == account0_.address
+    account0_.name = 'account-0'
+    account1.name = 'account-1'
     return account0_, account1
 

@@ -44,16 +44,7 @@ def create_account():
     """
     Create a new account
     """
-    wallet = Wallet()
-    account_path, name, bip32_coin_id, is_default = Account.init_general_params(wallet.profile.network_type, wallet.accounts_dir)
-    if is_default:
-        wallet.profile.set_default_account(name)
-    password = wallet.profile.check_pass(attempts=3)
-    if password is not None:
-        account = Account.account_by_mnemonic(wallet.profile.network_type, bip32_coin_id, is_generate=True)
-        account.name = name
-        account.profile = wallet.profile.name
-        account.account_creation(account_path, password)
+    Wallet().profile.create_account()
 
 
 @main.command('info')
