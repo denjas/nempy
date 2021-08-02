@@ -69,6 +69,7 @@ class GenerationType(Enum):
 class DecoderStatus(Enum):
     DECRYPTED = None
     NO_DATA = 'Missing data to decode'
+    WRONG_DATA = 'Wrong data format, expected `bytes`'
     WRONG_PASS = 'Wrong password'
 
 
@@ -137,6 +138,18 @@ class Account(FromTypingDict):
         table = tabulate(prepare, headers=['', f'{account}'], tablefmt='grid')
         return table
 
+    def __eq__(self, other: 'Account'):
+        if self.name == other.name and \
+                self.path == other.path and \
+                self.address == other.address and \
+                self.network_type == other.network_type and \
+                self.public_key == other.public_key and \
+                self.profile == other.profile and \
+                isinstance(self.private_key, type(other.private_key)) and \
+                isinstance(self.mnemonic, type(other.mnemonic)):
+            return True
+        return False
+
     @property
     def address(self) -> str:
         return self._address
@@ -156,12 +169,13 @@ class Account(FromTypingDict):
 
     def decrypt(self, password: str) -> 'Account':
         if not isinstance(self.private_key, bytes):
-            logger.error('Unencrypted account!')
+            logger.error('Unencrypted account?')
+            raise ValueError(DecoderStatus.WRONG_DATA.value)
         decrypted_account = copy.deepcopy(self)
         decrypted_key = decryption(password, self.private_key)
         if decrypted_key is None:
             logger.error(DecoderStatus.WRONG_PASS.value)
-            raise SystemExit(DecoderStatus.WRONG_PASS.value)
+            raise ValueError(DecoderStatus.WRONG_PASS.value)
         decrypted_account.private_key = pickle.loads(decrypted_key)
         if decrypted_account.mnemonic is not None:
             decrypted_account.mnemonic = pickle.loads(decryption(password, self.mnemonic))
@@ -184,6 +198,9 @@ class Account(FromTypingDict):
             # encrypt the mnemonic
             self.mnemonic = encryption(password=password, data=pickle_mnemonic)
         return self
+
+    def is_encrypted(self):
+        return isinstance(self.private_key, bytes)
 
     def write(self, path: str):
         if not isinstance(self.private_key, bytes):
@@ -305,11 +322,13 @@ class Account(FromTypingDict):
             return GenerationType.PRIVATE_KEY
         return GenerationType.MNEMONIC
 
-    def history(self, page_size: int):
-        conf_transactions: List[TransactionResponse] = network.search_transactions(address=self.address,
+    def inquirer_history(self, address: str = None, page_size: int = 10):
+        if address is None:
+            address = self.address
+        conf_transactions: List[TransactionResponse] = network.search_transactions(address=address,
                                                                                    page_size=page_size,
                                                                                    transaction_status=TransactionStatus.CONFIRMED_ADDED)
-        unconf_transactions: List[TransactionResponse] = network.search_transactions(address=self.address,
+        unconf_transactions: List[TransactionResponse] = network.search_transactions(address=address,
                                                                                      page_size=page_size,
                                                                                      transaction_status=TransactionStatus.UNCONFIRMED_ADDED)
         transactions = unconf_transactions + conf_transactions
@@ -317,7 +336,7 @@ class Account(FromTypingDict):
         for transaction in transactions:
             is_mosaic = '∴' if len(transaction.transaction.mosaics) > 1 else ''
             message = '🖂' if transaction.transaction.message is not None else ' '
-            direction = '+' if transaction.transaction.recipientAddress == self.address else '−'
+            direction = '+' if transaction.transaction.recipientAddress == address else '−'
             status = '🗸' if transaction.status == TransactionStatus.CONFIRMED_ADDED.value else '?'
             mosaic = next(iter(transaction.transaction.mosaics), '')
             short_name = f'{status} {transaction.transaction.recipientAddress} | {transaction.meta.height} | {transaction.transaction.deadline} |{message} |{direction}{mosaic} {is_mosaic}'
