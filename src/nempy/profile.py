@@ -7,7 +7,7 @@ from typing import Optional, Dict, Tuple
 import bcrypt
 import inquirer
 import stdiomask
-from nempy.account import Account
+from nempy.account import Account, GenerationType
 from nempy.config import C
 from nempy.sym.constants import NetworkType
 from password_strength import PasswordPolicy
@@ -60,16 +60,44 @@ class Profile(BaseModel):
         accounts = self.load_accounts(self.accounts_dir)
         return accounts.get(account_name)
 
-    def create_account(self):
+    def create_account(self, is_import: bool = False):
         account_path, name, bip32_coin_id, is_default = Account.init_general_params(self.network_type, self.accounts_dir)
         if is_default:
             self.set_default_account(name)
         password = self.check_pass(attempts=3)
         if password is not None:
-            account = Account.account_by_mnemonic(self.network_type, bip32_coin_id, is_generate=True)
+            if is_import:
+                gen_type = Account.get_generation_type()
+                if gen_type == GenerationType.MNEMONIC:
+                    account = Account.account_by_mnemonic(self.network_type, bip32_coin_id, is_import=True)
+                elif gen_type == GenerationType.PRIVATE_KEY:
+                    raise NotImplementedError(
+                        'The functionality of building an account from a private key is not implemented')
+                else:
+                    raise NotImplementedError(
+                        f'The functionality of building an account from a {gen_type.name} key is not implemented')
+            else:
+                account = Account.account_by_mnemonic(self.network_type, bip32_coin_id, is_import=is_import)
             account.name = name
             account.profile = self.name
             account.account_creation(account_path, password)
+            return account
+            
+    # def import_account(self):
+    #     account_path, name, bip32_coin_id, is_default = Account.init_general_params(self.network_type, self.accounts_dir)
+    #     if is_default:
+    #         self.set_default_account(name)
+    #     password = self.check_pass(attempts=3)
+    #     gen_type = Account.get_generation_type()
+    #     if gen_type == GenerationType.MNEMONIC:
+    #         account = Account.account_by_mnemonic(self.network_type, bip32_coin_id, is_import=True)
+    #     elif gen_type == GenerationType.PRIVATE_KEY:
+    #         raise NotImplementedError('The functionality of building an account from a private key is not implemented')
+    #     else:
+    #         raise NotImplementedError(f'The functionality of building an account from a {gen_type.name} key is not implemented')
+    #     account.name = name
+    #     account.profile = self.name
+    #     account.account_creation(account_path, password)
 
     def load_accounts(self, accounts_dir: str) -> Dict[str, Account]:
         accounts = {}

@@ -24,19 +24,7 @@ def import_account():
     """
     Create a new account with existing private key or mnemonic
     """
-    wallet = Wallet()
-    account_path, name, bip32_coin_id, is_default = Account.init_general_params(wallet.profile.network_type, wallet.accounts_dir)
-    if is_default:
-        wallet.profile.set_default_account(name)
-    password = wallet.profile.check_pass(attempts=3)
-    gen_type = Account.get_generation_type()
-    if gen_type == GenerationType.MNEMONIC:
-        account = Account.account_by_mnemonic(wallet.profile.network_type, bip32_coin_id)
-    if gen_type == GenerationType.PRIVATE_KEY:
-        raise NotImplementedError('The functionality of building an account from a private key is not implemented')
-    account.name = name
-    account.profile = wallet.profile.name
-    account.account_creation(account_path, password)
+    Wallet().profile.create_account(is_import=True)
 
 
 @main.command('create')

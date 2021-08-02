@@ -247,13 +247,14 @@ class Account(FromTypingDict):
         return account_name
 
     @classmethod
-    def account_by_mnemonic(cls, network_type: NetworkType, bip32_coin_id: int, is_generate: bool = False) -> 'Account':
-        if is_generate:
+    def account_by_mnemonic(cls, network_type: NetworkType, bip32_coin_id: int, is_import: bool = False) -> 'Account':
+        if is_import:
+            mnemonic = stdiomask.getpass('Enter a mnemonic passphrase. Words must be separated by spaces: ')
+        else:
             random_char_set = cls.input_keyprint_entropy()
             entropy_bytes_hex = blake2b(random_char_set.encode(), digest_size=32).hexdigest().encode()
             mnemonic = Bip39MnemonicGenerator(Bip39Languages.ENGLISH).FromEntropy(binascii.unhexlify(entropy_bytes_hex))
-        else:
-            mnemonic = stdiomask.getpass('Enter a mnemonic passphrase. Words must be separated by spaces: ')
+
         accounts = cls._accounts_pool_by_mnemonic(network_type, bip32_coin_id, mnemonic)
         account_name = cls.inquirer_account(accounts.keys())
         return accounts[account_name]
