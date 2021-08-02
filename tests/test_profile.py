@@ -6,6 +6,7 @@ from unittest.mock import patch
 import bcrypt
 import pytest
 import stdiomask
+from nempy.account import GenerationType
 from nempy.wallet import Wallet
 from nempy.profile import Profile, RepeatPasswordError, PasswordPolicyError
 from nempy.sym.constants import NetworkType
@@ -38,12 +39,31 @@ class TestProfile:
     def teardown(self):
         shutil.rmtree(self.wallet_path)
 
-    def test_create_account(self):
+    def test_create_import_account(self):
         account_path = os.path.join(self.wallet.accounts_dir, self.account1.name + '.account')
         with patch('nempy.account.Account.init_general_params', return_value=(account_path, self.account1.name, 1, True)), \
              patch('nempy.profile.Profile.check_pass', return_value=self.password), \
              patch('nempy.account.Account.account_by_mnemonic', return_value=self.account1.decrypt(self.password)):
-            self.profile.create_account()
+            account1 = self.profile.create_account()
+
+        with patch('nempy.account.Account.init_general_params', return_value=(account_path, self.account1.name, 1, True)), \
+             patch('nempy.profile.Profile.check_pass', return_value=self.password), \
+             patch('nempy.account.Account.get_generation_type', return_value=GenerationType.MNEMONIC), \
+             patch('stdiomask.getpass', return_value=self.account1.decrypt(self.password).mnemonic), \
+             patch('nempy.account.Account.inquirer_account', return_value='TBR5X6UG3ZT2IIOAP65Y7J7SLPN4UPARKH6HMUI'):
+            account0 = self.profile.create_account(is_import=True)
+
+            with patch('nempy.account.Account.get_generation_type', return_value=GenerationType.PRIVATE_KEY):
+                with pytest.raises(NotImplementedError):
+                    self.profile.create_account(is_import=True)
+
+            class NewGenerationType:
+                name = 'UNKNOWN'
+            with patch('nempy.account.Account.get_generation_type', return_value=NewGenerationType()):
+                with pytest.raises(NotImplementedError):
+                    self.profile.create_account(is_import=True)
+
+        assert account0.address == account1.address
 
     def test_str_repr(self):
         assert [val in str(self.profile) for val in ['Name', 'Network Type', 'Pass Hash']]
