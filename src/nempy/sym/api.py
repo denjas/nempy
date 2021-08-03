@@ -5,7 +5,6 @@ import re
 from binascii import unhexlify
 from typing import Union, Optional, List, Tuple
 
-from nempy.sym.network import mosaic_id_to_name_n_real
 from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.CryptoTypes import PrivateKey
 from symbolchain.core.CryptoTypes import Signature, PublicKey

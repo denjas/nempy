@@ -33,7 +33,8 @@ class SymbolNetworkException(Exception):
         'ResourceNotFound': 404,
         'InvalidAddress': 409,
         'InvalidArgument': 409,
-        'InvalidContent': 400
+        'InvalidContent': 400,
+        'Internal': 500,
     }
 
     def __init__(self, code, message):
@@ -60,16 +61,12 @@ def mosaic_id_to_name_n_real(mosaic_id: str, amount: int) -> Dict[str, float]:
     if not isinstance(amount, int):
         raise TypeError('To avoid confusion, automatic conversion to integer is prohibited')
     divisibility = get_divisibility(mosaic_id)
-    if divisibility is None:
-        raise ValueError(f'Failed to get divisibility from network')
     divider = 10 ** int(divisibility)
-
     mn = get_mosaic_names(mosaic_id)
     name = mosaic_id
-    if mn is not None:
-        names = mn['mosaicNames'][0]['names']
-        if len(names) > 0:
-            name = names[0]
+    names = mn['mosaicNames'][0]['names']
+    if len(names) > 0:
+        name = names[0]
     return {'id': name, 'amount': float(amount / divider)}
 
 
@@ -161,26 +158,28 @@ def send_transaction(payload: bytes) -> bool:
         return True
 
 
-def get_mosaic_names(mosaics: Union[list, str]) -> Optional[dict]:
+def get_mosaic_names(mosaics_ids: Union[list, str]) -> Optional[dict]:
     """
     Get readable names for a set of mosaics
-    :param mosaics:
-    :return:
+    :param mosaics_ids:
+    :return: dict of mosaics {'mosaicNames': [{'mosaicId': '091F837E059AE13C', 'names': ['symbol.xym']}]}
     """
-    if isinstance(mosaics, str):
-        mosaics = [mosaics]
-    data = {'mosaicIds': mosaics}
-    headers = {'Content-type': 'application/json'}
+    if isinstance(mosaics_ids, str):
+        mosaics_ids = [mosaics_ids]
     try:
-        answer = requests.post(f'{node_selector.url}/namespaces/mosaic/names', json=data, headers=headers, timeout=10)
-    except ConnectionError as e:
-        logger.error(str(e))
-        return None
-    if answer.status_code == HTTPStatus.OK:
-        return answer.json()
+        for mosaic_id in mosaics_ids:
+            if not ed25519.check_hex(mosaic_id, constants.HexSequenceSizes.MOSAIC_ID):
+                raise SymbolNetworkException('InvalidArgument', f'mosaicId `{mosaic_id}` has an invalid format')
+        payload = {'mosaicIds': mosaics_ids}
+        headers = {'Content-type': 'application/json'}
+        answer = requests.post(f'{node_selector.url}/namespaces/mosaic/names', json=payload, headers=headers, timeout=10)
+        if answer.status_code != HTTPStatus.OK:
+            raise SymbolNetworkException(**answer.json())
+    except (RequestException, SymbolNetworkException) as e:
+        logger.exception(e)
+        raise
     else:
-        logger.error(answer.text)
-    return None
+        return answer.json()
 
 
 def get_accounts_info(address: str) -> Optional[dict]:
@@ -239,12 +238,14 @@ def search_transactions(address: Optional[str] = None,
     endpoint = f'{node_selector.url}/transactions/{transaction_status.value}'
     try:
         answer = requests.get(endpoint, params=payload)
-    except Exception as e:
-        logger.error(e)
-        return None
-    if answer.status_code != HTTPStatus.OK:
-        logger.error(answer.text)
-        return None
+        if answer.status_code != HTTPStatus.OK:
+            raise SymbolNetworkException(**answer.json())
+    except RequestException as e:
+        logger.exception(e)
+        raise
+    except SymbolNetworkException as e:
+        logger.exception(e)
+        raise
     transactions = answer.json()
     transactions_response = []
     for transaction in transactions['data']:
@@ -285,19 +286,21 @@ def check_transaction_state(transaction_hash):
         endpoint = f'{node_selector.url}/transactions/{checker}/{transaction_hash}'
         try:
             answer = requests.get(endpoint, timeout=timeout)
-        except Exception as e:
-            logger.error(str(e))
-            return None
-        if answer.status_code == 200:
+            if answer.status_code != 200:
+                raise SymbolNetworkException(**answer.json())
+        except (RequestException, SymbolNetworkException) as e:
+            if isinstance(e, SymbolNetworkException) and e.code == 404:
+                return TransactionStatus.NOT_FOUND
+            logger.exception(e)
+            raise
+        else:
             if checker == 'confirmed':
                 status = TransactionStatus.CONFIRMED_ADDED
-            if checker == 'unconfirmed':
+            elif checker == 'unconfirmed':
                 status = TransactionStatus.UNCONFIRMED_ADDED
-            if checker == 'partial':
+            elif checker == 'partial':
                 status = TransactionStatus.PARTIAL_ADDED
-        if answer.status_code == HTTPStatus.CONFLICT:
-            logger.error(answer.text)
-    return status
+        return status
 
 
 def get_network_properties():
@@ -309,7 +312,11 @@ def get_network_properties():
 
 
 def get_node_network():
-    answer = requests.get(f'{node_selector.url}/node/info')
+    try:
+        answer = requests.get(f'{node_selector.url}/node/info')
+    except RequestException as e:
+        logger.exception(e)
+        raise
     if answer.status_code == HTTPStatus.OK:
         fee_info = answer.json()
         network_generation_hash_seed = fee_info['networkGenerationHashSeed']
