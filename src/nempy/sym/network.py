@@ -11,11 +11,11 @@ from binascii import unhexlify
 from http import HTTPStatus
 from typing import Optional, Union, List, Callable, Dict
 from urllib.parse import urlparse
+from requests.exceptions import RequestException
 
 import requests
 import websockets
-from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType, \
-    TransactionTypes
+from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType, TransactionTypes
 from pydantic import BaseModel
 from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.facade.SymFacade import SymFacade
@@ -26,6 +26,21 @@ from . import ed25519, constants, config
 from .constants import TransactionStatus
 
 logger = logging.getLogger(__name__)
+
+
+class SymbolNetworkException(Exception):
+    codes = {
+        'ResourceNotFound': 404,
+        'InvalidAddress': 409,
+        'InvalidArgument': 409,
+        'InvalidContent': 400
+    }
+
+    def __init__(self, code, message):
+        self.code = self.codes.get(code)
+        self.name = code
+        self.message = message
+        super(SymbolNetworkException, self).__init__(f'{self.code} - {self.name}', self.message)
 
 
 def url_validation(url):
@@ -132,24 +147,18 @@ class TransactionResponse(BaseModel):
         return table
 
 
-class SymbolNetworkException(Exception):
-
-    def __init__(self, error):
-        err = json.loads(error.text)
-        super(SymbolNetworkException, self).__init__(err['code'], err['message'])
-
-
 def send_transaction(payload: bytes) -> bool:
-    headers = {'Content-type': 'application/json'}
+
     try:
+        headers = {'Content-type': 'application/json'}
         answer = requests.put(f'{node_selector.url}/transactions', data=payload, headers=headers, timeout=10)
-    except ConnectionError as e:
-        logger.error(str(e))
+        if answer.status_code != HTTPStatus.ACCEPTED:
+            raise SymbolNetworkException(**answer.json())
+    except (RequestException, SymbolNetworkException) as e:
+        logger.exception(e)
         return False
-    if answer.status_code == HTTPStatus.ACCEPTED:
+    else:
         return True
-    logger.error(answer.text)
-    return False
 
 
 def get_mosaic_names(mosaics: Union[list, str]) -> Optional[dict]:
@@ -168,30 +177,28 @@ def get_mosaic_names(mosaics: Union[list, str]) -> Optional[dict]:
         logger.error(str(e))
         return None
     if answer.status_code == HTTPStatus.OK:
-        return json.loads(answer.text)
+        return answer.json()
     else:
         logger.error(answer.text)
     return None
 
 
 def get_accounts_info(address: str) -> Optional[dict]:
-    if not ed25519.check_address(address):
-        logger.error(f'Incorrect wallet address: `{address}`')
-        return None
-    endpoint = f'{node_selector.url}/accounts/{address}'
     try:
+        if not ed25519.check_address(address):
+            raise SymbolNetworkException('InvalidAddress', f'Incorrect account address: `{address}`')
+        endpoint = f'{node_selector.url}/accounts/{address}'
         answer = requests.get(endpoint)
-    except Exception as e:
-        logger.error(e)
-        return None
-    if answer.status_code != HTTPStatus.OK:
-        logger.error(answer.text)
-        if answer.status_code == HTTPStatus.NOT_FOUND:
-            logger.error('Invalid recipient account info')
-            return {}
-        return None
-    address_info = json.loads(answer.text)
-    return address_info
+        if answer.status_code != HTTPStatus.OK:
+            return None
+    except RequestException as e:
+        logger.exception(e)
+        raise
+    except SymbolNetworkException as e:
+        logger.exception(e)
+        raise
+    else:
+        return answer.json()
 
 
 def search_transactions(address: Optional[str] = None,
@@ -228,17 +235,17 @@ def search_transactions(address: Optional[str] = None,
         'offset': offset,
         'order': order
     }
-    params = {key: val for key, val in params.items() if val is not None}
+    payload = {key: val for key, val in params.items() if val is not None}
     endpoint = f'{node_selector.url}/transactions/{transaction_status.value}'
     try:
-        answer = requests.get(endpoint, params=params)
+        answer = requests.get(endpoint, params=payload)
     except Exception as e:
         logger.error(e)
         return None
     if answer.status_code != HTTPStatus.OK:
         logger.error(answer.text)
         return None
-    transactions = json.loads(answer.text)
+    transactions = answer.json()
     transactions_response = []
     for transaction in transactions['data']:
         mosaics = [MosaicInfo(**mosaic) for mosaic in transaction['transaction']['mosaics']]
@@ -266,7 +273,7 @@ def get_namespace_info(namespace_id: str) -> Optional[dict]:
             logger.error(f'Invalid namespace ID `{namespace_id}`')
             return {}
         return None
-    namespace_info = json.loads(answer.text)
+    namespace_info = answer.json()
     return namespace_info
 
 
@@ -296,7 +303,7 @@ def check_transaction_state(transaction_hash):
 def get_network_properties():
     answer = requests.get(f'{node_selector.url}/network/properties')
     if answer.status_code == HTTPStatus.OK:
-        network_properties = json.loads(answer.text)
+        network_properties = answer.json()
         return network_properties
     answer.raise_for_status()
 
@@ -304,7 +311,7 @@ def get_network_properties():
 def get_node_network():
     answer = requests.get(f'{node_selector.url}/node/info')
     if answer.status_code == HTTPStatus.OK:
-        fee_info = json.loads(answer.text)
+        fee_info = answer.json()
         network_generation_hash_seed = fee_info['networkGenerationHashSeed']
         if network_generation_hash_seed == constants.NETWORK_GENERATION_HASH_SEED_TEST:
             return NetworkType.TEST_NET
@@ -318,7 +325,7 @@ def get_node_network():
 def get_block_information(height: int):
     answer = requests.get(f'{node_selector.url}/blocks/{height}')
     if answer.status_code == HTTPStatus.OK:
-        block_info = json.loads(answer.text)
+        block_info = answer.json()
         return block_info
     answer.raise_for_status()
 
@@ -326,43 +333,48 @@ def get_block_information(height: int):
 def get_fee_multipliers():
     try:
         answer = requests.get(f'{node_selector.url}/network/fees/transaction')
-    except Exception as e:
-        logger.error(e)
+    except RequestException as e:
+        logger.exception(e)
         return None
     if answer.status_code == HTTPStatus.OK:
-        fee_multipliers = json.loads(answer.text)
+        fee_multipliers = answer.json()
         return fee_multipliers
     return None
 
 
-def get_divisibility(mosaic_id: str):
+def get_divisibility(mosaic_id: str) -> Optional[int]:
     try:
+        if not ed25519.check_hex(mosaic_id, constants.HexSequenceSizes.MOSAIC_ID):
+            raise SymbolNetworkException('InvalidArgument', f'mosaicId `{mosaic_id}` has an invalid format')
         answer = requests.get(f'{node_selector.url}/mosaics/{mosaic_id}')
-    except Exception as e:
-        logger.error(e)
-        return None
-    if answer.status_code == HTTPStatus.OK:
-        node_info = json.loads(answer.text)
-        divisibility = int(node_info['mosaic']['divisibility'])
+        if answer.status_code == HTTPStatus.OK:
+            node_info = answer.json()
+            divisibility = int(node_info['mosaic']['divisibility'])
+        else:
+            raise SymbolNetworkException(**answer.json())
+    except RequestException as e:
+        logger.exception(e)
+        raise
+    except SymbolNetworkException as e:
+        logger.exception(e)
+        raise
+    else:
         return divisibility
-    err = json.loads(answer.text)
-    logger.error(f"{err['code']}: {err['message']}")
-    return None
 
 
 def get_divisibilities(n_pages: int = 0):
     mosaics = {}
-    params = {'pageSize': 100}
+    payload = {'pageSize': 100}
 
     page_count = 1
     while True:
         try:
-            answer = requests.get(f'{node_selector.url}/mosaics', params=params)
+            answer = requests.get(f'{node_selector.url}/mosaics', params=payload)
         except Exception as e:
             logger.error(e)
             return None
         if answer.status_code == HTTPStatus.OK:
-            mosaics_pages = json.loads(answer.text)['data']
+            mosaics_pages = answer.json()['data']
             if len(mosaics_pages) == 0:
                 return mosaics
             last_page = None
@@ -371,35 +383,25 @@ def get_divisibilities(n_pages: int = 0):
                 divisibility = page['mosaic']['divisibility']
                 mosaics[mosaic_id] = divisibility
                 last_page = page
-            params['offset'] = last_page['id']
+            payload['offset'] = last_page['id']
             page_count = page_count + 1 if n_pages else page_count
             if page_count > n_pages:
                 return mosaics
 
 
-def get_balance(address: str, mosaic_filter: Union[list, str] = None, is_linked: bool = False) -> Optional[dict]:
-    if isinstance(mosaic_filter, str):
-        mosaic_filter = [mosaic_filter]
-    if mosaic_filter is None:
-        mosaic_filter = []
-    for mosaic_id in mosaic_filter:
-        if not ed25519.check_hex(mosaic_id, constants.HexSequenceSizes.mosaic_id):
-            logger.error(f'Incorrect mosaic ID: `{mosaic_id}`')
-            return None
-    address_info = get_accounts_info(address)
-    if address_info == {}:
-        return address_info
-    mosaics = address_info['account']['mosaics']
-    balance = {}
-    for mosaic in mosaics:
-        div = get_divisibility(mosaic['id'])
-        if div is None:
-            return None
-        balance[mosaic['id']] = int(mosaic['amount']) / 10 ** div
-    if mosaic_filter:
-        filtered_balance = {key: balance.get(key) for key in mosaic_filter if key in balance}
-        return filtered_balance
-    return balance
+def get_balance(address: str) -> Optional[dict]:
+    try:
+        address_info = get_accounts_info(address)
+        if address_info is None:
+            return {}
+        mosaics = address_info['account']['mosaics']
+        balance = {mosaic['id']: int(mosaic['amount']) / 10 ** get_divisibility(mosaic['id']) for mosaic in mosaics}
+    except (SymbolNetworkException, RequestException) as e:
+        if isinstance(e, SymbolNetworkException) and e.code == 404:
+            return {}
+        raise
+    else:
+        return balance
 
 
 class Monitor:
@@ -624,7 +626,7 @@ class NodeSelector:
         except:
             return BlockchainStatuses.REST_FAILURE
         if answer.status_code == HTTPStatus.OK:
-            node_info = json.loads(answer.text)
+            node_info = answer.json()
             if node_info['status']['apiNode'] == 'up' and node_info['status']['db'] == 'up':
                 return BlockchainStatuses.OK
             if node_info['status']['apiNode'] == 'down':
@@ -646,7 +648,7 @@ class NodeSelector:
             answer = requests.get(f'{url}/chain/info', timeout=1)
         except Exception:
             return 0
-        node_info = json.loads(answer.text)
+        node_info = answer.json()
         height = node_info['height']
         return int(height)
 

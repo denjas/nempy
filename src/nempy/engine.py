@@ -71,7 +71,7 @@ class XYMEngine(NEMEngine):
         mosaics = [sym.Mosaic(mosaic_id=mosaic[0], amount=mosaic[1]) for mosaic in mosaics]
         if is_encrypted:
             address_info = network.get_accounts_info(address=recipient_address)
-            if not address_info:
+            if address_info is None:
                 return EngineStatusCode.INVALID_ACCOUNT_INFO
             public_key = address_info['account']['publicKey']
             message = sym.EncryptMessage(message, self.account.decrypt(password).private_key, public_key)

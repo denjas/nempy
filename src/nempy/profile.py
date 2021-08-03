@@ -37,7 +37,6 @@ class Profile(BaseModel):
                    for key, value in self.__dict__.items() if key not in ['network_type', 'pass_hash']]
         prepare.append(['Network Type', self.network_type.name])
         prepare.append(['Pass Hash', C.OKBLUE + '*' * len(self.pass_hash) + C.END])
-        prepare.append(['Accounts Directory', self.accounts_dir])
         profile = f'Profile - {self.name}'
         indent = (len(self.pass_hash) - len(profile)) // 2
         profile = C.INVERT + ' ' * indent + profile + ' ' * indent + C.END

@@ -33,9 +33,9 @@ class BlockchainStatuses(Enum):
 
 
 class HexSequenceSizes(IntEnum):
-    address = 39
-    public_key = private_key = 64
-    mosaic_id = namespace_id = 16
+    ADDRESS = 39
+    PUBLIC_KEY = private_key = 64
+    MOSAIC_ID = namespace_id = 16
 
 
 class Fees(Enum):
