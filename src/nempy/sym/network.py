@@ -17,7 +17,7 @@ import requests
 import websockets
 from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType, \
     TransactionTypes, AccountValidationState
-from pydantic import BaseModel
+from pydantic import BaseModel, StrictInt, StrictFloat
 from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.facade.SymFacade import SymFacade
 from tabulate import tabulate
@@ -80,11 +80,7 @@ class Meta(BaseModel):
 
 class MosaicInfo(BaseModel):
     id: str
-    amount: int
-
-
-class HumMosaicInfo(MosaicInfo):
-    amount: float
+    amount: Union[StrictInt, StrictFloat]
 
     def __str__(self):
         return f'{self.amount}({self.id})'
@@ -102,14 +98,14 @@ class TransactionInfo(BaseModel):
     recipientAddress: str
     message: Optional[str]
     signer_address: Optional[str]
-    mosaics: List[Union[MosaicInfo, HumMosaicInfo]]
+    mosaics: List[MosaicInfo]
 
     def humanization(self):
         self.deadline = Timing().deadline_to_date(self.deadline)
         if self.message is not None:
             self.message = unhexlify(self.message)[1:].decode('utf-8')
         self.recipientAddress = b32encode(unhexlify(self.recipientAddress)).decode('utf-8')[:-1]
-        self.mosaics = [HumMosaicInfo(**mosaic_id_to_name_n_real(mosaic.id, mosaic.amount)) for mosaic in self.mosaics]
+        self.mosaics = [MosaicInfo(**mosaic_id_to_name_n_real(mosaic.id, mosaic.amount)) for mosaic in self.mosaics]
         self.type = TransactionTypes.get_type_by_id(self.type).name
         facade = SymFacade(node_selector.network_type.value)
         self.signer_address = str(facade.network.public_key_to_address(Hash256(self.signerPublicKey)))
@@ -250,7 +246,7 @@ def search_transactions(address: Optional[str] = None,
     transactions = answer.json()
     transactions_response = []
     for transaction in transactions['data']:
-        mosaics = [MosaicInfo(**mosaic) for mosaic in transaction['transaction']['mosaics']]
+        mosaics = [MosaicInfo(id=mosaic['id'], amount=int(mosaic['amount'])) for mosaic in transaction['transaction']['mosaics']]
         del(transaction['transaction']['mosaics'])
         _transaction = TransactionResponse(id=transaction['id'],
                                            meta=Meta(**transaction['meta']),
