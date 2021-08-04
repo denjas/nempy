@@ -1,5 +1,6 @@
 import binascii
 import copy
+import json
 import logging
 import os
 import pickle
@@ -17,13 +18,16 @@ from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
 from bip_utils import Bip39MnemonicGenerator, Bip39Languages
 from nempy.config import C
+from nempy import config
 from nempy.sym import network
-from nempy.sym.constants import NetworkType, TransactionStatus
+from nempy.sym.constants import NetworkType, TransactionStatus, AccountValidationState
 from nempy.sym.network import TransactionResponse
 from symbolchain.core.Bip32 import Bip32
 from symbolchain.core.facade.SymFacade import SymFacade
 from tabulate import tabulate
-# from pydantic import BaseModel
+from pydantic import BaseModel, validator, StrictStr, StrictBytes
+from pydantic.dataclasses import dataclass
+from nempy.sym.ed25519 import check_address
 
 logger = logging.getLogger(__name__)
 
@@ -73,51 +77,32 @@ class DecoderStatus(Enum):
     WRONG_PASS = 'Wrong password'
 
 
-class NotSet:
-    pass
-
-
-# pydantic didn't use because it doesn't work with getter and setter
-# plus practiced with the definition of types
-class FromTypingDict:
-    """
-    Sets the attributes of the class to be the types in the dictionary if allowed when declared
-    """
-    def __init__(self, args: dict):
-        for name, value in args.items():
-            if self.__annotations__.get('_'+name) is not None:
-                name = '_' + name
-            class_var_type = self.__annotations__.get(name)
-            if isinstance(class_var_type, _GenericAlias):
-                if type(value) in class_var_type.__args__:
-                    class_var_type = type(value)
-                else:
-                    class_var_type = None
-            if class_var_type is not None:
-                if isinstance(value, class_var_type):
-                    setattr(self, name, value)
-                    continue
-            raise TypeError(f'The type of the `{name}` variable {type(value)} does not match the default `{self.__annotations__.get(name)}`')
-        for v in self.__annotations__:
-            ga = getattr(self, v, NotSet)
-            if isinstance(ga, type(NotSet)):
-                raise TypeError(f'Not all required variables are set: `{v}`')
-
-
-class Account(FromTypingDict):
-    name: str = None
-    _address: str
-    public_key: str
-    private_key: Union[str, bytes]
-    path: Optional[str] = None
-    mnemonic: Union[str, bytes] = None
+class Account(BaseModel):
+    name: Optional[str] = None
+    address: StrictStr
+    public_key: StrictStr
+    private_key: Union[StrictStr, StrictBytes]
+    path: Optional[StrictStr] = None
+    mnemonic: Union[StrictStr, StrictBytes] = None
     network_type: NetworkType
-    profile: str = None
+    profile: Optional[str] = None
+
+    class Config:
+        pass
+        validate_assignment = True
+        # require_by_default = False
+
+    @validator('address')
+    def validate_address(cls, address):
+        address = address.replace('-', '')
+        if (avs := check_address(address)) != AccountValidationState.OK:
+            raise ValueError(avs.value)
+        return address
 
     def __str__(self):
         prepare = list()
         for key, value in self.__dict__.items():
-            if key == '_address':
+            if key == 'address':
                 value = '-'.join(value[i:i + 6] for i in range(0, len(value), 6))
             if key == 'mnemonic' and not isinstance(value, bytes):
                 positions = [pos for pos, char in enumerate(value) if char == ' ']
@@ -150,22 +135,14 @@ class Account(FromTypingDict):
             return True
         return False
 
-    @property
-    def address(self) -> str:
-        return self._address
-
-    @address.setter
-    def address(self, address: str):
-        self._address = address.replace('-', '')
-
     def serialize(self) -> bytes:
-        sdate = pickle.dumps(self.__dict__)
+        sdate = pickle.dumps(self.dict())
         return sdate
 
     @classmethod
     def deserialize(cls, data) -> 'Account':
         ddate = pickle.loads(data)
-        return cls(ddate)
+        return cls(**ddate)
 
     def decrypt(self, password: str) -> 'Account':
         if not isinstance(self.private_key, bytes):
@@ -290,12 +267,12 @@ class Account(FromTypingDict):
             private_key = str(child_key_pair.private_key).upper()
             public_key = str(child_key_pair.public_key).upper()
             address = str(facade.network.public_key_to_address(child_key_pair.public_key)).upper()
-            accounts[address] = cls({'address': address,
-                                     'public_key': public_key,
-                                     'private_key': private_key,
-                                     'mnemonic': mnemonic,
-                                     'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'",
-                                     'network_type': network_type})
+            accounts[address] = cls(**{'address': address,
+                                       'public_key': public_key,
+                                       'private_key': private_key,
+                                       'mnemonic': mnemonic,
+                                       'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'",
+                                       'network_type': network_type})
         return accounts
 
     def account_creation(self, account_path: str, password: str):

@@ -8,6 +8,12 @@ EPOCH_TIME_MAINNET = datetime.datetime(2021, 3, 16, 0, 6, 25, tzinfo=datetime.ti
 EPOCH_TIME_TESTNET = datetime.datetime(2021, 3, 25, 17, 56, 17, tzinfo=datetime.timezone.utc)
 
 
+class AccountValidationState(Enum):
+    OK = 'The address is correct'
+    LENGTH_FAILURE = 'The address length must be 39 characters'
+    CHECKSUM_FAILURE = 'Checksum does not match'
+
+
 class NetworkType(Enum):
     TEST_NET = 'public_test'
     MAIN_NET = 'public'
@@ -34,8 +40,8 @@ class BlockchainStatuses(Enum):
 
 class HexSequenceSizes(IntEnum):
     ADDRESS = 39
-    PUBLIC_KEY = private_key = 64
-    MOSAIC_ID = namespace_id = 16
+    PUBLIC_KEY = PRIVATE_KEY = 64
+    MOSAIC_ID = NAMESPACE_ID = 16
 
 
 class Fees(Enum):

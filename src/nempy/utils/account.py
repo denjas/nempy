@@ -3,7 +3,7 @@ import os
 
 import click
 import stdiomask
-from nempy.account import Account, print_warning, DecoderStatus, GenerationType
+from nempy.account import print_warning, DecoderStatus
 from nempy.config import C
 from nempy.engine import XYMEngine, EngineStatusCode
 from nempy.sym import ed25519
@@ -192,7 +192,7 @@ def history(page_size):
     Show history
     """
     wallet = Wallet()
-    wallet.profile.account.history(page_size)
+    wallet.profile.account.inquirer_history(page_size)
 
 
 @main.command('setdefault')

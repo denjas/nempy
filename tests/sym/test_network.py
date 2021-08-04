@@ -1,3 +1,4 @@
+import tempfile
 import threading
 import time
 import datetime
@@ -8,6 +9,7 @@ from nempy.sym import network
 from nempy.sym.constants import NetworkType
 import requests
 from requests import exceptions
+from nempy.sym.network import Monitor
 
 
 def test_node_selector():
@@ -180,6 +182,15 @@ class TestTiming:
         assert date == deadline_date
         date_local = self.timing_test_net.deadline_to_date(11395314574, is_local=True)
         assert date != date_local
+
+
+def test_monitor():
+    def monitoring_callback(bock):
+        raise SystemExit('Stop monitoring')
+    subscribers = ['block']
+    with tempfile.NamedTemporaryFile() as log:
+        with pytest.raises(SystemExit):
+            Monitor(network.node_selector.url, subscribers, formatting=True, log=log, callback=monitoring_callback)
 
 
 

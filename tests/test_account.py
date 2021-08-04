@@ -151,8 +151,8 @@ class TestAccount:
             _account = self.account.read(path)
             assert self.account == _account
             tmp_account = copy.deepcopy(self.account)
-            tmp_account.address = 'ADDRES'
-            assert self.account != tmp_account
+            with pytest.raises(ValueError):
+                tmp_account.address = 'ADDRES'
             with pytest.raises(ValueError):
                 _account.decrypt('pass').write(path)
             _account = self.account.read(path + 'random')

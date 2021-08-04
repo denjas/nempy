@@ -15,7 +15,8 @@ from requests.exceptions import RequestException
 
 import requests
 import websockets
-from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType, TransactionTypes
+from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType, \
+    TransactionTypes, AccountValidationState
 from pydantic import BaseModel
 from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.facade.SymFacade import SymFacade
@@ -184,8 +185,8 @@ def get_mosaic_names(mosaics_ids: Union[list, str]) -> Optional[dict]:
 
 def get_accounts_info(address: str) -> Optional[dict]:
     try:
-        if not ed25519.check_address(address):
-            raise SymbolNetworkException('InvalidAddress', f'Incorrect account address: `{address}`')
+        if (avs := ed25519.check_address(address)) != AccountValidationState.OK:
+            raise SymbolNetworkException('InvalidAddress', f'Incorrect account address: `{address}`: {avs}')
         endpoint = f'{node_selector.url}/accounts/{address}'
         answer = requests.get(endpoint)
         if answer.status_code != HTTPStatus.OK:
@@ -442,33 +443,35 @@ class Monitor:
         result = urlparse(self.url)
         url = f"ws://{result.hostname}:{result.port}/ws"
         print(f'MONITORING: {url}')
-        async with websockets.connect(url) as ws:
-            response = json.loads(await ws.recv())
-            print(f'UID: {response["uid"]}')
-            if 'uid' in response:
-                prepare = []
-                for subscriber in self.subscribers:
-                    added = json.dumps({"uid": response["uid"], "subscribe": f"{subscriber}"})
-                    await ws.send(added)
-                    # print(f'Subscribed to: {subscriber}')
-                    prepare.append([subscriber])
-                table = tabulate(prepare, headers=['Subscribers'], tablefmt='grid')
-                print(table)
-                print('Listening... `Ctrl+C` for abort')
-                while True:
-                    res = await ws.recv()
-                    if self.formatting:
-                        res = json.dumps(json.loads(res), indent=4)
-                    if self.callback is not None:
-                        self.callback(json.loads(res))
-                        continue
-                    print(res)
-                    if self.log:
-                        with open(self.log, 'a+') as f:
-                            res += '\n'
-                            f.write(res)
-            else:
-                raise RuntimeError('Server mot response')
+        try:
+            async with websockets.connect(url) as ws:
+                response = json.loads(await ws.recv())
+                print(f'UID: {response["uid"]}')
+                if 'uid' in response:
+                    prepare = []
+                    for subscriber in self.subscribers:
+                        added = json.dumps({"uid": response["uid"], "subscribe": f"{subscriber}"})
+                        await ws.send(added)
+                        # print(f'Subscribed to: {subscriber}')
+                        prepare.append([subscriber])
+                    table = tabulate(prepare, headers=['Subscribers'], tablefmt='grid')
+                    print(table)
+                    print('Listening... `Ctrl+C` for abort')
+                    while True:
+                        res = await ws.recv()
+                        if self.formatting:
+                            res = json.dumps(json.loads(res), indent=4)
+                        if self.callback is not None:
+                            self.callback(json.loads(res))
+                            continue
+                        print(res)
+                        if self.log:
+                            with open(self.log, 'a+') as f:
+                                res += '\n'
+                                f.write(res)
+        except exceptions.WebSocketException as e:
+            logger.exception(e)
+            raise
 
 
 class Timing:
