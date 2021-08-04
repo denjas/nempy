@@ -41,9 +41,8 @@ class Wallet:
             config.read(self.config_file)
             default_profile = self.profiles.get(config['profile']['default'])
             if default_profile is None:
-                self.profile = self.inquirer_default_profile()
-            else:
-                self.profile = default_profile
+                default_profile = self.inquirer_default_profile()
+            self.profile = default_profile
 
     @property
     def profile(self):
@@ -73,6 +72,7 @@ class Wallet:
             path = os.path.join(self.profiles_dir, pp)
             profile = Profile.loaf_profile(path)
             self.profiles[os.path.splitext(pp)[0]] = profile
+        return self.profiles
 
     def print_profiles(self):
         for profile in self.profiles.values():

@@ -45,23 +45,14 @@ def info(name, decrypt, is_list):
     """
     wallet = Wallet()
     accounts = wallet.profile.load_accounts()
-    if not accounts:
-        print(f'There are no accounts for the {wallet.profile.name} profile.')
-        print('To create an account, run the command: `nempy-cli.py account create`')
-        exit(1)
     if not is_list:
-
         if not name and wallet.profile.account is not None:
             name = wallet.profile.account.name
         account = accounts.get(name, {})
-        if not account:
-            # print(f'The account named `{name}` does not exist in profile `{wallet.profile.name}`')
-            wallet.profile.inquirer_default_account()
-            account = wallet.profile.account
         accounts = {name: account}
     password = None
     if decrypt:
-        print('Attention! Hide information received after entering a password from prying eyes')
+        print(f'{C.RED}Attention! Hide information received after entering a password from prying eyes{C.END}')
         password = wallet.profile.check_pass(attempts=3)
         if password is None:
             exit(1)
@@ -83,6 +74,8 @@ def get_balance(address):
     Get the balance for the current  account
     """
     wallet = Wallet()
+    if not address:
+        address = wallet.profile.account.address
     engine = XYMEngine(wallet.profile.account)
     balance = engine.get_balance(address, humanization=True)
     if balance == {}:

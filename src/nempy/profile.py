@@ -32,6 +32,12 @@ class Profile(BaseModel):
     accounts_dir: str
     config_file: str
 
+    def __init__(self, check_accounts: bool = True, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.account is None and check_accounts:
+            if self.inquirer_default_account() is None:
+                raise SystemExit('There is no way to get account information without an account.')
+
     def __str__(self):
         prepare = [[key.replace('_', ' ').title(), value]
                    for key, value in self.__dict__.items() if key not in ['network_type', 'pass_hash']]
@@ -61,8 +67,6 @@ class Profile(BaseModel):
 
     def create_account(self, is_import: bool = False):
         account_path, name, bip32_coin_id, is_default = Account.init_general_params(self.network_type, self.accounts_dir)
-        if is_default:
-            self.set_default_account(name)
         password = self.check_pass(attempts=3)
         if password is not None:
             if is_import:
@@ -80,25 +84,13 @@ class Profile(BaseModel):
             account.name = name
             account.profile = self.name
             account.account_creation(account_path, password)
+            if is_default:
+                self.set_default_account(name)
             return account
-            
-    # def import_account(self):
-    #     account_path, name, bip32_coin_id, is_default = Account.init_general_params(self.network_type, self.accounts_dir)
-    #     if is_default:
-    #         self.set_default_account(name)
-    #     password = self.check_pass(attempts=3)
-    #     gen_type = Account.get_generation_type()
-    #     if gen_type == GenerationType.MNEMONIC:
-    #         account = Account.account_by_mnemonic(self.network_type, bip32_coin_id, is_import=True)
-    #     elif gen_type == GenerationType.PRIVATE_KEY:
-    #         raise NotImplementedError('The functionality of building an account from a private key is not implemented')
-    #     else:
-    #         raise NotImplementedError(f'The functionality of building an account from a {gen_type.name} key is not implemented')
-    #     account.name = name
-    #     account.profile = self.name
-    #     account.account_creation(account_path, password)
 
-    def load_accounts(self, accounts_dir: str) -> Dict[str, Account]:
+    def load_accounts(self, accounts_dir: str = None) -> Dict[str, Account]:
+        if accounts_dir is None:
+            accounts_dir = self.accounts_dir
         accounts = {}
         accounts_paths = os.listdir(accounts_dir)
         for account_path in accounts_paths:
@@ -114,9 +106,11 @@ class Profile(BaseModel):
         if not accounts:
             answer = input(f'There are no accounts for the {self.name} profile. Create new? [Y/n]: ') or 'y'
             if answer.lower() != 'y':
-                return
+                return None
             self.create_account()
             accounts = self.load_accounts(self.accounts_dir)
+            if (account := self.account) is not None:
+                return account
         questions = [
             inquirer.List(
                 "name",
@@ -127,6 +121,7 @@ class Profile(BaseModel):
         answers = inquirer.prompt(questions)
         account = accounts[answers['name']]
         self.set_default_account(account.name)
+        return self.account
 
     def set_default_account(self, name: str):
         config = configparser.ConfigParser()
@@ -168,7 +163,8 @@ class Profile(BaseModel):
                           network_type=network_type,
                           pass_hash=pass_hash,
                           accounts_dir=accounts_dir,
-                          config_file=config_file)
+                          config_file=config_file,
+                          check_accounts=False)
         profile.save_profile(path)
         print(f'Profile {profile.name} successful created by path: {path}')
         return profile, path
@@ -232,7 +228,7 @@ class Profile(BaseModel):
             else:
                 break
         if not_in_policies:
-            raise PasswordPolicyError(print(not_in_policies))
+            raise PasswordPolicyError(not_in_policies)
         return Profile.repeat_password(n_attempts, new_password)
 
     @staticmethod
@@ -256,9 +252,9 @@ class Profile(BaseModel):
             return cls.deserialize(opened_file.read())
 
     def serialize(self):
-        return pickle.dumps(self.__dict__)
+        return pickle.dumps(self.dict())
 
     @classmethod
     def deserialize(cls, data) -> 'Profile':
         des_date = pickle.loads(data)
-        return cls(**des_date)
+        return cls(**des_date, check_accounts=False)

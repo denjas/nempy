@@ -3,8 +3,10 @@ import shutil
 import tempfile
 from unittest.mock import patch
 
+import pytest
 from nempy.wallet import Wallet
 from nempy.sym.constants import NetworkType
+from nempy.profile import PasswordPolicyError
 
 
 class TestWallet:
@@ -40,7 +42,20 @@ class TestWallet:
 
     def test_load_profiles(self):
         profiles = self.wallet.load_profiles()
-        print(profiles)
+        assert len(profiles) == 1
+
+    def test_create_profile(self):
+        with patch('nempy.profile.Profile.create_profile_by_input', return_value=(self.wallet.profile, 'path')), \
+             patch('nempy.profile.Profile.input_is_default', return_value=True):
+            self.wallet.create_profile()
+
+        with patch('nempy.profile.Profile.create_profile_by_input') as mocked_create_profile_by_input:
+            mocked_create_profile_by_input.side_effect = PasswordPolicyError
+            with pytest.raises(SystemExit):
+                self.wallet.create_profile()
+
+
+
 
 
 
