@@ -1,3 +1,4 @@
+import copy
 import os
 import shutil
 import tempfile
@@ -38,7 +39,10 @@ class TestWallet:
         with patch('inquirer.prompt', return_value={'name': 'test [TEST_NET]'}):
             profile = self.wallet.profile
             _profile = self.wallet.inquirer_default_profile()
-            assert str(profile) == str(_profile)
+            assert profile == _profile
+            _profile = copy.deepcopy(_profile)
+            _profile.name = 'test1'
+            assert profile != _profile
 
     def test_load_profiles(self):
         profiles = self.wallet.load_profiles()

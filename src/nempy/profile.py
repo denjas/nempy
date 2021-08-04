@@ -2,7 +2,7 @@ import configparser
 import logging
 import os
 import pickle
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, Any
 
 import bcrypt
 import inquirer
@@ -31,16 +31,22 @@ class Profile(BaseModel):
     pass_hash: bytes
     accounts_dir: str
     config_file: str
+    account_: Optional[Account] = None
 
-    def __init__(self, check_accounts: bool = True, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.account is None and check_accounts:
+    def __init__(self, check_accounts: bool = True, **data: Any):
+        super().__init__(**data)
+        if self.account_ is None and check_accounts:
             if self.inquirer_default_account() is None:
                 raise SystemExit('There is no way to get account information without an account.')
 
+    def __eq__(self, other: 'Profile'):
+        if other.dict() == self.dict():
+            return True
+        return False
+
     def __str__(self):
         prepare = [[key.replace('_', ' ').title(), value]
-                   for key, value in self.__dict__.items() if key not in ['network_type', 'pass_hash']]
+                   for key, value in self.dict().items() if key not in ['network_type', 'pass_hash']]
         prepare.append(['Network Type', self.network_type.name])
         prepare.append(['Pass Hash', C.OKBLUE + '*' * len(self.pass_hash) + C.END])
         profile = f'Profile - {self.name}'
@@ -50,8 +56,14 @@ class Profile(BaseModel):
         table = tabulate(prepare, headers=['', f'{profile}'], tablefmt='grid')
         return table
 
-    def __repr__(self):
+    def __repr__(self, ):
         return self.name
+
+    # base method dict overloading
+    def dict(self,  *args, **kwargs):
+        result: dict = super(Profile, self).dict(*args, **kwargs)
+        result.pop('account_')
+        return result
 
     @property
     def account(self) -> Optional[Account]:
@@ -59,11 +71,14 @@ class Profile(BaseModel):
         Get the default account
         :return: Account
         """
+        if self.account_ is not None:
+            return self.account_
         config = configparser.ConfigParser()
         config.read(self.config_file)
         account_name = config['account']['default']
         accounts = self.load_accounts(self.accounts_dir)
-        return accounts.get(account_name)
+        self.account_ = accounts.get(account_name)
+        return self.account_
 
     def create_account(self, is_import: bool = False):
         account_path, name, bip32_coin_id, is_default = Account.init_general_params(self.network_type, self.accounts_dir)
@@ -84,9 +99,7 @@ class Profile(BaseModel):
             account.name = name
             account.profile = self.name
             account.account_creation(account_path, password)
-            if is_default:
-                self.set_default_account(name)
-            return account
+            return account, is_default
 
     def load_accounts(self, accounts_dir: str = None) -> Dict[str, Account]:
         if accounts_dir is None:
@@ -107,28 +120,24 @@ class Profile(BaseModel):
             answer = input(f'There are no accounts for the {self.name} profile. Create new? [Y/n]: ') or 'y'
             if answer.lower() != 'y':
                 return None
-            self.create_account()
+            account, is_default = self.create_account()
+            if is_default:
+                self.set_default_account(account)
+                return self.account
             accounts = self.load_accounts(self.accounts_dir)
-            if (account := self.account) is not None:
-                return account
-        questions = [
-            inquirer.List(
-                "name",
-                message="Select default account",
-                choices=accounts.keys(),
-            ),
-        ]
+        questions = [inquirer.List("name", message="Select default account", choices=accounts.keys(),), ]
         answers = inquirer.prompt(questions)
         account = accounts[answers['name']]
-        self.set_default_account(account.name)
+        self.set_default_account(account)
         return self.account
 
-    def set_default_account(self, name: str):
+    def set_default_account(self, account: Account):
         config = configparser.ConfigParser()
         config.read(self.config_file)
-        config['account']['default'] = name
+        config['account']['default'] = account.name
         with open(self.config_file, 'w') as configfile:
             config.write(configfile)
+        self.account_ = account
 
     def check_pass(self, password: str = None, attempts: int = 1) -> Optional[str]:
         """

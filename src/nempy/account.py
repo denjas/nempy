@@ -101,7 +101,7 @@ class Account(BaseModel):
 
     def __str__(self):
         prepare = list()
-        for key, value in self.__dict__.items():
+        for key, value in self.dict().items():
             if key == 'address':
                 value = '-'.join(value[i:i + 6] for i in range(0, len(value), 6))
             if key == 'mnemonic' and not isinstance(value, bytes):

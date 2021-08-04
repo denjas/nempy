@@ -79,15 +79,9 @@ class Wallet:
             print(profile)
             print(f'{C.GREY}###################################################################################{C.END}')
 
-    def inquirer_default_profile(self):
+    def inquirer_default_profile(self) -> Profile:
         names = {profile.name + f' [{profile.network_type.name}]': profile.name for profile in self.profiles.values()}
-        questions = [
-            inquirer.List(
-                "name",
-                message="Select default profile",
-                choices=names.keys(),
-            ),
-        ]
+        questions = [inquirer.List("name", message="Select default profile", choices=names.keys(),), ]
         answers = inquirer.prompt(questions)
         name = names[answers['name']]
         profile = self.profiles[name]
