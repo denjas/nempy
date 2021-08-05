@@ -189,29 +189,6 @@ class Account(BaseModel):
             opened_file.write(pickled_data)
         logger.debug(f'Wallet saved along the way: {path}')
 
-    @classmethod
-    def init_general_params(cls, network_type: NetworkType, accounts_dir: str) -> Tuple[str, str, int, bool]:
-        while True:
-            name = input('Enter the account name: ')
-            if name != '':
-                account_path = os.path.join(accounts_dir, name + '.account')
-                if os.path.exists(account_path):
-                    print('An account with the same name already exists, please select a different name')
-                    continue
-                break
-            print('The name cannot be empty.')
-        is_default = False
-        answer = input(f'Set `{name}` account as default? [Y/n]: ') or 'y'
-        if answer.lower() == 'y':
-            is_default = True
-        if network_type == NetworkType.MAIN_NET:
-            bip32_coin_id = 4343
-        elif network_type == NetworkType.TEST_NET:
-            bip32_coin_id = 1
-        else:
-            raise ValueError('Invalid URL or network not supported')
-        return account_path, name, bip32_coin_id, is_default
-
     @staticmethod
     def input_keyprint_entropy():
         random_char_set = ''

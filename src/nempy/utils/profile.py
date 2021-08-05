@@ -2,13 +2,13 @@
 
 import click
 from nempy.wallet import Wallet
-from nempy.profile import Profile, PasswordPolicyError, RepeatPasswordError
+from nempy.profile import ProfileUI
 
 
-@click.group('profile', help='- Interactive account management')
+@click.group('profile', help='- Interactive profile management')
 def main():
-    Wallet(init_only=True)
-    print('Interactive account management:')
+    # Wallet(init_only=True)
+    print('Interactive profile management:')
 
 
 @main.command('create')
@@ -27,7 +27,7 @@ def setdefault():
     Change the default profile
     """
     wallet = Wallet()
-    wallet.inquirer_default_profile()
+    ProfileUI.ui_default_profile(wallet.profile_io.load_profiles())
 
 
 @main.command('info')
@@ -40,6 +40,7 @@ def profile_info(name, is_list):
     wallet = Wallet()
     if is_list:
         wallet.print_profiles()
+        exit(0)
     print(wallet.profile)
 
 

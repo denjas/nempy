@@ -24,7 +24,10 @@ def import_account():
     """
     Create a new account with existing private key or mnemonic
     """
-    Wallet().profile.create_account(is_import=True)
+    wallet = Wallet()
+    account, is_default = wallet.profile.create_account(is_import=True)
+    if is_default:
+        wallet.profile.set_default_account(account)
 
 
 @main.command('create')
@@ -32,7 +35,10 @@ def create_account():
     """
     Create a new account
     """
-    Wallet().profile.create_account()
+    wallet = Wallet()
+    account, is_default = wallet.profile.create_account()
+    if is_default:
+        wallet.profile.set_default_account(account)
 
 
 @main.command('info')
@@ -61,7 +67,7 @@ def info(name, decrypt, is_list):
             account = account.decrypt(password)
             if isinstance(account, DecoderStatus):
                 exit(1)
-        print(account)
+        print(account or '')
         print(f'{C.GREY}###################################################################################{C.END}')
     if decrypt:
         print_warning()

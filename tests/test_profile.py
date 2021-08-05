@@ -28,7 +28,7 @@ class TestProfile:
         }
         self.profile_path = os.path.join(self.wallet.profiles_dir, f'{self.params["name"]}.profile')
         with patch('nempy.profile.input', return_value='n'):
-            self.profile = Profile(**self.params, check_accounts=False)
+            self.profile = Profile(**self.params)
             self.profile.save_profile(self.profile_path)
         self.account0, self.account1 = test_account()
         self.account0.encrypt(self.password)
@@ -42,10 +42,16 @@ class TestProfile:
         self.profile_context.cleanup()
 
     def test_init(self):
+        real_value = self.profile.load_accounts()
+        with patch('nempy.profile.Profile.load_accounts', side_effect=[{}, {}]):
+            profile = Profile(**self.params)
+            assert profile == self.profile
+
         with patch('nempy.profile.Profile.inquirer_default_account', return_value=None), \
-             patch('nempy.profile.Profile.load_accounts', return_value={}):
-            with pytest.raises(SystemExit):
-                Profile(**self.params)
+             patch('nempy.profile.Profile.load_accounts', side_effect=[{}, real_value]):
+            profile = Profile(**self.params)
+            assert profile == self.profile
+
         account = self.profile.account
         self.profile.account_ = None
         assert account == self.profile.account
