@@ -1,34 +1,25 @@
 import abc
-import binascii
 import copy
-import json
 import logging
 import os
 import pickle
-import random
 from base64 import b64decode
 from base64 import b64encode
 from enum import Enum
 from hashlib import blake2b
-from typing import List, Union, Tuple, Dict, _GenericAlias, Optional
+from typing import Union, Dict, Optional
+
 import bcrypt
-import inquirer
-import stdiomask
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
-from bip_utils import Bip39MnemonicGenerator, Bip39Languages
 from nempy.config import C
-from nempy import config
-from nempy.sym import network
-from nempy.sym.constants import NetworkType, TransactionStatus, AccountValidationState
-from nempy.sym.network import TransactionResponse
+from nempy.sym.constants import NetworkType, AccountValidationState
+from nempy.sym.ed25519 import check_address
+from pydantic import BaseModel, validator, StrictStr, StrictBytes
 from symbolchain.core.Bip32 import Bip32
 from symbolchain.core.facade.SymFacade import SymFacade
 from tabulate import tabulate
-from pydantic import BaseModel, validator, StrictStr, StrictBytes
-from pydantic.dataclasses import dataclass
-from nempy.sym.ed25519 import check_address
 
 logger = logging.getLogger(__name__)
 
@@ -209,11 +200,11 @@ class AccountData(UserData):
             public_key = str(child_key_pair.public_key).upper()
             address = str(facade.network.public_key_to_address(child_key_pair.public_key)).upper()
             accounts[address] = AccountData(**{'address': address,
-                                           'public_key': public_key,
-                                           'private_key': private_key,
-                                           'mnemonic': mnemonic,
-                                           'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'",
-                                           'network_type': network_type})
+                                               'public_key': public_key,
+                                               'private_key': private_key,
+                                               'mnemonic': mnemonic,
+                                               'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'",
+                                               'network_type': network_type})
         return accounts
 
 

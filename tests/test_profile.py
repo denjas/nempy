@@ -68,7 +68,7 @@ class TestProfile:
             assert self.profile.check_pass() == self.password
         with patch.object(stdiomask, 'getpass', return_value=self.password + 'random'):
             assert self.profile.check_pass() is None
-            
+
     def test_serialize_deserialize(self):
         data = self.profile.serialize()
         assert Profile.deserialize(data) == self.profile

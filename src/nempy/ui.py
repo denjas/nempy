@@ -2,25 +2,22 @@ import binascii
 import configparser
 import logging
 import os
-import pickle
 import random
 from enum import Enum
 from hashlib import blake2b
-from typing import Optional, Dict, Tuple, Any, Union, List
+from typing import Optional, Dict, Tuple, Union, List
 
 import bcrypt
 import inquirer
 import stdiomask
 from bip_utils import Bip39MnemonicGenerator, Bip39Languages
 from nempy.config import C
+from nempy.sym import network
+from nempy.sym.constants import NetworkType, TransactionStatus
+from nempy.sym.network import TransactionResponse
 from nempy.user_data import AccountData, GenerationType
 from nempy.user_data import ProfileData
-from nempy.sym.constants import NetworkType, TransactionStatus
 from password_strength import PasswordPolicy
-from pydantic import BaseModel
-from nempy.sym import network
-from nempy.sym.network import TransactionResponse
-from tabulate import tabulate
 
 logger = logging.getLogger(__name__)
 
