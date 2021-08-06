@@ -33,16 +33,6 @@ from nempy.sym.ed25519 import check_address
 logger = logging.getLogger(__name__)
 
 
-def print_warning():
-    print(f""" {C.ORANGE}
-                                !!! Important !!!
- Save the mnemonic, it will be needed to restore access to the wallet in case of password loss
-       Where to store can be found here - https://en.bitcoinwiki.org/wiki/Mnemonic_phrase
-!!!Do not share your secret key and mnemonic with anyone, it guarantees access to your funds!!!
-                                       !!!{C.END}
-    """)
-
-
 def encryption(password: str, data: bytes) -> bytes:
     key = blake2b(password.encode(), digest_size=16).hexdigest().encode()
     cipher = AES.new(key, AES.MODE_CBC)
@@ -83,15 +73,16 @@ class UserData(BaseModel):
     network_type: NetworkType
 
     def __repr__(self, ):
-        return self.name
+        return f'<class `{type(self).__name__}`>'
 
     @abc.abstractmethod
     def __str__(self):
         pass
 
-    @abc.abstractmethod
     def __eq__(self, other: 'UserData'):
-        pass
+        if other.dict() == self.dict():
+            return True
+        return False
 
     @classmethod
     @abc.abstractmethod
@@ -156,18 +147,6 @@ class AccountData(UserData):
         table = tabulate(prepare, headers=['', f'{account}'], tablefmt='grid')
         return table
 
-    def __eq__(self, other: 'AccountData'):
-        if self.name == other.name and \
-                self.path == other.path and \
-                self.address == other.address and \
-                self.network_type == other.network_type and \
-                self.public_key == other.public_key and \
-                self.profile == other.profile and \
-                isinstance(self.private_key, type(other.private_key)) and \
-                isinstance(self.mnemonic, type(other.mnemonic)):
-            return True
-        return False
-
     def decrypt(self, password: str) -> 'AccountData':
         if not isinstance(self.private_key, bytes):
             logger.error('Unencrypted account?')
@@ -214,7 +193,9 @@ class AccountData(UserData):
         logger.debug(f'Wallet saved along the way: {path}')
 
     @staticmethod
-    def accounts_pool_by_mnemonic(network_type: NetworkType, bip32_coin_id: int, mnemonic: str) -> Dict[str, 'AccountData']:
+    def accounts_pool_by_mnemonic(network_type: NetworkType,
+                                  bip32_coin_id: int,
+                                  mnemonic: str) -> Dict[str, 'AccountData']:
         facade = SymFacade(network_type.value)
 
         bip = Bip32(facade.BIP32_CURVE_NAME)
@@ -235,22 +216,9 @@ class AccountData(UserData):
                                            'network_type': network_type})
         return accounts
 
-    def account_creation(self, account_path: str, password: str):
-        self.encrypt(password).write(account_path)
-        print(f'\nAccount created at: {account_path}')
-        # checking the ability to read and display information about the account
-        account = AccountData.read(account_path).decrypt(password)
-        print(account)
-        print_warning()
-
 
 class ProfileData(UserData):
     pass_hash: bytes
-
-    def __eq__(self, other: 'ProfileData'):
-        if other.dict() == self.dict():
-            return True
-        return False
 
     def __str__(self):
         prepare = [[key.replace('_', ' ').title(), value]

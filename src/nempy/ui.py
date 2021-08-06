@@ -12,6 +12,7 @@ import bcrypt
 import inquirer
 import stdiomask
 from bip_utils import Bip39MnemonicGenerator, Bip39Languages
+from nempy.config import C
 from nempy.user_data import AccountData, GenerationType
 from nempy.user_data import ProfileData
 from nempy.sym.constants import NetworkType, TransactionStatus
@@ -32,11 +33,19 @@ class RepeatPasswordError(Exception):
     pass
 
 
-# -----------------------------------------------------------------------------------------------------------
-
 class UDTypes(Enum):
     PROFILE = 'profile'
     ACCOUNT = 'account'
+
+
+def print_warning():
+    print(f""" {C.ORANGE}
+                                !!! Important !!!
+ Save the mnemonic, it will be needed to restore access to the wallet in case of password loss
+       Where to store can be found here - https://en.bitcoinwiki.org/wiki/Mnemonic_phrase
+!!!Do not share your secret key and mnemonic with anyone, it guarantees access to your funds!!!
+                                       !!!{C.END}
+    """)
 
 
 class UD:
@@ -79,12 +88,33 @@ class UD:
             self.config.write(configfile)
 
 
+class AccountI(UD):
+
+    def __init__(self, config_file: str, accounts_dir: str):
+        self.type_ud = UDTypes.ACCOUNT
+        super().__init__(config_file, None, accounts_dir)
+
+    @property
+    def data(self) -> AccountData:
+        return self.user_data
+
+    def load_accounts(self) -> Dict[str, AccountData]:
+        return self.load_uds()
+
+    def set_default_account(self, account: AccountData):
+        self.set_default_ud(account)
+
+
 class ProfileI(UD):
 
     def __init__(self, config_file: str, profiles_dir: str, accounts_dir: str):
         self.type_ud = UDTypes.PROFILE
-        self.account_io = AccountIO(config_file, accounts_dir)
+        self.account_i = AccountI(config_file, accounts_dir)
         super().__init__(config_file, profiles_dir, None)
+        accounts_data = self.load_accounts()
+        if (self.account.data is None and accounts_data) or self.account.data.name not in accounts_data:
+            account_data = AccountUI.ui_default_account(accounts_data)
+            self.set_default_account(account_data)
 
     @property
     def data(self) -> ProfileData:
@@ -97,38 +127,22 @@ class ProfileI(UD):
         self.set_default_ud(profile)
 
     @property
-    def account(self) -> AccountData:
-        return self.account_io.data
+    def account(self) -> AccountI:
+        return self.account_i
 
-    def load_accounts(self):
-        return self.account_io.load_account()
-
-    def set_default_account(self, account: AccountData):
-        self.account_io.set_default_account(account)
-
-
-class AccountIO(UD):
-
-    def __init__(self, config_file: str, accounts_dir: str):
-        self.type_ud = UDTypes.ACCOUNT
-        super().__init__(config_file, None, accounts_dir)
-
-    @property
-    def data(self) -> AccountData:
-        return self.user_data
-
-    def load_account(self) -> Dict[str, AccountData]:
-        return self.load_uds()
+    def load_accounts(self) -> Dict[str, AccountData]:
+        accounts_data = self.account_i.load_accounts()
+        accounts_data = {key: account for key, account in accounts_data.items() if account.profile == self.data.name}
+        return accounts_data
 
     def set_default_account(self, account: AccountData):
-        self.set_default_ud(account)
+        self.account_i.set_default_account(account)
 
 
-class AccountUI:
-    # ACCOUNT -------------------------------------------------------------------------------------------
+class AccountUI(AccountI):
 
     @staticmethod
-    def ui_init_general_params(network_type: NetworkType, accounts_dir: str) -> Tuple[str, str, int, bool]:
+    def ui_init_general_params(network_type: NetworkType, accounts_dir: str, is_default: bool = False) -> Tuple[str, str, int, bool]:
         while True:
             name = input('Enter the account name: ')
             if name != '':
@@ -138,10 +152,10 @@ class AccountUI:
                     continue
                 break
             print('The name cannot be empty.')
-        is_default = False
-        answer = input(f'Set `{name}` account as default? [Y/n]: ') or 'y'
-        if answer.lower() == 'y':
-            is_default = True
+        if not is_default:
+            answer = input(f'Set `{name}` account as default? [Y/n]: ') or 'y'
+            if answer.lower() == 'y':
+                is_default = True
         if network_type == NetworkType.MAIN_NET:
             bip32_coin_id = 4343
         elif network_type == NetworkType.TEST_NET:
@@ -151,14 +165,17 @@ class AccountUI:
         return account_path, name, bip32_coin_id, is_default
 
     @staticmethod
-    def iu_create_account(profile, accounts_dir, is_import: bool = False):
-        account_path, name, bip32_coin_id, is_default = AccountUI.ui_init_general_params(profile.network_type, accounts_dir)
-        password = ProfileUI.ui_check_pass(name, profile.network_type, profile.pass_hash, attempts=3)
+    def iu_create_account(profile_data: ProfileData,
+                          accounts_dir: str,
+                          is_default: bool = False,
+                          is_import: bool = False) -> Tuple[Optional[AccountData], bool]:
+        account_path, name, bip32_coin_id, is_default = AccountUI.ui_init_general_params(profile_data.network_type, accounts_dir, is_default)
+        password = ProfileUI.ui_check_pass(profile_data.name, profile_data.network_type, profile_data.pass_hash, attempts=3)
         if password is not None:
             if is_import:
                 gen_type = AccountUI.ui_generation_type_inquirer()
                 if gen_type == GenerationType.MNEMONIC:
-                    account = AccountUI.ui_account_by_mnemonic(profile.network_type, bip32_coin_id, is_import=True)
+                    account_data = AccountUI.ui_account_by_mnemonic(profile_data.network_type, bip32_coin_id, is_import=True)
                 elif gen_type == GenerationType.PRIVATE_KEY:
                     raise NotImplementedError(
                         'The functionality of building an account from a private key is not implemented')
@@ -166,11 +183,22 @@ class AccountUI:
                     raise NotImplementedError(
                         f'The functionality of building an account from a {gen_type.name} key is not implemented')
             else:
-                account = AccountUI.ui_account_by_mnemonic(profile.network_type, bip32_coin_id, is_import=is_import)
-            account.name = name
-            account.profile = profile.name
-            account.account_creation(account_path, password)
-            return account, is_default
+                account_data = AccountUI.ui_account_by_mnemonic(profile_data.network_type, bip32_coin_id, is_import=is_import)
+            account_data.name = name
+            account_data.profile = profile_data.name
+            AccountUI.save_and_check(account_data, account_path, password)
+            return account_data, is_default
+        else:
+            return None, is_default
+
+    @staticmethod
+    def save_and_check(account_data: AccountData, account_path: str, password: str):
+        account_data.encrypt(password).write(account_path)
+        print(f'\nAccount created at: {account_path}')
+        # checking the ability to read and display information about the account
+        account = AccountData.read(account_path).decrypt(password)
+        print(account)
+        print_warning()
 
     @staticmethod
     def ui_default_account(accounts: Dict[str, AccountData]):
@@ -261,8 +289,7 @@ class AccountUI:
         return accounts[account_name]
 
 
-class ProfileUI:
-    # PROFILE -------------------------------------------------------------------------------------------
+class ProfileUI(ProfileI):
 
     @staticmethod
     def ui_default_profile(profiles: Dict[str, ProfileData]) -> ProfileData:
@@ -294,15 +321,14 @@ class ProfileUI:
     def ui_check_pass(name: str, network_type: NetworkType, pass_hash: bytes, attempts: int = 1) -> Optional[str]:
         """
         Verifies the password from the profile
-        :param password: password - if specified, then immediately check and result
-        :param attempts: if no password is specified, you are prompted to input with the number of attempts
         :return: password or None if password is failed
         """
         for i in range(attempts):
-            password = stdiomask.getpass(f'Enter your `{name} [{network_type.name}]` profile password: ')
+            password = stdiomask.getpass(f'({attempts - i}) Enter your `{name} [{network_type.name}]` profile password: ')
             if bcrypt.checkpw(password.encode('utf-8'), pass_hash):
                 return password
-            print(f'Incorrect password. Try again ({attempts - 1 - i})')
+            if i != attempts - 1:
+                print(f'Incorrect password. Try again)')
         logger.error('Incorrect password')
         return None
 

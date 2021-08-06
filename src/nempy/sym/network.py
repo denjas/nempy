@@ -574,7 +574,7 @@ class NodeSelector:
             self._URL = self._URLs[0]  # setting a single URL value
             logger.debug(f'Installed node: {self._URL}')
         else:
-            self.thread.start(self.node_actualizer, interval=2).wait()
+            self.thread.start(self.node_actualizer, interval=3600).wait()
         self.is_elections = False
 
     def node_actualizer(self, interval, stop_event, updated):

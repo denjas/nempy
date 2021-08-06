@@ -4,16 +4,13 @@ import os
 from typing import Optional
 
 from nempy.config import WALLET_DIR, C
-from nempy.ui import ProfileI, PasswordPolicyError, RepeatPasswordError, ProfileI, ProfileUI
+from nempy.ui import PasswordPolicyError, RepeatPasswordError, ProfileUI, AccountUI
 from nempy.user_data import ProfileData
 
 logger = logging.getLogger(__name__)
 
 
 class Wallet:
-
-    # profiles = dict()
-    # _profile: Optional[ProfileI] = None
 
     def __init__(self, wallet_dir: str = WALLET_DIR):
         self.wallet_dir = wallet_dir
@@ -25,7 +22,7 @@ class Wallet:
         os.makedirs(self.profiles_dir, exist_ok=True)
         os.makedirs(self.accounts_dir, exist_ok=True)
         self.init_config_file()
-        self._profile = ProfileI(self.config_file, self.profiles_dir, self.accounts_dir)
+        self._profile = ProfileUI(self.config_file, self.profiles_dir, self.accounts_dir)
 
         if self.profile.data is None:
             profiles_data = self.profile.load_profiles()
@@ -37,15 +34,25 @@ class Wallet:
                 profile_data = self.create_profile(is_default=True)
                 print(profile_data)
 
+        if self.profile.account.data is None:
+            accounts_data = self.profile.load_accounts()
+            if not accounts_data:
+                print('No account have been created')
+                answer = input('Create new account? [Y/n]') or 'y'
+                if answer.lower() != 'y':
+                    raise SystemExit('There is no way to continue working without an account')
+                account_data, _ = AccountUI.iu_create_account(self.profile.data, self.accounts_dir, is_default=True)
+                self.profile.set_default_account(account_data)
+
     @property
-    def profile(self) -> ProfileI:
+    def profile(self) -> ProfileUI:
         if self._profile.data is None and (profiles := self._profile.load_profiles()):
             profile_data = ProfileUI.ui_default_profile(profiles)
             self._profile.set_default_profile(profile_data)
         return self._profile
 
     @profile.setter
-    def profile(self, profile: ProfileI):
+    def profile(self, profile: ProfileUI):
         # if profile.data.name not in self.profiles_data:
         #     self.profiles[profile.data.name] = profile
         self._profile = profile
@@ -71,9 +78,9 @@ class Wallet:
                 continue
             # add default label
             if self.profile.data is not None and profile_data == self.profile.data:
-                profile_data = str(profile_data).replace('|              |', '|  >DEFAULT<   |')
+                profile_data = str(profile_data).replace('|              |', f'|  >{C.OKGREEN}DEFAULT{C.END}<   |', 1)
             print(profile_data)
-            print(f'{C.GREY}###################################################################################{C.END}')
+            print(f'{C.GREY}#################################################################################{C.END}')
 
     def init_config_file(self):
         if not os.path.exists(self.config_file):

@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 import click
+from nempy.config import C
 from nempy.wallet import Wallet
 from nempy.ui import ProfileUI
 
 
 @click.group('profile', help='- Interactive profile management')
 def main():
-    # Wallet(init_only=True)
+    Wallet()
     print('Interactive profile management:')
 
 
@@ -33,7 +34,7 @@ def setdefault():
 
 @main.command('info')
 @click.option('-n', '--name', type=str, required=False, default='', help='Profile name')
-@click.option('--list', 'is_list', required=False, is_flag=True, help='List of all profile of the current wallet')
+@click.option('-l', '--list', 'is_list', required=False, is_flag=True, help='List of all profile of the current wallet')
 def profile_info(name, is_list):
     """
     Displays profile information
@@ -42,7 +43,7 @@ def profile_info(name, is_list):
     if is_list or name:
         wallet.print_profiles(name)
         exit(0)
-    str_profile_data = str(wallet.profile.data).replace('|              |', '|  >DEFAULT<   |')
+    str_profile_data = str(wallet.profile.data).replace('|              |', f'|  >{C.OKGREEN}DEFAULT{C.END}<   |', 1)
     print(str_profile_data)
 
 
