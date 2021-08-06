@@ -67,8 +67,7 @@ class UserData(BaseModel):
         return f'<class `{type(self).__name__}`>'
 
     @abc.abstractmethod
-    def __str__(self):
-        pass
+    def __str__(self): pass
 
     def __eq__(self, other: 'UserData'):
         if other.dict() == self.dict():
@@ -77,12 +76,10 @@ class UserData(BaseModel):
 
     @classmethod
     @abc.abstractmethod
-    def read(cls, path: str) -> 'UserData':
-        pass
+    def read(cls, path: str) -> 'UserData': pass
 
     @abc.abstractmethod
-    def write(self, path: str):
-        pass
+    def write(self, path: str): pass
 
     def serialize(self) -> bytes:
         serialized_data = pickle.dumps(self.dict())
@@ -103,9 +100,7 @@ class AccountData(UserData):
     profile: Optional[str] = None
 
     class Config:
-        pass
         validate_assignment = True
-        # require_by_default = False
 
     @validator('address')
     def validate_address(cls, address):
@@ -209,7 +204,7 @@ class AccountData(UserData):
 
 
 class ProfileData(UserData):
-    pass_hash: bytes
+    pass_hash: StrictBytes
 
     def __str__(self):
         prepare = [[key.replace('_', ' ').title(), value]
