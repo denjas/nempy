@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pytest
 from nempy.wallet import Wallet
 from nempy.sym.constants import NetworkType
-from nempy.profile import PasswordPolicyError
+from nempy.ui import PasswordPolicyError
 
 
 class TestWallet:

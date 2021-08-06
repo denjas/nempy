@@ -6,9 +6,9 @@ from unittest.mock import patch
 import bcrypt
 import pytest
 import stdiomask
-from nempy.account import GenerationType
+from nempy.user_data import GenerationType
 from nempy.wallet import Wallet
-from nempy.profile import Profile, RepeatPasswordError, PasswordPolicyError
+from nempy.ui import Profile, RepeatPasswordError, PasswordPolicyError
 from nempy.sym.constants import NetworkType
 from .test_account import test_account
 
