@@ -1,3 +1,4 @@
+import abc
 import binascii
 import copy
 import json
@@ -10,7 +11,7 @@ from base64 import b64encode
 from enum import Enum
 from hashlib import blake2b
 from typing import List, Union, Tuple, Dict, _GenericAlias, Optional
-
+import bcrypt
 import inquirer
 import stdiomask
 from Crypto.Cipher import AES
@@ -77,14 +78,46 @@ class DecoderStatus(Enum):
     WRONG_PASS = 'Wrong password'
 
 
-class Account(BaseModel):
+class UserData(BaseModel):
     name: Optional[str] = None
+    network_type: NetworkType
+
+    def __repr__(self, ):
+        return self.name
+
+    @abc.abstractmethod
+    def __str__(self):
+        pass
+
+    @abc.abstractmethod
+    def __eq__(self, other: 'UserData'):
+        pass
+
+    @classmethod
+    @abc.abstractmethod
+    def read(cls, path: str) -> 'UserData':
+        pass
+
+    @abc.abstractmethod
+    def write(self, path: str):
+        pass
+
+    def serialize(self) -> bytes:
+        serialized_data = pickle.dumps(self.dict())
+        return serialized_data
+
+    @classmethod
+    def deserialize(cls, data) -> 'UserData':
+        deserialized_date = pickle.loads(data)
+        return cls(**deserialized_date)
+
+
+class AccountData(UserData):
     address: StrictStr
     public_key: StrictStr
     private_key: Union[StrictStr, StrictBytes]
     path: Optional[StrictStr] = None
     mnemonic: Union[StrictStr, StrictBytes] = None
-    network_type: NetworkType
     profile: Optional[str] = None
 
     class Config:
@@ -123,7 +156,7 @@ class Account(BaseModel):
         table = tabulate(prepare, headers=['', f'{account}'], tablefmt='grid')
         return table
 
-    def __eq__(self, other: 'Account'):
+    def __eq__(self, other: 'AccountData'):
         if self.name == other.name and \
                 self.path == other.path and \
                 self.address == other.address and \
@@ -135,16 +168,7 @@ class Account(BaseModel):
             return True
         return False
 
-    def serialize(self) -> bytes:
-        sdate = pickle.dumps(self.dict())
-        return sdate
-
-    @classmethod
-    def deserialize(cls, data) -> 'Account':
-        ddate = pickle.loads(data)
-        return cls(**ddate)
-
-    def decrypt(self, password: str) -> 'Account':
+    def decrypt(self, password: str) -> 'AccountData':
         if not isinstance(self.private_key, bytes):
             logger.error('Unencrypted account?')
             raise ValueError(DecoderStatus.WRONG_DATA.value)
@@ -159,14 +183,14 @@ class Account(BaseModel):
         return decrypted_account
 
     @classmethod
-    def read(cls, path: str) -> Union['Account', DecoderStatus]:
+    def read(cls, path: str) -> Union['AccountData', DecoderStatus]:
         if not os.path.exists(path):
             logger.error(DecoderStatus.NO_DATA.value)
             return DecoderStatus.NO_DATA
         account = cls.deserialize(open(path, 'rb').read())
         return account
 
-    def encrypt(self, password: str) -> 'Account':
+    def encrypt(self, password: str) -> 'AccountData':
         pickle_private_key = pickle.dumps(self.private_key)
         # encrypt the private key
         self.private_key = encryption(password=password, data=pickle_private_key)
@@ -190,48 +214,7 @@ class Account(BaseModel):
         logger.debug(f'Wallet saved along the way: {path}')
 
     @staticmethod
-    def input_keyprint_entropy():
-        random_char_set = ''
-        print('Write something (random character set), the input will be interrupted automatically')
-        attempts = list(range(random.randint(3, 5)))
-        for i in attempts:
-            something = input(f'Something else ({len(attempts) - i}): ')
-            if not something:
-                print('Only a non-empty line will have to be repeated :(')
-                attempts.append(len(attempts))
-                continue
-            random_char_set += something
-        return random_char_set
-
-    @staticmethod
-    def inquirer_account(accounts_names):
-        addresses = [account for account in accounts_names]
-        questions = [
-            inquirer.List(
-                "address",
-                message="Select an import type?",
-                choices=addresses,
-            ),
-        ]
-        answers = inquirer.prompt(questions)
-        account_name = answers['address']
-        return account_name
-
-    @classmethod
-    def account_by_mnemonic(cls, network_type: NetworkType, bip32_coin_id: int, is_import: bool = False) -> 'Account':
-        if is_import:
-            mnemonic = stdiomask.getpass('Enter a mnemonic passphrase. Words must be separated by spaces: ')
-        else:
-            random_char_set = cls.input_keyprint_entropy()
-            entropy_bytes_hex = blake2b(random_char_set.encode(), digest_size=32).hexdigest().encode()
-            mnemonic = Bip39MnemonicGenerator(Bip39Languages.ENGLISH).FromEntropy(binascii.unhexlify(entropy_bytes_hex))
-
-        accounts = cls._accounts_pool_by_mnemonic(network_type, bip32_coin_id, mnemonic)
-        account_name = cls.inquirer_account(accounts.keys())
-        return accounts[account_name]
-
-    @classmethod
-    def _accounts_pool_by_mnemonic(cls, network_type: NetworkType, bip32_coin_id: int, mnemonic: str) -> Dict[str, 'Account']:
+    def accounts_pool_by_mnemonic(network_type: NetworkType, bip32_coin_id: int, mnemonic: str) -> Dict[str, 'AccountData']:
         facade = SymFacade(network_type.value)
 
         bip = Bip32(facade.BIP32_CURVE_NAME)
@@ -244,70 +227,66 @@ class Account(BaseModel):
             private_key = str(child_key_pair.private_key).upper()
             public_key = str(child_key_pair.public_key).upper()
             address = str(facade.network.public_key_to_address(child_key_pair.public_key)).upper()
-            accounts[address] = cls(**{'address': address,
-                                       'public_key': public_key,
-                                       'private_key': private_key,
-                                       'mnemonic': mnemonic,
-                                       'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'",
-                                       'network_type': network_type})
+            accounts[address] = AccountData(**{'address': address,
+                                           'public_key': public_key,
+                                           'private_key': private_key,
+                                           'mnemonic': mnemonic,
+                                           'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'",
+                                           'network_type': network_type})
         return accounts
 
     def account_creation(self, account_path: str, password: str):
         self.encrypt(password).write(account_path)
         print(f'\nAccount created at: {account_path}')
         # checking the ability to read and display information about the account
-        account = Account.read(account_path).decrypt(password)
+        account = AccountData.read(account_path).decrypt(password)
         print(account)
         print_warning()
 
-    @staticmethod
-    def get_generation_type() -> GenerationType:
-        questions = [
-            inquirer.List(
-                "type",
-                message="Select an import type?",
-                choices=["Mnemonic", "Private Key"],
-            ),
-        ]
 
-        answers = inquirer.prompt(questions)
-        import_type = answers['type']
-        if import_type == 'Private Key':
-            return GenerationType.PRIVATE_KEY
-        return GenerationType.MNEMONIC
+class ProfileData(UserData):
+    pass_hash: bytes
 
-    def inquirer_history(self, address: str = None, page_size: int = 10):
-        if address is None:
-            address = self.address
-        conf_transactions: List[TransactionResponse] = network.search_transactions(address=address,
-                                                                                   page_size=page_size,
-                                                                                   transaction_status=TransactionStatus.CONFIRMED_ADDED)
-        unconf_transactions: List[TransactionResponse] = network.search_transactions(address=address,
-                                                                                     page_size=page_size,
-                                                                                     transaction_status=TransactionStatus.UNCONFIRMED_ADDED)
-        transactions = unconf_transactions + conf_transactions
-        short_names = {}
-        for transaction in transactions:
-            is_mosaic = '∴' if len(transaction.transaction.mosaics) > 1 else ''
-            message = '🖂' if transaction.transaction.message is not None else ' '
-            direction = '+' if transaction.transaction.recipientAddress == address else '−'
-            status = '🗸' if transaction.status == TransactionStatus.CONFIRMED_ADDED.value else '?'
-            mosaic = next(iter(transaction.transaction.mosaics), '')
-            short_name = f'{status} {transaction.transaction.recipientAddress} | {transaction.meta.height} | {transaction.transaction.deadline} |{message} |{direction}{mosaic} {is_mosaic}'
-            short_names[short_name] = transaction
-        _short_names = list(short_names.keys())
-        _short_names.append('Exit')
-        while True:
-            questions = [
-                inquirer.List(
-                    "transaction",
-                    message="Select an transaction?",
-                    choices=_short_names,
-                    carousel=True
-                ),
-            ]
-            answers = inquirer.prompt(questions)
-            transaction = answers['transaction']
-            if transaction == 'Exit':
-                exit(0)
-            print(short_names[transaction])
+    def __eq__(self, other: 'ProfileData'):
+        if other.dict() == self.dict():
+            return True
+        return False
+
+    def __str__(self):
+        prepare = [[key.replace('_', ' ').title(), value]
+                   for key, value in self.dict().items() if key not in ['network_type', 'pass_hash']]
+        prepare.append(['Network Type', self.network_type.name])
+        prepare.append(['Pass Hash', C.OKBLUE + '*' * len(self.pass_hash) + C.END])
+        profile = f'Profile - {self.name}'
+        indent = (len(self.pass_hash) - len(profile)) // 2
+        profile = C.INVERT + ' ' * indent + profile + ' ' * indent + C.END
+
+        table = tabulate(prepare, headers=['', f'{profile}'], tablefmt='grid')
+        return table
+
+    @classmethod
+    def read(cls, path) -> 'ProfileData':
+        with open(path, 'rb') as opened_file:
+            deserialized = cls.deserialize(opened_file.read())
+            return deserialized
+
+    def write(self, path):
+        pickled = self.serialize()
+        with open(path, 'wb') as opened_file:
+            opened_file.write(pickled)
+
+    def check_pass(self, password: str) -> bool:
+        """
+        Verifies the password from the profile
+        :param password: password - if specified, then immediately check and result
+        :return: True if password confirmed or False if password is failed
+        """
+        if password is not None:
+            if bcrypt.checkpw(password.encode('utf-8'), self.pass_hash):
+                return True
+            else:
+                logger.error('Incorrect password')
+                return False
+
+
+

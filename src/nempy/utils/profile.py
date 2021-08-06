@@ -2,7 +2,7 @@
 
 import click
 from nempy.wallet import Wallet
-from nempy.profile import ProfileUI
+from nempy.ui import ProfileUI
 
 
 @click.group('profile', help='- Interactive profile management')
@@ -27,7 +27,8 @@ def setdefault():
     Change the default profile
     """
     wallet = Wallet()
-    ProfileUI.ui_default_profile(wallet.profile_io.load_profiles())
+    profile_data = ProfileUI.ui_default_profile(wallet.profile.load_profiles())
+    wallet.profile.set_default_profile(profile_data)
 
 
 @main.command('info')
@@ -38,10 +39,11 @@ def profile_info(name, is_list):
     Displays profile information
     """
     wallet = Wallet()
-    if is_list:
-        wallet.print_profiles()
+    if is_list or name:
+        wallet.print_profiles(name)
         exit(0)
-    print(wallet.profile)
+    str_profile_data = str(wallet.profile.data).replace('|              |', '|  >DEFAULT<   |')
+    print(str_profile_data)
 
 
 if __name__ == '__main__':

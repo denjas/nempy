@@ -4,18 +4,18 @@ import os
 from typing import Optional
 
 from nempy.config import WALLET_DIR, C
-from nempy.profile import Profile, PasswordPolicyError, RepeatPasswordError, ProfileIO, ProfileUI
+from nempy.ui import ProfileI, PasswordPolicyError, RepeatPasswordError, ProfileI, ProfileUI
+from nempy.user_data import ProfileData
 
 logger = logging.getLogger(__name__)
 
 
 class Wallet:
 
-    profiles = dict()
-    _profile: Optional[Profile] = None
+    # profiles = dict()
+    # _profile: Optional[ProfileI] = None
 
-    def __init__(self,
-                 wallet_dir: str = WALLET_DIR):
+    def __init__(self, wallet_dir: str = WALLET_DIR):
         self.wallet_dir = wallet_dir
         self.profiles_dir = os.path.join(self.wallet_dir, 'profiles')
         self.accounts_dir = os.path.join(self.wallet_dir, 'accounts')
@@ -25,48 +25,54 @@ class Wallet:
         os.makedirs(self.profiles_dir, exist_ok=True)
         os.makedirs(self.accounts_dir, exist_ok=True)
         self.init_config_file()
+        self._profile = ProfileI(self.config_file, self.profiles_dir, self.accounts_dir)
 
-        self.profile_io = ProfileIO(self.config_file, self.profiles_dir)
-        self._profile = self.profile_io.profile
-        if self._profile is None:
-            self.profiles = self.profile_io.load_profiles()
-            if not self.profiles:
+        if self.profile.data is None:
+            profiles_data = self.profile.load_profiles()
+            if not profiles_data:
                 print('No profiles have been created')
                 answer = input('Create new profile? [Y/n]') or 'y'
                 if answer.lower() != 'y':
                     raise SystemExit('There is no way to get account information without an profile')
-                self.profile = self.create_profile(is_default=True)
+                profile_data = self.create_profile(is_default=True)
+                print(profile_data)
 
     @property
-    def profile(self):
+    def profile(self) -> ProfileI:
+        if self._profile.data is None and (profiles := self._profile.load_profiles()):
+            profile_data = ProfileUI.ui_default_profile(profiles)
+            self._profile.set_default_profile(profile_data)
         return self._profile
 
     @profile.setter
-    def profile(self, profile: Profile):
-        if profile.name not in self.profiles:
-            self.profiles[profile.name] = profile
+    def profile(self, profile: ProfileI):
+        # if profile.data.name not in self.profiles_data:
+        #     self.profiles[profile.data.name] = profile
         self._profile = profile
 
-    def create_profile(self, is_default: bool = False):
+    def create_profile(self, is_default: bool = False) -> ProfileData:
         try:
-            profile, path = ProfileUI.ui_create_profile(self.profiles_dir, self.config_file)
-            profile.write(path)
-            print(f'Profile {profile.name} successful created by path: {path}')
+            profile_data, path = ProfileUI.ui_create_profile(self.profiles_dir, self.config_file)
+            profile_data.write(path)
+            print(f'Profile {profile_data.name} successful created by path: {path}')
             if not is_default:
-                is_default = ProfileUI.ui_is_default(profile.name)
+                is_default = ProfileUI.ui_is_default(profile_data.name)
             if is_default:
-                self.profile_io.set_default_profile(profile)
-            return profile
+                self.profile.set_default_profile(profile_data)
+            return profile_data
         except (PasswordPolicyError, RepeatPasswordError) as e:
             logger.error(e)
             exit(1)
 
-    def print_profiles(self):
-        for profile in self.profile_io.load_profiles().values():
+    def print_profiles(self, name):
+        for profile_data in self.profile.load_profiles().values():
+            # skip printing if name is specified
+            if name != profile_data.name and name:
+                continue
             # add default label
-            if profile == self.profile:
-                profile = str(profile).replace('|              |', '|  >DEFAULT<   |')
-            print(profile)
+            if self.profile.data is not None and profile_data == self.profile.data:
+                profile_data = str(profile_data).replace('|              |', '|  >DEFAULT<   |')
+            print(profile_data)
             print(f'{C.GREY}###################################################################################{C.END}')
 
     def init_config_file(self):

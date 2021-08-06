@@ -3,19 +3,20 @@ import os
 
 import click
 import stdiomask
-from nempy.account import print_warning, DecoderStatus
+from nempy.user_data import print_warning, DecoderStatus
 from nempy.config import C
 from nempy.engine import XYMEngine, EngineStatusCode
 from nempy.sym import ed25519
 from nempy.sym.constants import HexSequenceSizes
 from nempy.sym.network import Monitor
 from nempy.wallet import Wallet
+from nempy.ui import AccountUI, ProfileUI
 from tabulate import tabulate
 
 
 @click.group('account', help='- Interactive account management')
 def main():
-    Wallet(init_only=True)
+    Wallet()
     print('|Interactive account management|')
 
 
@@ -25,9 +26,9 @@ def import_account():
     Create a new account with existing private key or mnemonic
     """
     wallet = Wallet()
-    account, is_default = wallet.profile.create_account(is_import=True)
+    account, is_default = AccountUI.iu_create_account(wallet.profile, wallet.accounts_dir, is_import=True)
     if is_default:
-        wallet.profile.set_default_account(account)
+        wallet.profile_io.set_default_account(account)
 
 
 @main.command('create')
@@ -36,9 +37,9 @@ def create_account():
     Create a new account
     """
     wallet = Wallet()
-    account, is_default = wallet.profile.create_account()
+    account, is_default = AccountUI.iu_create_account(wallet.profile, wallet.accounts_dir)
     if is_default:
-        wallet.profile.set_default_account(account)
+        wallet.profile_io.set_default_account(account)
 
 
 @main.command('info')
@@ -50,16 +51,16 @@ def info(name, decrypt, is_list):
     Account Information
     """
     wallet = Wallet()
-    accounts = wallet.profile.load_accounts()
+    accounts = wallet.profile_io.load_accounts()
     if not is_list:
-        if not name and wallet.profile.account is not None:
-            name = wallet.profile.account.name
+        if not name and wallet.profile_io.account is not None:
+            name = wallet.profile_io.account.name
         account = accounts.get(name, {})
         accounts = {name: account}
     password = None
     if decrypt:
         print(f'{C.RED}Attention! Hide information received after entering a password from prying eyes{C.END}')
-        password = wallet.profile.check_pass(attempts=3)
+        password = ProfileUI.ui_check_pass(name, wallet.profile.network_type, wallet.profile.pass_hash, attempts=3)
         if password is None:
             exit(1)
     for account in accounts.values():

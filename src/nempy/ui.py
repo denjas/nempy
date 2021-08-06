@@ -1,19 +1,24 @@
+import binascii
 import configparser
 import logging
 import os
 import pickle
+import random
 from enum import Enum
-from typing import Optional, Dict, Tuple, Any, Union
+from hashlib import blake2b
+from typing import Optional, Dict, Tuple, Any, Union, List
 
 import bcrypt
 import inquirer
 import stdiomask
-from nempy.account import Account, GenerationType
-from nempy.config import C
-from nempy.sym.constants import NetworkType
+from bip_utils import Bip39MnemonicGenerator, Bip39Languages
+from nempy.user_data import AccountData, GenerationType
+from nempy.user_data import ProfileData
+from nempy.sym.constants import NetworkType, TransactionStatus
 from password_strength import PasswordPolicy
 from pydantic import BaseModel
 from nempy.sym import network
+from nempy.sym.network import TransactionResponse
 from tabulate import tabulate
 
 logger = logging.getLogger(__name__)
@@ -25,65 +30,6 @@ class PasswordPolicyError(Exception):
 
 class RepeatPasswordError(Exception):
     pass
-
-
-class Profile(BaseModel):
-    name: str
-    network_type: NetworkType
-    pass_hash: bytes
-
-    def __eq__(self, other: 'Profile'):
-        if other.dict() == self.dict():
-            return True
-        return False
-
-    def __str__(self):
-        prepare = [[key.replace('_', ' ').title(), value]
-                   for key, value in self.dict().items() if key not in ['network_type', 'pass_hash']]
-        prepare.append(['Network Type', self.network_type.name])
-        prepare.append(['Pass Hash', C.OKBLUE + '*' * len(self.pass_hash) + C.END])
-        profile = f'Profile - {self.name}'
-        indent = (len(self.pass_hash) - len(profile)) // 2
-        profile = C.INVERT + ' ' * indent + profile + ' ' * indent + C.END
-
-        table = tabulate(prepare, headers=['', f'{profile}'], tablefmt='grid')
-        return table
-
-    def __repr__(self, ):
-        return self.name
-
-    @classmethod
-    def read(cls, path) -> 'Profile':
-        with open(path, 'rb') as opened_file:
-            deserialized = cls._deserialize(opened_file.read())
-            return deserialized
-
-    def write(self, path):
-        pickled = self._serialize()
-        with open(path, 'wb') as opened_file:
-            opened_file.write(pickled)
-
-    def _serialize(self):
-        return pickle.dumps(self.dict())
-
-    @classmethod
-    def _deserialize(cls, data) -> 'Profile':
-        des_date = pickle.loads(data)
-        profile = cls(**des_date)
-        return profile
-
-    def check_pass(self, password: str) -> bool:
-        """
-        Verifies the password from the profile
-        :param password: password - if specified, then immediately check and result
-        :return: True if password confirmed or False if password is failed
-        """
-        if password is not None:
-            if bcrypt.checkpw(password.encode('utf-8'), self.pass_hash):
-                return True
-            else:
-                logger.error('Incorrect password')
-                return False
 
 
 # -----------------------------------------------------------------------------------------------------------
@@ -104,48 +50,61 @@ class UD:
         # self.profiles_dir = profiles_dir
         if self.type_ud == UDTypes.PROFILE:
             self.ud_dir = profiles_dir
+            self.cls = ProfileData
         elif self.type_ud == UDTypes.ACCOUNT:
             self.ud_dir = accounts_dir
+            self.cls = AccountData
 
     @property
-    def user_data(self) -> Union[Profile, Account]:
+    def user_data(self) -> Union[ProfileData, AccountData]:
         self.config.read(self.config_file)
         ud_name = self.config[self.type_ud.value]['default']
         uds = self.load_uds()
         ud = uds.get(ud_name)
         return ud
 
-    def load_uds(self) -> Union[Dict[str, Profile], Dict[str, Account]]:
+    def load_uds(self) -> Union[Dict[str, ProfileData], Dict[str, AccountData]]:
         uds = {}
         profiles_paths = os.listdir(self.ud_dir)
         for pp in profiles_paths:
             path = os.path.join(self.ud_dir, pp)
-            ud = Profile.read(path)
+            ud = self.cls.read(path)
             uds[os.path.splitext(pp)[0]] = ud
         return uds
 
-    def set_default_ud(self, ud: Union[Account, Profile]):
+    def set_default_ud(self, ud: Union[AccountData, ProfileData]):
         self.config.read(self.config_file)
         self.config[self.type_ud.value]['default'] = ud.name
         with open(self.config_file, 'w') as configfile:
             self.config.write(configfile)
 
 
-class ProfileIO(UD):
+class ProfileI(UD):
 
-    def __init__(self, config_file: str, profiles_dir: str):
+    def __init__(self, config_file: str, profiles_dir: str, accounts_dir: str):
         self.type_ud = UDTypes.PROFILE
+        self.account_io = AccountIO(config_file, accounts_dir)
         super().__init__(config_file, profiles_dir, None)
 
     @property
-    def profile(self) -> Profile:
+    def data(self) -> ProfileData:
         return self.user_data
 
-    def load_profiles(self) -> Dict[str, Profile]:
+    def load_profiles(self) -> Dict[str, ProfileData]:
         return self.load_uds()
 
-    def set_default_profile(self, profile: Profile):
+    def set_default_profile(self, profile: ProfileData):
         self.set_default_ud(profile)
+
+    @property
+    def account(self) -> AccountData:
+        return self.account_io.data
+
+    def load_accounts(self):
+        return self.account_io.load_account()
+
+    def set_default_account(self, account: AccountData):
+        self.account_io.set_default_account(account)
 
 
 class AccountIO(UD):
@@ -155,13 +114,13 @@ class AccountIO(UD):
         super().__init__(config_file, None, accounts_dir)
 
     @property
-    def account(self) -> Account:
+    def data(self) -> AccountData:
         return self.user_data
 
-    def load_account(self) -> Dict[str, Account]:
+    def load_account(self) -> Dict[str, AccountData]:
         return self.load_uds()
 
-    def set_default_profile(self, account: Account):
+    def set_default_account(self, account: AccountData):
         self.set_default_ud(account)
 
 
@@ -197,9 +156,9 @@ class AccountUI:
         password = ProfileUI.ui_check_pass(name, profile.network_type, profile.pass_hash, attempts=3)
         if password is not None:
             if is_import:
-                gen_type = Account.get_generation_type()
+                gen_type = AccountUI.ui_generation_type_inquirer()
                 if gen_type == GenerationType.MNEMONIC:
-                    account = Account.account_by_mnemonic(profile.network_type, bip32_coin_id, is_import=True)
+                    account = AccountUI.ui_account_by_mnemonic(profile.network_type, bip32_coin_id, is_import=True)
                 elif gen_type == GenerationType.PRIVATE_KEY:
                     raise NotImplementedError(
                         'The functionality of building an account from a private key is not implemented')
@@ -207,14 +166,14 @@ class AccountUI:
                     raise NotImplementedError(
                         f'The functionality of building an account from a {gen_type.name} key is not implemented')
             else:
-                account = Account.account_by_mnemonic(profile.network_type, bip32_coin_id, is_import=is_import)
+                account = AccountUI.ui_account_by_mnemonic(profile.network_type, bip32_coin_id, is_import=is_import)
             account.name = name
             account.profile = profile.name
             account.account_creation(account_path, password)
             return account, is_default
 
     @staticmethod
-    def ui_default_account(accounts: Dict[str, Account]):
+    def ui_default_account(accounts: Dict[str, AccountData]):
         questions = [inquirer.List("name", message="Select default account", choices=accounts.keys(), ), ]
         answers = inquirer.prompt(questions)
         if answers is None:
@@ -222,34 +181,113 @@ class AccountUI:
         account = accounts[answers['name']]
         return account  # -> set_default_account(account)
 
+    @staticmethod
+    def ui_generation_type_inquirer() -> GenerationType:
+        questions = [inquirer.List("type", message="Select an import type?", choices=["Mnemonic", "Private Key"], ), ]
+        answers = inquirer.prompt(questions)
+        import_type = answers['type']
+        if import_type == 'Private Key':
+            return GenerationType.PRIVATE_KEY
+        return GenerationType.MNEMONIC
+
+    @staticmethod
+    def ui_history_inquirer(address: str = None, page_size: int = 10):
+        conf_transactions: List[TransactionResponse] = network.search_transactions(address=address,
+                                                                                   page_size=page_size,
+                                                                                   transaction_status=TransactionStatus.CONFIRMED_ADDED)
+        unconf_transactions: List[TransactionResponse] = network.search_transactions(address=address,
+                                                                                     page_size=page_size,
+                                                                                     transaction_status=TransactionStatus.UNCONFIRMED_ADDED)
+        transactions = unconf_transactions + conf_transactions
+        short_names = {}
+        for transaction in transactions:
+            is_mosaic = '∴' if len(transaction.transaction.mosaics) > 1 else ''
+            message = '🖂' if transaction.transaction.message is not None else ' '
+            direction = '+' if transaction.transaction.recipientAddress == address else '−'
+            status = '🗸' if transaction.status == TransactionStatus.CONFIRMED_ADDED.value else '?'
+            mosaic = next(iter(transaction.transaction.mosaics), '')
+            short_name = f'{status} {transaction.transaction.recipientAddress} | {transaction.meta.height} | {transaction.transaction.deadline} |{message} |{direction}{mosaic} {is_mosaic}'
+            short_names[short_name] = transaction
+        _short_names = list(short_names.keys())
+        _short_names.append('Exit')
+        while True:
+            questions = [
+                inquirer.List(
+                    "transaction",
+                    message="Select an transaction?",
+                    choices=_short_names,
+                    carousel=True
+                ),
+            ]
+            answers = inquirer.prompt(questions)
+            transaction = answers['transaction']
+            if transaction == 'Exit':
+                exit(0)
+            print(short_names[transaction])
+
+    @staticmethod
+    def ui_keyprint_entropy():
+        random_char_set = ''
+        print('Write something (random character set), the input will be interrupted automatically')
+        attempts = list(range(random.randint(3, 5)))
+        for i in attempts:
+            something = input(f'Something else ({len(attempts) - i}): ')
+            if not something:
+                print('Only a non-empty line will have to be repeated :(')
+                attempts.append(len(attempts))
+                continue
+            random_char_set += something
+        return random_char_set
+
+    @staticmethod
+    def ui_account_inquirer(accounts_names):
+        addresses = [account for account in accounts_names]
+        questions = [inquirer.List("address", message="Select an import type?", choices=addresses,), ]
+        answers = inquirer.prompt(questions)
+        account_name = answers['address']
+        return account_name
+
+    @classmethod
+    def ui_account_by_mnemonic(cls, network_type: NetworkType, bip32_coin_id: int, is_import: bool = False) -> 'AccountData':
+        if is_import:
+            mnemonic = stdiomask.getpass('Enter a mnemonic passphrase. Words must be separated by spaces: ')
+        else:
+            random_char_set = cls.ui_keyprint_entropy()
+            entropy_bytes_hex = blake2b(random_char_set.encode(), digest_size=32).hexdigest().encode()
+            mnemonic = Bip39MnemonicGenerator(Bip39Languages.ENGLISH).FromEntropy(binascii.unhexlify(entropy_bytes_hex))
+
+        accounts = AccountData.accounts_pool_by_mnemonic(network_type, bip32_coin_id, mnemonic)
+        account_name = cls.ui_account_inquirer(accounts.keys())
+        return accounts[account_name]
+
 
 class ProfileUI:
     # PROFILE -------------------------------------------------------------------------------------------
 
     @staticmethod
-    def ui_default_profile(profiles: Dict[str, Profile]) -> Profile:
+    def ui_default_profile(profiles: Dict[str, ProfileData]) -> ProfileData:
         names = {profile.name + f' [{profile.network_type.name}]': profile.name for profile in profiles.values()}
         questions = [inquirer.List("name", message="Select default profile", choices=names.keys(),), ]
         answers = inquirer.prompt(questions)
         if answers is None:
             exit(1)
         name = names[answers['name']]
-        profile = profiles[name]
-        network.node_selector.network_type = profile.network_type
-        return profile  # -> set_default_profile(profile)
+        profile_data = profiles[name]
+        network.node_selector.network_type = profile_data.network_type
+        return profile_data  # -> set_default_profile(profile)
 
     @classmethod
-    def ui_create_profile(cls, profiles_dir: str, config_file: str) -> Tuple['Profile', str]:
+    def ui_create_profile(cls, profiles_dir: str, config_file: str) -> Tuple[ProfileData, str]:
         name, path = cls.ui_profile_name(profiles_dir)
         network_type = cls.ui_network_type()
         new_pass = cls.ui_new_pass(10)
         pass_hash = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt(12))
         accounts_dir = os.path.join(os.path.dirname(profiles_dir), 'accounts')
-        profile = Profile(name=name,
-                          network_type=network_type,
-                          pass_hash=pass_hash,
-                          accounts_dir=accounts_dir,
-                          config_file=config_file)
+        profile = ProfileData(name=name,
+                              network_type=network_type,
+                              pass_hash=pass_hash,
+                              accounts_dir=accounts_dir,
+                              config_file=config_file)
         return profile, path
 
     @staticmethod
