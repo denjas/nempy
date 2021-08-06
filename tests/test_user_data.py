@@ -7,15 +7,6 @@ from nempy.sym.network import NetworkType
 import os
 
 
-class TestUserData:
-
-    def setup(self):
-        self.profile_data = ProfileData(nane='', network_type=NetworkType.TEST_NET, pass_hash=b'')
-
-    def test_str(self):
-        UserData.__str__(self.profile_data)
-
-
 class TestAccountData:
 
     def setup(self):

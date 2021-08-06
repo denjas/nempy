@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class Wallet:
 
-    def __init__(self, wallet_dir: str = WALLET_DIR):
+    def __init__(self, wallet_dir: str = WALLET_DIR, init_only=False):
         self.wallet_dir = wallet_dir
         self.profiles_dir = os.path.join(self.wallet_dir, 'profiles')
         self.accounts_dir = os.path.join(self.wallet_dir, 'accounts')
@@ -22,6 +22,8 @@ class Wallet:
         os.makedirs(self.profiles_dir, exist_ok=True)
         os.makedirs(self.accounts_dir, exist_ok=True)
         self.init_config_file()
+        if init_only:
+            return
         self._profile = ProfileUI(self.config_file, self.profiles_dir, self.accounts_dir)
 
         if self.profile.data is None:

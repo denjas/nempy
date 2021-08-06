@@ -47,13 +47,12 @@ def print_warning():
 
 class UD:
 
-    type_ud: UDTypes
+    type_ud: UDTypes = None
     ud_dir: str
     config = configparser.ConfigParser()
 
     def __init__(self, config_file: str, profiles_dir: Optional[str], accounts_dir: Optional[str]):
         self.config_file = config_file
-        # self.profiles_dir = profiles_dir
         if self.type_ud == UDTypes.PROFILE:
             self.ud_dir = profiles_dir
             self.cls = ProfileData
@@ -83,6 +82,11 @@ class UD:
         self.config[self.type_ud.value]['default'] = ud.name
         with open(self.config_file, 'w') as configfile:
             self.config.write(configfile)
+
+    def get_default_ud_name(self) -> str:
+        self.config.read(self.config_file)
+        ud_name = self.config[self.type_ud.value]['default']
+        return ud_name
 
 
 class AccountI(UD):
