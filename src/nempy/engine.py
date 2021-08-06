@@ -3,7 +3,7 @@ import logging
 from enum import Enum
 from typing import List, Tuple, Union, Dict, Optional
 
-from nempy.account import Account
+from nempy.user_data import AccountData
 from nempy.sym.constants import BlockchainStatuses
 
 from .sym import api as sym
@@ -20,7 +20,7 @@ class EngineStatusCode(Enum):
 class NEMEngine:
     account = None
 
-    def __init__(self, url: str, account: Account):
+    def __init__(self, url: str, account: AccountData):
         self.url = url
         self.account = account
 
@@ -53,7 +53,7 @@ class NEMEngine:
 
 class XYMEngine(NEMEngine):
 
-    def __init__(self, account: Account):
+    def __init__(self, account: AccountData):
         self.node_selector = network.node_selector
         self.node_selector.network_type = account.network_type
         self.transaction = sym.Transaction()
