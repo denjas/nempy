@@ -181,7 +181,8 @@ class TestTiming:
         date = self.timing_test_net.deadline_to_date(11395314574)
         assert date == deadline_date
         date_local = self.timing_test_net.deadline_to_date(11395314574, is_local=True)
-        assert date != date_local
+        if time.timezone != 0:
+            assert date != date_local
 
 
 def test_monitor():
