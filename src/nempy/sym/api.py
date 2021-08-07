@@ -5,7 +5,6 @@ import re
 from binascii import unhexlify
 from typing import Union, Optional, List, Tuple
 
-from nempy.sym.network import mosaic_id_to_name_n_real
 from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.CryptoTypes import PrivateKey
 from symbolchain.core.CryptoTypes import Signature, PublicKey
@@ -75,22 +74,6 @@ class EncryptMessage(bytes):
         return bytes.__new__(EncryptMessage, payload_message)
 
 
-def name_of_mosaic(mosaic_names: list):
-    """
-    https://docs.symbolplatform.com/symbol-openapi/v1.0.0/#operation/getMosaicsNames
-    picks up names for the mosaic
-    :param mosaic_names: list of friendly names for mosaics form get_mosaic_names()
-    [{"mosaicId": "0DC67FBE1CAD29E3", "names": ["symbol.xym"]}, ...]
-    :return: expanded list into dictionary {'name', 'mosaic_id'}
-    """
-    name_mosaic = {}
-    for mosaic_name in mosaic_names:
-        if len(names := mosaic_name['names']) > 0:
-            for name in names:
-                name_mosaic[name] = mosaic_name['mosaicId']
-    return name_mosaic
-
-
 class Namespace(str):
 
     def __new__(cls, name: str) -> str:
@@ -139,11 +122,6 @@ class Mosaic(tuple):
         mosaic_id = namespace_info['namespace']['alias']['mosaicId']
         return mosaic_id
 
-    @staticmethod
-    def human(mosaic_id: str, amount: int):
-        amount = int(amount)
-        return mosaic_id_to_name_n_real(mosaic_id, amount)
-
 
 class Transaction:
     # Size of transaction with empty message
@@ -161,7 +139,7 @@ class Transaction:
                pr_key: str,
                recipient_address: str,
                mosaics: Union[Mosaic, List[Mosaic], None] = None,
-               message: Union[PlainMessage, EncryptMessage, None] = None,
+               message: Union[PlainMessage, EncryptMessage] = PlainMessage(''),
                fee_type: Fees = Fees.SLOWEST,
                deadline: Optional[dict] = None) -> Tuple[str, bytes]:
 
@@ -169,9 +147,10 @@ class Transaction:
             deadline = {'minutes': 2}
         if mosaics is None:
             mosaics = []
-        if not isinstance(mosaics, list):
+        if not isinstance(mosaics, list) and isinstance(mosaics, Mosaic):
             mosaics = [mosaics]
-
+        if not isinstance(mosaics, list) and not isinstance(mosaics, Mosaic):
+            raise ValueError(f'Expected type of `Mosaic` for mosaic got `{type(mosaics)}`')
         if len(mosaics) > 1:
             # sorting mosaic by ID (blockchain requirement)
             mosaics = sorted(mosaics, key=lambda tup: tup[0])
@@ -187,7 +166,7 @@ class Transaction:
             'mosaics': mosaics,
             'fee': self.max_fee,
             'deadline': deadline,
-            'message': message if message is not None else b''
+            'message': message
         }
 
         self.size = self.MIN_TRANSACTION_SIZE + descriptor['message'].size + sum(mosaic.size for mosaic in descriptor['mosaics'])
@@ -220,6 +199,9 @@ class Transaction:
         average_fee_multiplier = nfm[FM.min] + nfm[FM.average] * 0.65
         slow_fee_multiplier = nfm[FM.min] + nfm[FM.average] * 0.35
         slowest_fee_multiplier = nfm[FM.min]
+        # sometimes the average is less than fast
+        slowest_fee_multiplier, slow_fee_multiplier, average_fee_multiplier, fast_fee_multiplier = sorted(
+            [slowest_fee_multiplier, slow_fee_multiplier, average_fee_multiplier, fast_fee_multiplier])
 
         div = 1000000
         logger.debug(f'Fees.FAST.name: {fast_fee_multiplier * transaction_size / div}')
@@ -240,8 +222,7 @@ class Transaction:
             fee_multiplier = 0
 
         max_fee = int(fee_multiplier * transaction_size)
-        # ограничение при получении при просчёте слишком высокой комисии
-        # TODO take a closer look at the regulation of the commission for transactions
+        # TODO whether restrictions are needed for too high a fee, can this be?
         return max_fee
 
     @staticmethod
@@ -251,10 +232,8 @@ class Transaction:
         is_aggregate = transaction.type in [TransactionTypes.AGGREGATE_BONDED, TransactionTypes.AGGREGATE_COMPLETE]
         # TODO check if it works correctly on aggregated transactions
         if is_aggregate:
-            raise RuntimeError('Working with aggregated transactions has not been tested !!!')
-        if is_aggregate:
-            transaction_body = tr_sr[
-                               TransactionMetrics.TRANSACTION_HEADER_SIZE:TransactionMetrics.TRANSACTION_BODY_INDEX + 32]
+            raise NotImplementedError('Working with aggregated transactions has not been tested !!!')
+            transaction_body = tr_sr[TransactionMetrics.TRANSACTION_HEADER_SIZE:TransactionMetrics.TRANSACTION_BODY_INDEX + 32]
         else:
             transaction_body = tr_sr[TransactionMetrics.TRANSACTION_HEADER_SIZE:]
         # https://symbol-docs.netlify.app/concepts/transaction.html#signing-a-transaction

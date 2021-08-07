@@ -17,9 +17,11 @@ logging.getLogger('urllib3').setLevel(logging.ERROR)
 @click.group()
 @click.option('-d', '--debug', is_flag=True)
 def main(debug):
+    log_format = "[%(asctime)s][%(levelname)s] %(name)s - %(message)s"
     if debug:
-        log_format = "[%(asctime)s][%(levelname)s] %(name)s - %(message)s"
         logging.basicConfig(level=logging.DEBUG, format=log_format)
+    else:
+        logging.basicConfig(level=logging.ERROR, format=log_format)
 
 
 @main.command()

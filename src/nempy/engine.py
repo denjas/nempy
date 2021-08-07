@@ -1,9 +1,9 @@
 import abc
 import logging
 from enum import Enum
-from typing import List, Tuple, Union, Dict
+from typing import List, Tuple, Union, Dict, Optional
 
-from nempy.account import Account
+from nempy.user_data import AccountData
 from nempy.sym.constants import BlockchainStatuses
 
 from .sym import api as sym
@@ -14,12 +14,13 @@ logger = logging.getLogger(__name__)
 
 class EngineStatusCode(Enum):
     INVALID_ACCOUNT_INFO = 'There is no information on the network for this account. '
+    ANNOUNCE_ERROR = 'Transaction announce error'
 
 
 class NEMEngine:
     account = None
 
-    def __init__(self, url: str, account: Account):
+    def __init__(self, url: str, account: AccountData):
         self.url = url
         self.account = account
 
@@ -32,21 +33,27 @@ class NEMEngine:
         yield 'public_key', self.account.public_key
 
     @abc.abstractmethod
-    def send_tokens(self, recipient_address: str, mosaics: List[Tuple[str, float]], message: Union[str, bytes] = ''):
-        pass
+    def send_tokens(self,
+                    recipient_address: str,
+                    mosaics: List[Tuple[str, float]],
+                    message: Union[str, bytes] = '',
+                    is_encrypted=False,
+                    password: str = '',
+                    deadline: Optional[dict] = None):
+        raise NotImplementedError
 
     @abc.abstractmethod
-    def check_status(self, is_logging):
-        pass
+    def check_status(self):
+        raise NotImplementedError
 
     @abc.abstractmethod
     def get_balance(self, nem_address, test=False):
-        pass
+        raise NotImplementedError
 
 
 class XYMEngine(NEMEngine):
 
-    def __init__(self, account: Account):
+    def __init__(self, account: AccountData):
         self.node_selector = network.node_selector
         self.node_selector.network_type = account.network_type
         self.transaction = sym.Transaction()
@@ -56,15 +63,15 @@ class XYMEngine(NEMEngine):
     def send_tokens(self,
                     recipient_address: str,
                     mosaics: List[Tuple[str, float]],
-                    message: [str, bytes] = '',
+                    message: Union[str, bytes] = '',
                     is_encrypted=False,
                     password: str = '',
-                    deadline: dict = None):
+                    deadline: Optional[dict] = None):
         recipient_address = recipient_address.replace('-', '')
         mosaics = [sym.Mosaic(mosaic_id=mosaic[0], amount=mosaic[1]) for mosaic in mosaics]
         if is_encrypted:
             address_info = network.get_accounts_info(address=recipient_address)
-            if not address_info:
+            if address_info is None:
                 return EngineStatusCode.INVALID_ACCOUNT_INFO
             public_key = address_info['account']['publicKey']
             message = sym.EncryptMessage(message, self.account.decrypt(password).private_key, public_key)
@@ -76,14 +83,16 @@ class XYMEngine(NEMEngine):
                                                        message=message,
                                                        deadline=deadline)
         is_sent = network.send_transaction(payload)
-        return entity_hash if is_sent else None
+        return entity_hash if is_sent else EngineStatusCode.ANNOUNCE_ERROR
 
-    def check_status(self, is_logging):
+    def check_status(self):
         if self.account is None:
             return BlockchainStatuses.NOT_INITIALIZED
         return network.NodeSelector.health(self.node_selector.url)
 
-    def get_balance(self, nem_address, humanization=False):
+    def get_balance(self, nem_address: str = '', humanization: bool = False):
+        if not nem_address:
+            nem_address = self.account.address
         amount = network.get_balance(nem_address)
         if humanization:
             amount = XYMEngine.mosaic_humanization(amount)

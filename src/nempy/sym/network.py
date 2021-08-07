@@ -5,17 +5,19 @@ import logging
 import multiprocessing
 import threading
 import time
+import re
 from base64 import b32encode
 from binascii import unhexlify
 from http import HTTPStatus
-from typing import Optional, Union, List, Callable, Tuple, Dict
+from typing import Optional, Union, List, Callable, Dict
 from urllib.parse import urlparse
+from requests.exceptions import RequestException
 
 import requests
 import websockets
 from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType, \
-    TransactionTypes
-from pydantic import BaseModel
+    TransactionTypes, AccountValidationState
+from pydantic import BaseModel, StrictInt, StrictFloat
 from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.facade.SymFacade import SymFacade
 from tabulate import tabulate
@@ -27,20 +29,45 @@ from .constants import TransactionStatus
 logger = logging.getLogger(__name__)
 
 
+class SymbolNetworkException(Exception):
+    codes = {
+        'ResourceNotFound': 404,
+        'InvalidAddress': 409,
+        'InvalidArgument': 409,
+        'InvalidContent': 400,
+        'Internal': 500,
+    }
+
+    def __init__(self, code, message):
+        self.code = self.codes.get(code)
+        self.name = code
+        self.message = message
+        super(SymbolNetworkException, self).__init__(f'{self.code} - {self.name}', self.message)
+
+
+def url_validation(url):
+    # django url validation regex
+    regex = re.compile(
+        r'^(?:http|ftp)s?://'  # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+        r'localhost|'  # localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+        r'(?::\d+)?'  # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+    if re.match(regex, url) is None:
+        raise ValueError(f'`{url}` is not a valid URL')
+
+
 def mosaic_id_to_name_n_real(mosaic_id: str, amount: int) -> Dict[str, float]:
     if not isinstance(amount, int):
         raise TypeError('To avoid confusion, automatic conversion to integer is prohibited')
     divisibility = get_divisibility(mosaic_id)
-    if divisibility is None:
-        raise ValueError(f'Failed to get divisibility from network')
     divider = 10 ** int(divisibility)
-
     mn = get_mosaic_names(mosaic_id)
     name = mosaic_id
-    if mn is not None:
-        names = mn['mosaicNames'][0]['names']
-        if len(names) > 0:
-            name = names[0]
+    names = mn['mosaicNames'][0]['names']
+    if len(names) > 0:
+        name = names[0]
     return {'id': name, 'amount': float(amount / divider)}
 
 
@@ -53,12 +80,7 @@ class Meta(BaseModel):
 
 class MosaicInfo(BaseModel):
     id: str
-    amount: int
-
-
-class HumMosaicInfo(MosaicInfo):
-    id: str
-    amount: float
+    amount: Union[StrictInt, StrictFloat]
 
     def __str__(self):
         return f'{self.amount}({self.id})'
@@ -76,15 +98,15 @@ class TransactionInfo(BaseModel):
     recipientAddress: str
     message: Optional[str]
     signer_address: Optional[str]
-    mosaics: List[Union[MosaicInfo, HumMosaicInfo]]
+    mosaics: List[MosaicInfo]
 
     def humanization(self):
         self.deadline = Timing().deadline_to_date(self.deadline)
         if self.message is not None:
             self.message = unhexlify(self.message)[1:].decode('utf-8')
         self.recipientAddress = b32encode(unhexlify(self.recipientAddress)).decode('utf-8')[:-1]
-        self.mosaics = [HumMosaicInfo(**mosaic_id_to_name_n_real(mosaic.id, mosaic.amount)) for mosaic in self.mosaics]
-        self.type = TransactionTypes.get_type_by_id(self.type)
+        self.mosaics = [MosaicInfo(**mosaic_id_to_name_n_real(mosaic.id, mosaic.amount)) for mosaic in self.mosaics]
+        self.type = TransactionTypes.get_type_by_id(self.type).name
         facade = SymFacade(node_selector.network_type.value)
         self.signer_address = str(facade.network.public_key_to_address(Hash256(self.signerPublicKey)))
 
@@ -119,66 +141,60 @@ class TransactionResponse(BaseModel):
         return table
 
 
-class SymbolNetworkException(Exception):
-
-    def __init__(self, error):
-        err = json.loads(error.text)
-        super(SymbolNetworkException, self).__init__(err['code'], err['message'])
-
-
 def send_transaction(payload: bytes) -> bool:
-    headers = {'Content-type': 'application/json'}
+
     try:
+        headers = {'Content-type': 'application/json'}
         answer = requests.put(f'{node_selector.url}/transactions', data=payload, headers=headers, timeout=10)
-    except ConnectionError as e:
-        logger.error(str(e))
+        if answer.status_code != HTTPStatus.ACCEPTED:
+            raise SymbolNetworkException(**answer.json())
+    except (RequestException, SymbolNetworkException) as e:
+        logger.exception(e)
         return False
-    if answer.status_code == HTTPStatus.ACCEPTED:
+    else:
         return True
-    logger.error(answer.text)
-    return False
 
 
-def get_mosaic_names(mosaics: Union[list, str]) -> Optional[dict]:
+def get_mosaic_names(mosaics_ids: Union[list, str]) -> Optional[dict]:
     """
     Get readable names for a set of mosaics
-    :param mosaics:
-    :return:
+    :param mosaics_ids:
+    :return: dict of mosaics {'mosaicNames': [{'mosaicId': '091F837E059AE13C', 'names': ['symbol.xym']}]}
     """
-    if isinstance(mosaics, str):
-        mosaics = [mosaics]
-    data = {'mosaicIds': mosaics}
-    headers = {'Content-type': 'application/json'}
+    if isinstance(mosaics_ids, str):
+        mosaics_ids = [mosaics_ids]
     try:
-        answer = requests.post(f'{node_selector.url}/namespaces/mosaic/names', json=data, headers=headers, timeout=10)
-    except ConnectionError as e:
-        logger.error(str(e))
-        return None
-    if answer.status_code == HTTPStatus.OK:
-        return json.loads(answer.text)
+        for mosaic_id in mosaics_ids:
+            if not ed25519.check_hex(mosaic_id, constants.HexSequenceSizes.MOSAIC_ID):
+                raise SymbolNetworkException('InvalidArgument', f'mosaicId `{mosaic_id}` has an invalid format')
+        payload = {'mosaicIds': mosaics_ids}
+        headers = {'Content-type': 'application/json'}
+        answer = requests.post(f'{node_selector.url}/namespaces/mosaic/names', json=payload, headers=headers, timeout=10)
+        if answer.status_code != HTTPStatus.OK:
+            raise SymbolNetworkException(**answer.json())
+    except (RequestException, SymbolNetworkException) as e:
+        logger.exception(e)
+        raise
     else:
-        logger.error(answer.text)
-    return None
+        return answer.json()
 
 
 def get_accounts_info(address: str) -> Optional[dict]:
-    if not ed25519.check_address(address):
-        logger.error(f'Incorrect wallet address: `{address}`')
-        return None
-    endpoint = f'{node_selector.url}/accounts/{address}'
     try:
+        if (avs := ed25519.check_address(address)) != AccountValidationState.OK:
+            raise SymbolNetworkException('InvalidAddress', f'Incorrect account address: `{address}`: {avs}')
+        endpoint = f'{node_selector.url}/accounts/{address}'
         answer = requests.get(endpoint)
-    except Exception as e:
-        logger.error(e)
-        return None
-    if answer.status_code != HTTPStatus.OK:
-        logger.error(answer.text)
-        if answer.status_code == HTTPStatus.NOT_FOUND:
-            logger.error('Invalid recipient account info')
-            return {}
-        return None
-    address_info = json.loads(answer.text)
-    return address_info
+        if answer.status_code != HTTPStatus.OK:
+            return None
+    except RequestException as e:
+        logger.exception(e)
+        raise
+    except SymbolNetworkException as e:
+        logger.exception(e)
+        raise
+    else:
+        return answer.json()
 
 
 def search_transactions(address: Optional[str] = None,
@@ -215,20 +231,22 @@ def search_transactions(address: Optional[str] = None,
         'offset': offset,
         'order': order
     }
-    params = {key: val for key, val in params.items() if val is not None}
+    payload = {key: val for key, val in params.items() if val is not None}
     endpoint = f'{node_selector.url}/transactions/{transaction_status.value}'
     try:
-        answer = requests.get(endpoint, params=params)
-    except Exception as e:
-        logger.error(e)
-        return None
-    if answer.status_code != HTTPStatus.OK:
-        logger.error(answer.text)
-        return None
-    transactions = json.loads(answer.text)
+        answer = requests.get(endpoint, params=payload)
+        if answer.status_code != HTTPStatus.OK:
+            raise SymbolNetworkException(**answer.json())
+    except RequestException as e:
+        logger.exception(e)
+        raise
+    except SymbolNetworkException as e:
+        logger.exception(e)
+        raise
+    transactions = answer.json()
     transactions_response = []
     for transaction in transactions['data']:
-        mosaics = [MosaicInfo(**mosaic) for mosaic in transaction['transaction']['mosaics']]
+        mosaics = [MosaicInfo(id=mosaic['id'], amount=int(mosaic['amount'])) for mosaic in transaction['transaction']['mosaics']]
         del(transaction['transaction']['mosaics'])
         _transaction = TransactionResponse(id=transaction['id'],
                                            meta=Meta(**transaction['meta']),
@@ -253,7 +271,7 @@ def get_namespace_info(namespace_id: str) -> Optional[dict]:
             logger.error(f'Invalid namespace ID `{namespace_id}`')
             return {}
         return None
-    namespace_info = json.loads(answer.text)
+    namespace_info = answer.json()
     return namespace_info
 
 
@@ -265,33 +283,39 @@ def check_transaction_state(transaction_hash):
         endpoint = f'{node_selector.url}/transactions/{checker}/{transaction_hash}'
         try:
             answer = requests.get(endpoint, timeout=timeout)
-        except Exception as e:
-            logger.error(str(e))
-            return None
-        if answer.status_code == 200:
+            if answer.status_code != 200:
+                raise SymbolNetworkException(**answer.json())
+        except (RequestException, SymbolNetworkException) as e:
+            if isinstance(e, SymbolNetworkException) and e.code == 404:
+                return TransactionStatus.NOT_FOUND
+            logger.exception(e)
+            raise
+        else:
             if checker == 'confirmed':
                 status = TransactionStatus.CONFIRMED_ADDED
-            if checker == 'unconfirmed':
+            elif checker == 'unconfirmed':
                 status = TransactionStatus.UNCONFIRMED_ADDED
-            if checker == 'partial':
+            elif checker == 'partial':
                 status = TransactionStatus.PARTIAL_ADDED
-        if answer.status_code == HTTPStatus.CONFLICT:
-            logger.error(answer.text)
-    return status
+        return status
 
 
 def get_network_properties():
     answer = requests.get(f'{node_selector.url}/network/properties')
     if answer.status_code == HTTPStatus.OK:
-        network_properties = json.loads(answer.text)
+        network_properties = answer.json()
         return network_properties
     answer.raise_for_status()
 
 
 def get_node_network():
-    answer = requests.get(f'{node_selector.url}/node/info')
+    try:
+        answer = requests.get(f'{node_selector.url}/node/info')
+    except RequestException as e:
+        logger.exception(e)
+        raise
     if answer.status_code == HTTPStatus.OK:
-        fee_info = json.loads(answer.text)
+        fee_info = answer.json()
         network_generation_hash_seed = fee_info['networkGenerationHashSeed']
         if network_generation_hash_seed == constants.NETWORK_GENERATION_HASH_SEED_TEST:
             return NetworkType.TEST_NET
@@ -305,7 +329,7 @@ def get_node_network():
 def get_block_information(height: int):
     answer = requests.get(f'{node_selector.url}/blocks/{height}')
     if answer.status_code == HTTPStatus.OK:
-        block_info = json.loads(answer.text)
+        block_info = answer.json()
         return block_info
     answer.raise_for_status()
 
@@ -313,53 +337,75 @@ def get_block_information(height: int):
 def get_fee_multipliers():
     try:
         answer = requests.get(f'{node_selector.url}/network/fees/transaction')
-    except Exception as e:
-        logger.error(e)
+    except RequestException as e:
+        logger.exception(e)
         return None
     if answer.status_code == HTTPStatus.OK:
-        fee_multipliers = json.loads(answer.text)
+        fee_multipliers = answer.json()
         return fee_multipliers
     return None
 
 
-def get_divisibility(mosaic_id: str):
+def get_divisibility(mosaic_id: str) -> Optional[int]:
     try:
+        if not ed25519.check_hex(mosaic_id, constants.HexSequenceSizes.MOSAIC_ID):
+            raise SymbolNetworkException('InvalidArgument', f'mosaicId `{mosaic_id}` has an invalid format')
         answer = requests.get(f'{node_selector.url}/mosaics/{mosaic_id}')
-    except Exception as e:
-        logger.error(e)
-        return None
-    if answer.status_code == HTTPStatus.OK:
-        node_info = json.loads(answer.text)
-        divisibility = int(node_info['mosaic']['divisibility'])
+        if answer.status_code == HTTPStatus.OK:
+            node_info = answer.json()
+            divisibility = int(node_info['mosaic']['divisibility'])
+        else:
+            raise SymbolNetworkException(**answer.json())
+    except RequestException as e:
+        logger.exception(e)
+        raise
+    except SymbolNetworkException as e:
+        logger.exception(e)
+        raise
+    else:
         return divisibility
-    err = json.loads(answer.text)
-    logger.error(f"{err['code']}: {err['message']}")
-    return None
 
 
-def get_balance(address: str, mosaic_filter: [list, str] = None, is_linked: bool = False) -> Optional[dict]:
-    if isinstance(mosaic_filter, str):
-        mosaic_filter = [mosaic_filter]
-    if mosaic_filter is None:
-        mosaic_filter = []
-    for mosaic_id in mosaic_filter:
-        if not ed25519.check_hex(mosaic_id, constants.HexSequenceSizes.mosaic_id):
-            logger.error(f'Incorrect mosaic ID: `{mosaic_id}`')
+def get_divisibilities(n_pages: int = 0):
+    mosaics = {}
+    payload = {'pageSize': 100}
+
+    page_count = 1
+    while True:
+        try:
+            answer = requests.get(f'{node_selector.url}/mosaics', params=payload)
+        except Exception as e:
+            logger.error(e)
             return None
-    address_info = get_accounts_info(address)
-    if address_info == {}:
-        return address_info
-    mosaics = address_info['account']['mosaics']
-    balance = {}
-    for mosaic in mosaics:
-        div = get_divisibility(mosaic['id'])
-        if div is None:
-            return None
-        balance[mosaic['id']] = int(mosaic['amount']) / 10 ** div
-    if mosaic_filter:
-        filtered_balance = {key: balance.get(key) for key in mosaic_filter if key in balance}
-        return filtered_balance
-    return balance
+        if answer.status_code == HTTPStatus.OK:
+            mosaics_pages = answer.json()['data']
+            if len(mosaics_pages) == 0:
+                return mosaics
+            last_page = None
+            for page in mosaics_pages:
+                mosaic_id = page['mosaic']['id']
+                divisibility = page['mosaic']['divisibility']
+                mosaics[mosaic_id] = divisibility
+                last_page = page
+            payload['offset'] = last_page['id']
+            page_count = page_count + 1 if n_pages else page_count
+            if page_count > n_pages:
+                return mosaics
+
+
+def get_balance(address: str) -> Optional[dict]:
+    try:
+        address_info = get_accounts_info(address)
+        if address_info is None:
+            return {}
+        mosaics = address_info['account']['mosaics']
+        balance = {mosaic['id']: int(mosaic['amount']) / 10 ** get_divisibility(mosaic['id']) for mosaic in mosaics}
+    except (SymbolNetworkException, RequestException) as e:
+        if isinstance(e, SymbolNetworkException) and e.code == 404:
+            return {}
+        raise
+    else:
+        return balance
 
 
 class Monitor:
@@ -393,33 +439,35 @@ class Monitor:
         result = urlparse(self.url)
         url = f"ws://{result.hostname}:{result.port}/ws"
         print(f'MONITORING: {url}')
-        async with websockets.connect(url) as ws:
-            response = json.loads(await ws.recv())
-            print(f'UID: {response["uid"]}')
-            if 'uid' in response:
-                prepare = []
-                for subscriber in self.subscribers:
-                    added = json.dumps({"uid": response["uid"], "subscribe": f"{subscriber}"})
-                    await ws.send(added)
-                    # print(f'Subscribed to: {subscriber}')
-                    prepare.append([subscriber])
-                table = tabulate(prepare, headers=['Subscribers'], tablefmt='grid')
-                print(table)
-                print('Listening... `Ctrl+C` for abort')
-                while True:
-                    res = await ws.recv()
-                    if self.formatting:
-                        res = json.dumps(json.loads(res), indent=4)
-                    if self.callback is not None:
-                        self.callback(json.loads(res))
-                        continue
-                    print(res)
-                    if self.log:
-                        with open(self.log, 'a+') as f:
-                            res += '\n'
-                            f.write(res)
-            else:
-                raise RuntimeError('Server mot response')
+        try:
+            async with websockets.connect(url) as ws:
+                response = json.loads(await ws.recv())
+                print(f'UID: {response["uid"]}')
+                if 'uid' in response:
+                    prepare = []
+                    for subscriber in self.subscribers:
+                        added = json.dumps({"uid": response["uid"], "subscribe": f"{subscriber}"})
+                        await ws.send(added)
+                        # print(f'Subscribed to: {subscriber}')
+                        prepare.append([subscriber])
+                    table = tabulate(prepare, headers=['Subscribers'], tablefmt='grid')
+                    print(table)
+                    print('Listening... `Ctrl+C` for abort')
+                    while True:
+                        res = await ws.recv()
+                        if self.formatting:
+                            res = json.dumps(json.loads(res), indent=4)
+                        if self.callback is not None:
+                            self.callback(json.loads(res))
+                            continue
+                        print(res)
+                        if self.log:
+                            with open(self.log, 'a+') as f:
+                                res += '\n'
+                                f.write(res)
+        except exceptions.WebSocketException as e:
+            logger.exception(e)
+            raise
 
 
 class Timing:
@@ -466,14 +514,96 @@ class Timing:
         return deadline_date_utc
 
 
+class Thread:
+
+    def __init__(self):
+        self.stop_event: Optional[threading.Event] = None
+        self.thread: Optional[threading.Thread] = None
+        self.is_started = False
+        self.updated = threading.Event()
+
+    def stop(self):
+        if self.thread is not None and self.thread.is_alive():
+            self.stop_event.set()
+            self.thread.join()
+            self.is_started = False
+            logger.debug(f'The node actualization thread {self.thread.name} has been stopped.')
+
+    def start(self, func: Callable, interval: int = 3600):
+        self.is_started = True
+        self.stop_event = threading.Event()
+        self.updated = threading.Event()
+        params = {'interval': interval, 'stop_event': self.stop_event, 'updated': self.updated}
+        self.thread = threading.Thread(target=func, kwargs=params, daemon=True)
+        self.thread.start()
+        logger.debug(f'New actualizer thread started: {self.thread.name}')
+        return self
+
+    def wait(self):
+        updated_is_set = self.updated.wait(60)
+        if not updated_is_set:
+            raise RuntimeError('Very long waiting time for node selection')
+
+
 class NodeSelector:
     _URL: Optional[str] = None
     _URLs: Optional[list] = None
-    _re_elections: Optional[bool] = False
+    is_elections: bool = False
     _network_type: NetworkType = NetworkType.TEST_NET
 
     def __init__(self, node_urls: Union[List[str], str]):
+        self.thread = Thread()
         self.url = node_urls
+
+    @property
+    def url(self):
+        while self.is_elections:
+            time.sleep(0.1)
+        return self._URL
+
+    @url.setter
+    def url(self, urls: Union[list, str]):
+        self.is_elections = True
+        self.thread.stop()
+        if isinstance(urls, str):
+            urls = [urls]
+        for url in urls:
+            url_validation(url)
+        self._URLs = urls
+        if len(self._URLs) == 1:
+            self._URL = self._URLs[0]  # setting a single URL value
+            logger.debug(f'Installed node: {self._URL}')
+        else:
+            self.thread.start(self.node_actualizer, interval=3600).wait()
+        self.is_elections = False
+
+    def node_actualizer(self, interval, stop_event, updated):
+        while True:
+            self.reelection_node()
+            updated.set()
+            event_is_set = stop_event.wait(interval)
+            if event_is_set:
+                break
+
+    def reelection_node(self):
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        logger.debug('Node reselecting...')
+        heights = [NodeSelector.get_height(url) for url in self._URLs]
+        max_height = max(heights)
+        heights_filter = [True if height >= max_height * 0.97 else False for height in heights]
+        # filtered by block height - 97%
+        filtered_by_height = [url for i, url in enumerate(self._URLs) if heights_filter[i]]
+        urls_p_h = {url: (NodeSelector.ping(url), NodeSelector.simple_health(url)) for url in filtered_by_height}
+        # Remove non-working nodes from the dict
+        working = {key: val for key, val in urls_p_h.items() if val[1]}
+        _sorted_URLs = [k for k, v in sorted(working.items(), key=lambda item: item[1][0])]
+        new_url = _sorted_URLs[0] if len(_sorted_URLs) > 0 else None
+        if new_url != self._URL and self._URL is not None:
+            logger.warning(f'Reselection node: {self._URL} -> {new_url}')
+        if new_url is None:
+            logger.error('It was not possible to select the current node from the list of available ones')
+        self._URL = new_url
+        logger.debug(f'Selected node: {self._URL}')
 
     @property
     def network_type(self):
@@ -493,69 +623,6 @@ class NodeSelector:
         else:
             raise TypeError('Unknown network type')
 
-    def node_actualizer(self, interval):
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        while True:
-            self._re_elections = False
-            self.reelection_node()
-            if self._re_elections is None:
-                break
-            self._re_elections = True
-            time.sleep(interval)
-            if self._re_elections is None:
-                break
-        logger.debug('The node actualization thread has been stopped.')
-
-    @property
-    def url(self):
-        if self._re_elections is None:
-            return self._URL
-        # waiting for the node re-election
-        while not self._re_elections:
-            time.sleep(0.5)
-        if self.health(self._URL) != BlockchainStatuses.OK:
-            self.reelection_node()
-        return self._URL
-
-    @url.setter
-    def url(self, value: Union[list, str]):
-        if isinstance(value, str):
-            value = [value]
-        self._URLs = value
-        if len(self._URLs) == 1:
-            self._re_elections = None  # stop background iteration of nodes
-            self._URL = self._URLs[0]
-            logger.debug(f'Selected node: {self._URL}')
-        else:
-            #  if the daemon is running and not actualizing right now
-            if self._re_elections:  # not started and not waiting
-                # actualize and exit
-                self.reelection_node()
-                return
-            # hourly update of the node in case it appears more relevant
-            self.actualizer = threading.Thread(target=self.node_actualizer, kwargs={'interval': 3600}, daemon=True)
-            self.actualizer.start()
-
-    def reelection_node(self):
-        logger.debug('Node reselecting...')
-        heights = [NodeSelector.get_height(url) for url in self._URLs]
-        max_height = max(heights)
-        heights_filter = [True if height >= max_height * 0.97 else False for height in heights]
-        # filtered by block height - 97%
-        filtered_by_height = [url for i, url in enumerate(self._URLs) if heights_filter[i]]
-        urls_p_h = {url: (NodeSelector.ping(url), NodeSelector.simple_health(url)) for url in filtered_by_height}
-        # Remove non-working nodes from the dict
-        working = {key: val for key, val in urls_p_h.items() if val[1]}
-        _sorted_URLs = [k for k, v in sorted(working.items(), key=lambda item: item[1][0])]
-        new_url = _sorted_URLs[0] if len(_sorted_URLs) > 0 else None
-        if self._re_elections is not None:
-            if new_url != self._URL and self._URL is not None:
-                logger.warning(f'Reselection node: {self._URL} -> {new_url}')
-            if new_url is None:
-                logger.error('It was not possible to select the current node from the list of available ones')
-            self._URL = new_url
-            logger.debug(f'Selected node: {self._URL}')
-
     @staticmethod
     def health(url):
         if url is None:
@@ -565,7 +632,7 @@ class NodeSelector:
         except:
             return BlockchainStatuses.REST_FAILURE
         if answer.status_code == HTTPStatus.OK:
-            node_info = json.loads(answer.text)
+            node_info = answer.json()
             if node_info['status']['apiNode'] == 'up' and node_info['status']['db'] == 'up':
                 return BlockchainStatuses.OK
             if node_info['status']['apiNode'] == 'down':
@@ -587,7 +654,7 @@ class NodeSelector:
             answer = requests.get(f'{url}/chain/info', timeout=1)
         except Exception:
             return 0
-        node_info = json.loads(answer.text)
+        node_info = answer.json()
         height = node_info['height']
         return int(height)
 
@@ -644,7 +711,8 @@ class NodeSelector:
             pass
         except exceptions.InvalidStatusCode:
             pass
-        except Exception:
+        except Exception as e:
+            logger.debug(str(e))
             return None
 
         # Stop Timer

@@ -8,6 +8,12 @@ EPOCH_TIME_MAINNET = datetime.datetime(2021, 3, 16, 0, 6, 25, tzinfo=datetime.ti
 EPOCH_TIME_TESTNET = datetime.datetime(2021, 3, 25, 17, 56, 17, tzinfo=datetime.timezone.utc)
 
 
+class AccountValidationState(Enum):
+    OK = 'The address is correct'
+    LENGTH_FAILURE = 'The address length must be 39 characters'
+    CHECKSUM_FAILURE = 'Checksum does not match'
+
+
 class NetworkType(Enum):
     TEST_NET = 'public_test'
     MAIN_NET = 'public'
@@ -33,9 +39,9 @@ class BlockchainStatuses(Enum):
 
 
 class HexSequenceSizes(IntEnum):
-    address = 39
-    public_key = private_key = 64
-    mosaic_id = namespace_id = 16
+    ADDRESS = 39
+    PUBLIC_KEY = PRIVATE_KEY = 64
+    MOSAIC_ID = NAMESPACE_ID = 16
 
 
 class Fees(Enum):
@@ -113,7 +119,7 @@ class TransactionTypes(IntEnum):
     NODE_KEY_LINK = 16972
 
     @staticmethod
-    def get_type_by_id(_id):
+    def get_type_by_id(_id) -> 'TransactionTypes':
         attributes = TransactionTypes.__dict__
         attributes = {key: attributes[key] for key in attributes if not key.startswith('_') and key != 'get_type_by_id'}
-        return list(attributes.keys())[list(attributes.values()).index(_id)]
+        return TransactionTypes[list(attributes.keys())[list(attributes.values()).index(_id)]]

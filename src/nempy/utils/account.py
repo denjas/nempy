@@ -3,19 +3,20 @@ import os
 
 import click
 import stdiomask
-from nempy.account import Account, print_warning, DecoderStatus, GenerationType
+from nempy.user_data import DecoderStatus
 from nempy.config import C
 from nempy.engine import XYMEngine, EngineStatusCode
 from nempy.sym import ed25519
 from nempy.sym.constants import HexSequenceSizes
 from nempy.sym.network import Monitor
 from nempy.wallet import Wallet
+from nempy.ui import AccountUI, ProfileUI, print_warning
 from tabulate import tabulate
 
 
 @click.group('account', help='- Interactive account management')
 def main():
-    Wallet(skip_checks=True)
+    Wallet()
     print('|Interactive account management|')
 
 
@@ -25,18 +26,9 @@ def import_account():
     Create a new account with existing private key or mnemonic
     """
     wallet = Wallet()
-    account_path, name, bip32_coin_id, is_default = Account.init_general_params(wallet.profile.network_type)
-    if is_default:
-        wallet.profile.set_default_account(name)
-    password = wallet.profile.check_pass(attempts=3)
-    gen_type = Account.get_generation_type()
-    if gen_type == GenerationType.MNEMONIC:
-        account = Account.account_by_mnemonic(wallet.profile.network_type, bip32_coin_id)
-    if gen_type == GenerationType.PRIVATE_KEY:
-        raise NotImplementedError('The functionality of building an account from a private key is not implemented')
-    account.name = name
-    account.profile = wallet.profile.name
-    account.account_creation(account_path, password)
+    account_data, is_default = AccountUI.iu_create_account(wallet.profile.data, wallet.accounts_dir, is_import=True)
+    if account_data and is_default:
+        wallet.profile.account.set_default_account(account_data)
 
 
 @main.command('create')
@@ -45,15 +37,9 @@ def create_account():
     Create a new account
     """
     wallet = Wallet()
-    account_path, name, bip32_coin_id, is_default = Account.init_general_params(wallet.profile.network_type)
-    if is_default:
-        wallet.profile.set_default_account(name)
-    password = wallet.profile.check_pass(attempts=3)
-    if password is not None:
-        account = Account.account_by_mnemonic(wallet.profile.network_type, bip32_coin_id, is_generate=True)
-        account.name = name
-        account.profile = wallet.profile.name
-        account.account_creation(account_path, password)
+    account_data, is_default = AccountUI.iu_create_account(wallet.profile.data, wallet.accounts_dir)
+    if account_data and is_default:
+        wallet.profile.account.set_default_account(account_data)
 
 
 @main.command('info')
@@ -65,33 +51,27 @@ def info(name, decrypt, is_list):
     Account Information
     """
     wallet = Wallet()
-    accounts = wallet.profile.load_accounts()
-    if not accounts:
-        print(f'There are no accounts for the {wallet.profile.name} profile.')
-        print('To create an account, run the command: `nempy-cli.py account create`')
-        exit(1)
+    accounts_data = wallet.profile.load_accounts()
     if not is_list:
-
-        if not name and wallet.profile.account is not None:
-            name = wallet.profile.account.name
-        account = accounts.get(name, {})
-        if not account:
-            # print(f'The account named `{name}` does not exist in profile `{wallet.profile.name}`')
-            wallet.profile.input_default_account()
-            account = wallet.profile.account
-        accounts = {name: account}
+        if not name and wallet.profile.account.data is not None:
+            name = wallet.profile.account.data.name
+        account = accounts_data.get(name, {})
+        accounts_data = {name: account}
     password = None
     if decrypt:
-        print('Attention! Hide information received after entering a password from prying eyes')
-        password = wallet.profile.check_pass(attempts=3)
+        print(f'{C.RED}Attention! Hide information received after entering a password from prying eyes{C.END}')
+        password = ProfileUI.ui_check_pass(wallet.profile.data, attempts=3)
         if password is None:
             exit(1)
-    for account in accounts.values():
+    for account_data in accounts_data.values():
         if decrypt:
-            account = account.decrypt(password)
-            if isinstance(account, DecoderStatus):
+            account_data = account_data.decrypt(password)
+            if isinstance(account_data, DecoderStatus):
                 exit(1)
-        print(account)
+        str_account_data = str(account_data)
+        if account_data.name == wallet.profile.account.data.name:
+            str_account_data = str_account_data.replace('|              |', f'|  >{C.OKGREEN}DEFAULT{C.END}<   |', 1)
+        print(str_account_data)
         print(f'{C.GREY}###################################################################################{C.END}')
     if decrypt:
         print_warning()
@@ -104,15 +84,14 @@ def get_balance(address):
     Get the balance for the current  account
     """
     wallet = Wallet()
-    engine = XYMEngine(wallet.profile.account)
     if not address:
-        address = wallet.profile.account.address
-    balance = engine.get_balance(address)
+        address = wallet.profile.account.data.address
+    engine = XYMEngine(wallet.profile.account.data)
+    balance = engine.get_balance(address, humanization=True)
     if balance == {}:
         print(f'Account `{address}` does not exist, or there was no movement of funds on it')
         exit(0)
-    h_balance = engine.mosaic_humanization(balance)
-    print(json.dumps(h_balance, sort_keys=True, indent=2))
+    print(json.dumps(balance, sort_keys=True, indent=2))
 
 
 def monitoring_callback(transaction_info: dict, addresses: list):
@@ -180,17 +159,17 @@ def send(address: str, plain_message: str, encrypted_message: str, mosaics: str,
         print('Specify for sending one of two - mosaic or a messages')
         exit(1)
     for mosaic in mosaics:
-        if not ed25519.check_hex(mosaic[0], HexSequenceSizes.mosaic_id) and not mosaic[0].startswith('@'):
+        if not ed25519.check_hex(mosaic[0], HexSequenceSizes.MOSAIC_ID) and not mosaic[0].startswith('@'):
             print(f'`{mosaic[0]}` cannot be a mosaic index. You may have forgotten to put `@` in front of the alias name (example: @symbol.xym)')
             exit(1)
     wallet = Wallet()
-    engine = XYMEngine(wallet.profile.account)
-    balance = engine.get_balance(engine.account.address, humanization=True)
+    engine = XYMEngine(wallet.profile.account.data)
+    balance = engine.get_balance(humanization=True)
     mosaics = [(mosaic.split(':')[0], float(mosaic.split(':')[1])) for mosaic in mosaics]
     message = plain_message or encrypted_message or ''
     is_encrypted = True if encrypted_message else False
     confirmation(address, mosaics, message, is_encrypted, fee, deadline, balance)
-    password = stdiomask.getpass(f'Enter your `{wallet.profile.name} [{wallet.profile.network_type.name}]` profile password: ')
+    password = stdiomask.getpass(f'Enter your `{wallet.profile.data.name} [{wallet.profile.data.network_type.name}]` profile password: ')
     result = engine.send_tokens(recipient_address=address,
                                 mosaics=mosaics,
                                 message=message,
@@ -211,12 +190,21 @@ def send(address: str, plain_message: str, encrypted_message: str, mosaics: str,
 @main.command('history')
 @click.option('-ps', '-page-size', 'page_size', type=int, required=False, default=10, show_default=True,
               help='Select the number of entries to return.')
-def setdefault(page_size):
+def history(page_size):
     """
     Show history
     """
     wallet = Wallet()
-    wallet.profile.account.history(page_size)
+    AccountUI.ui_history_inquirer(wallet.profile.account.data.address, page_size)
+
+
+@main.command('setdefault')
+def setdefault():
+    """
+    Set default account
+    """
+    wallet = Wallet()
+    AccountUI.ui_default_account(wallet.profile.load_accounts())
 
 
 if __name__ == '__main__':
