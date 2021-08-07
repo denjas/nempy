@@ -1,9 +1,11 @@
 NEMpy
 ==============================
 
-[![tests](https://github.com/DENjjA/nempy/actions/workflows/main.yml/badge.svg)](https://github.com/DENjjA/nempy/actions/workflows/main.yml)
-[![python-ver](https://github.com/DENjjA/nempy/blob/dev/.github/badges/python-version.svg)](https://www.python.org/)
-[![license](https://github.com/DENjjA/nempy/blob/dev/.github/badges/license.svg)](https://github.com/DENjjA/nempy/blob/dev/LICENSE)
+[![tests](https://github.com/denjas/nempy/actions/workflows/main.yml/badge.svg)](https://github.com/DENjjA/nempy/actions/workflows/main.yml)
+[![python-ver](https://github.com/denjas/nempy/blob/dev/.github/badges/python-version.svg)](https://www.python.org/)
+[![license](https://github.com/denjas/nempy/blob/dev/.github/badges/license.svg)](https://github.com/DENjjA/nempy/blob/dev/LICENSE)
+![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/denjas/9d8963b8ab464117a62f5f5fa7422c4a/raw/test.json)
+
 
 
 High-level wrapper for working with cryptocurrencies of the NEM ecosystem
