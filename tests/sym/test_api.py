@@ -6,31 +6,9 @@ from nempy.sym.api import Message, PlainMessage, EncryptMessage, Namespace, Mosa
 from nempy.sym.constants import NetworkType, Fees, TransactionTypes
 from nempy.sym.network import Timing
 
-from ..test_account import test_account
 from unittest.mock import patch
 
-# def setup():
-#     print("basic setup into module")
-#
-#
-# def teardown():
-#     print("basic teardown into module")
-#
-#
-# def setup_module(module):
-#     print("module setup")
-#
-#
-# def teardown_module(module):
-#     print("module teardown")
-#
-#
-# def setup_function(function):
-#     print("function setup")
-#
-#
-# def teardown_function(function):
-#     print("function teardown")
+from ..test_user_data import TestAccountData
 
 
 class TestMessage:
@@ -61,7 +39,7 @@ class TestMessage:
     @staticmethod
     def test_encrypt_message():
         _message = 'Hello NEM!'
-        account0, account1 = test_account()
+        account0, account1 = TestAccountData().setup()
         sender_private_key = account0.private_key
         recipient_pub = account1.public_key
 
@@ -141,7 +119,7 @@ class TestTransaction:
         self.transaction = Transaction()
         self.transaction.network_type = NetworkType.TEST_NET
         self.transaction.timing = Timing(self.transaction.network_type)
-        self.account0, self.account1 = test_account()
+        self.account0, self.account1 = TestAccountData().setup()
 
     def test_create(self):
         self.transaction.create(pr_key=self.account0.private_key,

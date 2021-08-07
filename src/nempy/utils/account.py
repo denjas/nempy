@@ -60,7 +60,7 @@ def info(name, decrypt, is_list):
     password = None
     if decrypt:
         print(f'{C.RED}Attention! Hide information received after entering a password from prying eyes{C.END}')
-        password = ProfileUI.ui_check_pass(name, wallet.profile.data.network_type, wallet.profile.data.pass_hash, attempts=3)
+        password = ProfileUI.ui_check_pass(wallet.profile.data, attempts=3)
         if password is None:
             exit(1)
     for account_data in accounts_data.values():
