@@ -175,7 +175,7 @@ class AccountUI(AccountI):
                           is_default: bool = False,
                           is_import: bool = False) -> Tuple[Optional[AccountData], bool]:
         account_path, name, bip32_coin_id, is_default = AccountUI.ui_init_general_params(profile_data.network_type, accounts_dir, is_default)
-        password = ProfileUI.ui_check_pass(profile_data.name, profile_data.network_type, profile_data.pass_hash, attempts=3)
+        password = ProfileUI.ui_check_pass(profile_data, attempts=3)
         if password is not None:
             if is_import:
                 gen_type = AccountUI.ui_generation_type_inquirer()
@@ -201,9 +201,10 @@ class AccountUI(AccountI):
         account_data.encrypt(password).write(account_path)
         print(f'\nAccount created at: {account_path}')
         # checking the ability to read and display information about the account
-        account = AccountData.read(account_path).decrypt(password)
-        print(account)
+        account_data = AccountData.read(account_path).decrypt(password)
+        print(account_data)
         print_warning()
+        return account_data
 
     @staticmethod
     def ui_default_account(accounts: Dict[str, AccountData]):
@@ -323,14 +324,14 @@ class ProfileUI(ProfileI):
         return profile, path
 
     @staticmethod
-    def ui_check_pass(name: str, network_type: NetworkType, pass_hash: bytes, attempts: int = 1) -> Optional[str]:
+    def ui_check_pass(profile_data: ProfileData, attempts: int = 1) -> Optional[str]:
         """
         Verifies the password from the profile
         :return: password or None if password is failed
         """
         for i in range(attempts):
-            password = stdiomask.getpass(f'({attempts - i}) Enter your `{name} [{network_type.name}]` profile password: ')
-            if bcrypt.checkpw(password.encode('utf-8'), pass_hash):
+            password = stdiomask.getpass(f'({attempts - i}) Enter your `{profile_data.name} [{profile_data.network_type.name}]` profile password: ')
+            if bcrypt.checkpw(password.encode('utf-8'), profile_data.pass_hash):
                 return password
             if i != attempts - 1:
                 print(f'Incorrect password. Try again)')
