@@ -19,7 +19,7 @@ class TestAccountData:
         network_type = NetworkType.TEST_NET
         accounts = AccountData.accounts_pool_by_mnemonic(network_type, bip32_coin_id_test_net, mnemonic)
         self.account_data = accounts['TBTCYCIDRQ7TJBEAYDZLDPHOTGIRKZHO5CH2SMQ']  #  'TCULT7R63UUSG2NTE3FJTWJD3U2JEOWPOFYEQQA' - second account
-        pass
+        return self.account_data
 
     def test_repr(self):
         assert repr(self.account_data) == '<class `AccountData`>'
@@ -80,6 +80,7 @@ class TestProfileData:
             'pass_hash': bcrypt.hashpw(self.password.encode('utf-8'), bcrypt.gensalt(12))
         }
         self.profile_data = ProfileData(**self.params)
+        return self.profile_data
 
     def test_repr(self):
         assert repr(self.profile_data) == '<class `ProfileData`>'

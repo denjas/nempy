@@ -1,3 +1,4 @@
+import abc
 import binascii
 import configparser
 import logging
@@ -5,7 +6,7 @@ import os
 import random
 from enum import Enum
 from hashlib import blake2b
-from typing import Optional, Dict, Tuple, Union, List
+from typing import Optional, Dict, Tuple, Union, List, Type
 
 import bcrypt
 import inquirer
@@ -15,9 +16,10 @@ from nempy.config import C
 from nempy.sym import network
 from nempy.sym.constants import NetworkType, TransactionStatus
 from nempy.sym.network import TransactionResponse
-from nempy.user_data import AccountData, GenerationType
+from nempy.user_data import AccountData, GenerationType, UserData
 from nempy.user_data import ProfileData
 from password_strength import PasswordPolicy
+
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +49,8 @@ def print_warning():
 
 class UD:
 
-    type_ud: UDTypes = None
+    cls: Type[UserData]
+    type_ud: UDTypes
     ud_dir: str
     config = configparser.ConfigParser()
 
@@ -61,14 +64,14 @@ class UD:
             self.cls = AccountData
 
     @property
-    def user_data(self) -> Union[ProfileData, AccountData]:
+    def user_data(self) -> Optional[UserData]:
         self.config.read(self.config_file)
         ud_name = self.config[self.type_ud.value]['default']
         uds = self.load_uds()
         ud = uds.get(ud_name)
         return ud
 
-    def load_uds(self) -> Union[Dict[str, ProfileData], Dict[str, AccountData]]:
+    def load_uds(self) -> Dict[str, UserData]:
         uds = {}
         profiles_paths = os.listdir(self.ud_dir)
         for pp in profiles_paths:
@@ -77,7 +80,7 @@ class UD:
             uds[os.path.splitext(pp)[0]] = ud
         return uds
 
-    def set_default_ud(self, ud: Union[AccountData, ProfileData]):
+    def set_default_ud(self, ud: UserData):
         self.config.read(self.config_file)
         self.config[self.type_ud.value]['default'] = ud.name
         with open(self.config_file, 'w') as configfile:
@@ -96,7 +99,7 @@ class AccountI(UD):
         super().__init__(config_file, None, accounts_dir)
 
     @property
-    def data(self) -> AccountData:
+    def data(self) -> Optional[AccountData]:
         return self.user_data
 
     def load_accounts(self) -> Dict[str, AccountData]:
@@ -113,12 +116,13 @@ class ProfileI(UD):
         self.account_i = AccountI(config_file, accounts_dir)
         super().__init__(config_file, profiles_dir, None)
         accounts_data = self.load_accounts()
-        if (self.account.data is None and accounts_data) or self.account.data.name not in accounts_data:
+        if (self.account.data is None and accounts_data) \
+                or (self.account.data is not None and self.account.data.name not in accounts_data):
             account_data = AccountUI.ui_default_account(accounts_data)
             self.set_default_account(account_data)
 
     @property
-    def data(self) -> ProfileData:
+    def data(self) -> Optional[ProfileData]:
         return self.user_data
 
     def load_profiles(self) -> Dict[str, ProfileData]:
