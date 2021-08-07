@@ -55,8 +55,6 @@ class Wallet:
 
     @profile.setter
     def profile(self, profile: ProfileUI):
-        # if profile.data.name not in self.profiles_data:
-        #     self.profiles[profile.data.name] = profile
         self._profile = profile
 
     def create_profile(self, is_default: bool = False) -> ProfileData:
