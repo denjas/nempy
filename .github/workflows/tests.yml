@@ -28,4 +28,4 @@ jobs:
         filename: test.json
         label: Hello
         message: World
-        color: orange
+        color: cyan
