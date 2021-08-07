@@ -5,19 +5,19 @@ from nempy.engine import XYMEngine, EngineStatusCode, NEMEngine
 from nempy.sym import network
 from nempy.sym.constants import BlockchainStatuses, TransactionStatus
 
-from .test_account import test_account
+from .test_user_data import TestAccountData
 
 
 class TestEngine:
 
     def setup(self):
         self.pw = 'pass'
-        self.account0, self.account1 = test_account()
+        self.account0, self.account1 = TestAccountData().setup()
         self.account0 = self.account0.encrypt(self.pw)
         self.engine = XYMEngine(self.account0)
 
     def test_send_tokens(self):
-        result = self.engine.send_tokens(self.account1.address, [('@symbol.xym', 0.001)], 'Hello NEM!', True, self.pw)
+        result = self.engine.send_tokens('TBRLIS-EH5QYA-KK76EF-IGHWQE-4DHDYO-JAWNYK-ZBA', [('@symbol.xym', 0.001)], 'Hello NEM!', True, self.pw)
         assert result == EngineStatusCode.INVALID_ACCOUNT_INFO
         param = {'account': {'publicKey': self.account1.public_key}}
         with patch.object(network, 'get_accounts_info', return_value=param):

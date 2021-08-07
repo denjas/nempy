@@ -4,11 +4,11 @@ from unittest.mock import patch
 
 import pytest
 import stdiomask
-from nempy.ui import UD, UDTypes, ProfileI, AccountI, AccountUI, PasswordPolicyError, RepeatPasswordError
-from nempy.wallet import Wallet
-from nempy.user_data import AccountData, GenerationType
-from nempy.sym.constants import NetworkType
 from nempy import ui
+from nempy.sym.constants import NetworkType
+from nempy.ui import UD, UDTypes, ProfileI, AccountI, AccountUI, PasswordPolicyError, RepeatPasswordError
+from nempy.user_data import GenerationType
+from nempy.wallet import Wallet
 
 from .test_user_data import TestAccountData, TestProfileData
 
@@ -46,7 +46,8 @@ class TestAccountI:
         self.wallet = Wallet(self.wallet_dir.name, init_only=True)
 
         self.account_i = AccountI(self.wallet.config_file, self.wallet.accounts_dir)
-        self.account_data = TestAccountData().setup().encrypt('pass')
+        self.account_data, _ = TestAccountData().setup()
+        self.account_data.encrypt('pass')
         self.account_data.name = 'test'
         self.account_data.write(os.path.join(self.wallet.accounts_dir, self.account_data.name))
 
@@ -84,7 +85,8 @@ class TestProfileI:
 
         self.profile_data.write(os.path.join(self.wallet.profiles_dir, self.profile_data.name))
 
-        self.account_data = TestAccountData().setup().encrypt('pass')
+        self.account_data, _ = TestAccountData().setup()
+        self.account_data.encrypt('pass')
         self.account_data.name = 'test'
         self.account_data.profile = profile_name
         self.account_data.write(os.path.join(self.wallet.accounts_dir, self.account_data.name))
@@ -134,7 +136,8 @@ class TestAccountUI:
         self.profile_data = TestProfileData().setup()
 
         self.password = 'pass'
-        self.account_data = TestAccountData().setup().encrypt(self.password)
+        self.account_data, _ = TestAccountData().setup()
+        self.account_data.encrypt(self.password)
         self.account_data.name = 'test'
         self.account_data.profile = self.profile_data.name
 
@@ -265,11 +268,6 @@ class TestProfileUI:
         self.wallet = Wallet(self.wallet_dir.name, init_only=True)
 
         self.profile_data = TestProfileData().setup()
-
-        # self.password = 'pass'
-        # self.account_data = TestAccountData().setup().encrypt(self.password)
-        # self.account_data.name = 'test'
-        # self.account_data.profile = self.profile_data.name
 
     def test_ui_default_profile(self):
         params = {self.profile_data.name: self.profile_data}

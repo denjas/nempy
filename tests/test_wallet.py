@@ -1,15 +1,11 @@
-import copy
 import os
-import shutil
 import tempfile
 from unittest.mock import patch
 
 import pytest
-import ui
+from nempy.ui import PasswordPolicyError
 from nempy.wallet import Wallet
-from nempy.sym.constants import NetworkType
-from nempy.ui import PasswordPolicyError, ProfileUI
-
+from nempy import ui
 from .test_user_data import TestProfileData, TestAccountData
 
 
@@ -21,7 +17,7 @@ class TestWallet:
 
         self.profile_data = TestProfileData().setup()
 
-        self.account_data = TestAccountData().setup()
+        self.account_data, _ = TestAccountData().setup()
         self.account_data.name = 'test'
         self.account_data.profile = self.profile_data.name
 
@@ -62,7 +58,8 @@ class TestWallet:
         assert os.path.exists(self.wallet.config_file) is True
 
     def test_create_profile(self):
-        with patch('nempy.ui.ProfileUI.ui_create_profile', return_value=(self.wallet.profile.data, 'path')), \
+        path = os.path.join(self.wallet.profiles_dir, 'test')
+        with patch('nempy.ui.ProfileUI.ui_create_profile', return_value=(self.wallet.profile.data, path)), \
              patch('nempy.ui.ProfileUI.ui_is_default', return_value=True):
             self.wallet.create_profile()
 
