@@ -36,8 +36,8 @@ Install and update using pip:
   ```
 ## A Simple Example
 
-<span style="color:orange">**Attention**!</span>
-The example below is intended to demonstrate ease of use, but it is <span style="color:orange">not secure</span>! Use this code only on the `NetworkType.TEST_NET`
+<font color='orange'>**Attention**!</font>
+The example below is intended to demonstrate ease of use, but it is <font color='orange'>not secure</font>! Use this code only on the `NetworkType.TEST_NET`
 ```python
 from nempy.user_data import AccountData
 from nempy.engine import XYMEngine
