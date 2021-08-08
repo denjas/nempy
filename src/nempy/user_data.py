@@ -5,6 +5,7 @@ import os
 import pickle
 from base64 import b64decode
 from base64 import b64encode
+from binascii import unhexlify
 from enum import Enum
 from hashlib import blake2b
 from typing import Union, Dict, Optional
@@ -18,7 +19,9 @@ from nempy.sym.constants import NetworkType, AccountValidationState
 from nempy.sym.ed25519 import check_address
 from pydantic import BaseModel, validator, StrictStr, StrictBytes
 from symbolchain.core.Bip32 import Bip32
+from symbolchain.core.CryptoTypes import PrivateKey
 from symbolchain.core.facade.SymFacade import SymFacade
+from symbolchain.core.sym.KeyPair import KeyPair
 from tabulate import tabulate
 
 logger = logging.getLogger(__name__)
@@ -132,6 +135,15 @@ class AccountData(UserData):
         account = C.INVERT + ' ' * indent + account + ' ' * indent + C.END
         table = tabulate(prepare, headers=['', f'{account}'], tablefmt='grid')
         return table
+
+    @classmethod
+    def create(cls, private_key: str, network_type: NetworkType) -> 'AccountData':
+        private_key = private_key.upper()
+        facade = SymFacade(network_type.value)
+        key_pair = KeyPair(PrivateKey(unhexlify(private_key)))
+        public_key = str(key_pair.public_key).upper()
+        address = str(facade.network.public_key_to_address(key_pair.public_key)).upper()
+        return cls(private_key=private_key, public_key=public_key, address=address, network_type=network_type)
 
     def decrypt(self, password: str) -> 'AccountData':
         if not isinstance(self.private_key, bytes):
