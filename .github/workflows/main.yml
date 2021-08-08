@@ -41,7 +41,7 @@ jobs:
           set -ex && python3 -m pipenv install --deploy --system --dev
           python3 -m pip install --use-feature=in-tree-build --no-dependencies .
       - name: Tests and Coverage
-        run: echo "COVERAGE=$(pipenv run tests --cov=src | grep TOTAL | grep -Eo '[0-9]+%')" >> $GITHUB_ENV
+        run: echo COVERAGE=$(pipenv run tests --cov=src | grep TOTAL | grep -Eo '[0-9]+%') >> $GITHUB_ENV
       # Runs a set of commands using the runners shell
       - name: Create Coverage Badge
         uses: schneegans/dynamic-badges-action@v1.1.0
