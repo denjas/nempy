@@ -2,9 +2,8 @@ import abc
 import logging
 from enum import Enum
 from typing import List, Tuple, Union, Dict, Optional
-
 from nempy.user_data import AccountData
-from nempy.sym.constants import BlockchainStatuses
+from nempy.sym.constants import BlockchainStatuses, Fees
 
 from .sym import api as sym
 from .sym import network
@@ -66,6 +65,7 @@ class XYMEngine(NEMEngine):
                     message: Union[str, bytes] = '',
                     is_encrypted=False,
                     password: str = '',
+                    fee_type: Fees = Fees.SLOWEST,
                     deadline: Optional[dict] = None):
         recipient_address = recipient_address.replace('-', '')
         mosaics = [sym.Mosaic(mosaic_id=mosaic[0], amount=mosaic[1]) for mosaic in mosaics]
@@ -81,7 +81,8 @@ class XYMEngine(NEMEngine):
                                                        recipient_address=recipient_address,
                                                        mosaics=mosaics,
                                                        message=message,
-                                                       deadline=deadline)
+                                                       deadline=deadline,
+                                                       fee_type=fee_type)
         is_sent = network.send_transaction(payload)
         return entity_hash if is_sent else EngineStatusCode.ANNOUNCE_ERROR
 

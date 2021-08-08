@@ -8,7 +8,7 @@ from nempy.config import C
 from nempy.engine import XYMEngine, EngineStatusCode
 from nempy.sym import ed25519
 from nempy.sym.constants import HexSequenceSizes
-from nempy.sym.network import Monitor
+from nempy.sym.network import Monitor, NetworkType
 from nempy.wallet import Wallet
 from nempy.ui import AccountUI, ProfileUI, print_warning
 from tabulate import tabulate
@@ -108,8 +108,12 @@ def monitoring_callback(transaction_info: dict, addresses: list):
         exit(1)
 
 
-def confirmation(address, mosaics, message, is_encrypted, fee, deadline, balance):
+def confirmation(address, mosaics, message, is_encrypted, fee, deadline, balance, network_type: NetworkType):
     prepare = list()
+    network_type_str = network_type.value.upper()
+    if network_type == NetworkType.MAIN_NET:
+        network_type_str = f'{C.RED}{network_type.value.upper()}{C.END}'
+    prepare.append(['Network Type', network_type_str])
     prepare.append(['Recipient address:', '-'.join(address[i:i + 6] for i in range(0, len(address), 6))])
     if message:
         prepare.append([f'Message (encrypted {is_encrypted})', message])
@@ -168,7 +172,7 @@ def send(address: str, plain_message: str, encrypted_message: str, mosaics: str,
     mosaics = [(mosaic.split(':')[0], float(mosaic.split(':')[1])) for mosaic in mosaics]
     message = plain_message or encrypted_message or ''
     is_encrypted = True if encrypted_message else False
-    confirmation(address, mosaics, message, is_encrypted, fee, deadline, balance)
+    confirmation(address, mosaics, message, is_encrypted, fee, deadline, balance, wallet.profile.data.network_type)
     password = stdiomask.getpass(f'Enter your `{wallet.profile.data.name} [{wallet.profile.data.network_type.name}]` profile password: ')
     result = engine.send_tokens(recipient_address=address,
                                 mosaics=mosaics,
