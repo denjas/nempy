@@ -35,16 +35,29 @@ Install and update using pip:
   pip install nempy
   ```
 ## A Simple Example
-  ```python
-    from nempy.engine import XYMEngine
-    from nempy.user_data import AccountData
 
-    
+<span style="color:orange">**Attention**!</span>
+The example below is intended to demonstrate ease of use, but it is <span style="color:orange">not secure</span>! Use this code only on the `NetworkType.TEST_NET`
+```python
+from nempy.user_data import AccountData
+from nempy.engine import XYMEngine
+from nempy.sym.network import NetworkType
+from nempy.sym.constants import Fees
 
-    @app.route("/")
-    def hello():
-        return "Hello, World!"
-  ```
+PRIVATE_KEY = '<YOUR_PRIVATE_KEY>'
+PASSWORD = '<YOUR_PASS>'
+account = AccountData.create(PRIVATE_KEY, NetworkType.TEST_NET).encrypt(PASSWORD)
+
+engine = XYMEngine(account)
+engine.send_tokens(recipient_address='TDPFLBK4NSCKUBGAZDWQWCUFNJOJB33Y5R5AWPQ',
+                   mosaics=[('@symbol.xym', 0.1), ],
+                   message='Hallo NEM!',
+                   password=PASSWORD,
+                   fee_type=Fees.SLOWEST)
+```
+You can get funds for the balance for testing in the [Faucet](http://faucet.testnet.symboldev.network/).
+## Command-line interface (CLI)
+
 ## Testing
 1. Clone the repository `git clone https://github.com/denjas/nempy.git`
 2. Go to the directory with the project `cd nempy`
