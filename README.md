@@ -1,5 +1,4 @@
-NEMpy
-==============================
+# NEMpy
 
 [![tests](https://github.com/denjas/nempy/actions/workflows/main.yml/badge.svg)](https://github.com/DENjjA/nempy/actions/workflows/main.yml)
 [![python-ver](https://github.com/denjas/nempy/blob/dev/.github/badges/python-version.svg)](https://www.python.org/)
@@ -8,16 +7,55 @@ NEMpy
 
 
 
-High-level wrapper for working with cryptocurrencies of the NEM ecosystem
+High-level python wrapper for working with cryptocurrencies of the NEM ecosystem
 
 Implemented on the basis symbol project [core sdk python library](https://github.com/symbol/symbol-sdk-core-python)
+## Possibilities
+* Creating a wallet with profiles and accounts
+* Using a wallet to send funds view activity history and balance
+* Blockchain [monitoring](https://docs.symbolplatform.com/api.html#websockets) via [websocket](https://ru.wikipedia.org/wiki/WebSocket)
+* Ability to use all the above in third-party products and services
 
+## Getting Started
 
-Testing
--------
+This is an example of how you may give instructions on setting up your project locally.
+To get a local copy up and running follow these simple example steps.
 
+### Prerequisites
+
+This is an example of how to list things you need to use the software and how to install them.
+* pipenv
+  ```sh
+  pip install pipenv
+  ```
+
+# Installing
+Install and update using pip:
+  ```sh
+  pip install nempy
+  ```
+## A Simple Example
+  ```python
+    from nempy.engine import XYMEngine
+    from nempy.user_data import AccountData
+
+    
+
+    @app.route("/")
+    def hello():
+        return "Hello, World!"
+  ```
+## Testing
 1. Clone the repository `git clone https://github.com/denjas/nempy.git`
 2. Go to the directory with the project `cd nempy`
 3. Install virtualenv package `pip install pipenv`
 4. Setting up a virtual environment `pipenv install`
 5. Running tests `pipenv run tests` or `pipenv run tests --cov=src`to assess coverage
+
+## Version Numbers
+Version numbers will be assigned according to the [Semantic Versioning](https://semver.org/) scheme.
+This means, given a version number MAJOR.MINOR.PATCH, we will increment the:
+
+1. MAJOR version when we make incompatible API changes,
+2. MINOR version when we add functionality in a backwards compatible manner, and
+3. PATCH version when we make backwards compatible bug fixes.
