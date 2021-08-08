@@ -4,7 +4,7 @@ NEMpy
 [![tests](https://github.com/denjas/nempy/actions/workflows/main.yml/badge.svg)](https://github.com/DENjjA/nempy/actions/workflows/main.yml)
 [![python-ver](https://github.com/denjas/nempy/blob/dev/.github/badges/python-version.svg)](https://www.python.org/)
 [![license](https://github.com/denjas/nempy/blob/dev/.github/badges/license.svg)](https://github.com/DENjjA/nempy/blob/dev/LICENSE)
-![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/denjas/9d8963b8ab464117a62f5f5fa7422c4a/raw/coverage.json)
+![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/denjas/9c7a615b3b16ced41d8530c7535ca131/raw/coverage.json)
 
 
 
