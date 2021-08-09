@@ -147,7 +147,7 @@ pipenv run pip inasall -e .
 ### Testing
 Follow the previous steps to set up your environment.
 
-Running tests `pipenv run tests` or `pipenv run tests --cov=src`to assess coverage
+Running tests `pipenv run tests` or `pipenv run tests --cov=src` to assess coverage
 
 ## Version Numbers
 Version numbers will be assigned according to the [Semantic Versioning](https://semver.org/) scheme.
