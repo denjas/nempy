@@ -21,7 +21,7 @@ def get_packages_from_pipfile_lock(path: str, version):
         return packages
 
 
-version = '0.0.1'
+version = open('version.txt', 'r').read()
 
 
 setup(

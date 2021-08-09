@@ -14,9 +14,21 @@ logging.getLogger('websockets').setLevel(logging.ERROR)
 logging.getLogger('urllib3').setLevel(logging.ERROR)
 
 
-@click.group()
-@click.option('-d', '--debug', is_flag=True)
-def main(debug):
+class MyGroup(click.Group):
+    def parse_args(self, ctx, args):
+        if '-v' in args or '--version' in args:
+            print(f'NEMpy {open("version.txt", "r").read()}')
+            if '-d' in args or '--debug' in args:
+                import sys
+                print(sys.version)
+            exit(0)
+        super(MyGroup, self).parse_args(ctx, args)
+
+
+@click.group(cls=MyGroup)
+@click.option('-d', '--debug', is_flag=True, default=False, help='Turns on debug mode for logs')
+@click.option('-v', '--version', is_flag=True, default=False, help='Show this version and exit.')
+def main(debug, version):
     log_format = "[%(asctime)s][%(levelname)s] %(name)s - %(message)s"
     if debug:
         logging.basicConfig(level=logging.DEBUG, format=log_format)

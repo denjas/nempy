@@ -2,3 +2,4 @@
 include requirements.txt
 include Pipfile
 include Pipfile.lock
+include version.txt
