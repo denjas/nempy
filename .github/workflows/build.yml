@@ -15,18 +15,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
+    - name: Publish a Python distribution to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        python-version: 3.9
-    - name: Create Awesome Badge
-      run: echo "BUILDIND"
-#      uses: schneegans/dynamic-badges-action@v1.1.0
-#      with:
-#        auth: ${{ secrets.GIST_SECRET }}
-#        gistID: 9d8963b8ab464117a62f5f5fa7422c4a
-#        filename: test.json
-#        label: coverage
-#        message: 84%
-#        color: dodgerblue
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
