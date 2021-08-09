@@ -25,7 +25,7 @@ version = open('version.txt', 'r').read()
 
 
 setup(
-    name='nempy',
+    name='nem-py',
     version=version,
     python_requires='>=3.6.0',
     author="Denys Shcheglov",
