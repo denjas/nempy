@@ -32,6 +32,11 @@ class TestAccountData:
         assert '******* **** **********' in str(self.account_data)
         self.account_data.decrypt(self.password)
 
+    def test_create(self):
+        account_data = AccountData.create(self.account_data.private_key, self.account_data.network_type)
+        assert account_data.address == self.account_data.address
+        assert account_data.public_key == self.account_data.public_key
+
     def test_serialize_deserialize_eu(self):
         data = self.account_data.serialize()
         assert AccountData.deserialize(data) == self.account_data
