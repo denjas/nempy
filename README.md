@@ -128,14 +128,26 @@ nempy-cli.py account send -a TDPFLBK4NSCKUBGAZDWQWCUFNJOJB33Y5R5AWPQ -m @symbol.
 #  Listening... `Ctrl+C` for abort
 #  [UNCONFIRMED] Transaction related to the given address enters the unconfirmed state, waiting to be included in a block...
 #  [CONFIRMED] Transaction related to the given address is included in a block
+pipenv run nempy-cli.py account balance
+#  {
+#    "symbol.xym": 18.000575
+#  }
 ```
-
-## Testing
+## Working with [pipenv](https://pipenv.pypa.io/) environment
 1. Clone the repository `git clone https://github.com/denjas/nempy.git`
 2. Go to the directory with the project `cd nempy`
 3. Install virtualenv package `pip install pipenv`
 4. Setting up a virtual environment `pipenv install`
-5. Running tests `pipenv run tests` or `pipenv run tests --cov=src`to assess coverage
+### For development
+To set up development in a virtual environment. Follow the previous steps then:
+```shell
+pipenv run pip inasall -e .
+```
+
+### Testing
+Follow the previous steps to set up your environment.
+
+Running tests `pipenv run tests` or `pipenv run tests --cov=src`to assess coverage
 
 ## Version Numbers
 Version numbers will be assigned according to the [Semantic Versioning](https://semver.org/) scheme.
