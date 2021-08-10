@@ -1,3 +1,10 @@
-
-__version__ = '0.0.2'
+__pdoc__ = {
+    "nempy.utils": False,
+    "nempy.bin": False,
+    "nempy.wallet": False,
+    "nempy.config": False,
+    "nempy.sym.network": True,
+    "nempy.sym.api": True,
+    "nempy.sym.ed25519": False,
+}
 
