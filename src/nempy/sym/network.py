@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class SymbolNetworkException(Exception):
+    """Is one exception for the convenience of working with the blockchain network"""
     codes = {
         'ResourceNotFound': 404,
         'InvalidAddress': 409,
@@ -46,7 +47,7 @@ class SymbolNetworkException(Exception):
 
 
 def url_validation(url):
-    # django url validation regex
+    """django URL validation regex"""
     regex = re.compile(
         r'^(?:http|ftp)s?://'  # http:// or https://
         r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
@@ -59,6 +60,7 @@ def url_validation(url):
 
 
 def mosaic_id_to_name_n_real(mosaic_id: str, amount: int) -> Dict[str, float]:
+    """Converts mosaic identifiers to names and integer numbers to real numbers"""
     if not isinstance(amount, int):
         raise TypeError('To avoid confusion, automatic conversion to integer is prohibited')
     divisibility = get_divisibility(mosaic_id)
@@ -72,6 +74,7 @@ def mosaic_id_to_name_n_real(mosaic_id: str, amount: int) -> Dict[str, float]:
 
 
 class Meta(BaseModel):
+    """Transaction meta information"""
     height: int
     hash: str
     merkleComponentHash: str
@@ -79,6 +82,7 @@ class Meta(BaseModel):
 
 
 class MosaicInfo(BaseModel):
+    """Mosaic information in a transaction"""
     id: str
     amount: Union[StrictInt, StrictFloat]
 
@@ -87,6 +91,7 @@ class MosaicInfo(BaseModel):
 
 
 class TransactionInfo(BaseModel):
+    """Contains information about transactions of the blockchain network"""
     size: int
     signature: str
     signerPublicKey: str
@@ -101,6 +106,7 @@ class TransactionInfo(BaseModel):
     mosaics: List[MosaicInfo]
 
     def humanization(self):
+        """Converts information from the blockchain into a readable form"""
         self.deadline = Timing().deadline_to_date(self.deadline)
         if self.message is not None:
             self.message = unhexlify(self.message)[1:].decode('utf-8')
@@ -142,7 +148,7 @@ class TransactionResponse(BaseModel):
 
 
 def send_transaction(payload: bytes) -> bool:
-
+    """Announces a transaction to the network"""
     try:
         headers = {'Content-type': 'application/json'}
         answer = requests.put(f'{node_selector.url}/transactions', data=payload, headers=headers, timeout=10)
@@ -157,9 +163,21 @@ def send_transaction(payload: bytes) -> bool:
 
 def get_mosaic_names(mosaics_ids: Union[list, str]) -> Optional[dict]:
     """
-    Get readable names for a set of mosaics
-    :param mosaics_ids:
-    :return: dict of mosaics {'mosaicNames': [{'mosaicId': '091F837E059AE13C', 'names': ['symbol.xym']}]}
+    Get readable names for a set of mosaics  
+    Parameters
+    ----------
+    mosaics_ids
+        IDs of mosaic as list or str if there is only one mosaic
+    ```py
+    print("Hello World!")
+    ```
+    Returns
+    -------
+    Optional[Dict[str, list]]
+        dict of mosaics. For example:
+    ```py
+    {"mosaicNames": [{"mosaicId": "091F837E059AE13C", "names": ["symbol.xym"]}]}
+    ```
     """
     if isinstance(mosaics_ids, str):
         mosaics_ids = [mosaics_ids]
@@ -409,6 +427,7 @@ def get_balance(address: str) -> Optional[dict]:
 
 
 class Monitor:
+    """Allows you to subscribe to events on the blockchain network"""
     where_to_subscribe = {
             'confirmedAdded': 'address',
             'unconfirmedAdded': 'address',
@@ -471,7 +490,7 @@ class Monitor:
 
 
 class Timing:
-
+    """Works with network time"""
     def __init__(self, network_type: Optional[NetworkType] = None):
         if network_type is None:
             network_type = node_selector.network_type
@@ -515,7 +534,7 @@ class Timing:
 
 
 class Thread:
-
+    """A helper class for working with a thread, starting and stopping it by signals"""
     def __init__(self):
         self.stop_event: Optional[threading.Event] = None
         self.thread: Optional[threading.Thread] = None
@@ -546,6 +565,10 @@ class Thread:
 
 
 class NodeSelector:
+    """Works with a list of nodes in both the main and test networks.
+       Offline finds the best connection options and makes adjustments if conditions change.
+       Also allows you to add connections manually.
+    """
     _URL: Optional[str] = None
     _URLs: Optional[list] = None
     is_elections: bool = False

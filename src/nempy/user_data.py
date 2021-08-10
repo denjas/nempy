@@ -244,8 +244,12 @@ class ProfileData(UserData):
     def check_pass(self, password: str) -> bool:
         """
         Verifies the password from the profile
-        :param password: password - if specified, then immediately check and result
-        :return: True if password confirmed or False if password is failed
+        Args:
+            password: verifiable password
+
+        Returns:
+            True if password confirmed or False if password is failed
+
         """
         if password is not None:
             if bcrypt.checkpw(password.encode('utf-8'), self.pass_hash):

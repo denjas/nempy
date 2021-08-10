@@ -17,15 +17,15 @@ class TestEngine:
         self.engine = XYMEngine(self.account0)
 
     def test_send_tokens(self):
-        result = self.engine.send_tokens('TBRLIS-EH5QYA-KK76EF-IGHWQE-4DHDYO-JAWNYK-ZBA', [('@symbol.xym', 0.001)], 'Hello NEM!', True, self.pw)
-        assert result == EngineStatusCode.INVALID_ACCOUNT_INFO
+        _, status = self.engine.send_tokens('TBRLIS-EH5QYA-KK76EF-IGHWQE-4DHDYO-JAWNYK-ZBA', [('@symbol.xym', 0.001)], 'Hello NEM!', True, self.pw)
+        assert status == EngineStatusCode.INVALID_ACCOUNT_INFO
         param = {'account': {'publicKey': self.account1.public_key}}
         with patch.object(network, 'get_accounts_info', return_value=param):
-            result = self.engine.send_tokens(self.account1.address, [('@symbol.xym', 0.001)], 'Hello NEM!', True, self.pw)
-            assert not isinstance(result, EngineStatusCode)
-        result = self.engine.send_tokens(self.account1.address, [('@symbol.xym', 0.001)], 'Hello NEM!', False, self.pw)
-        assert not isinstance(result, EngineStatusCode)
-        self.entity_hash = result
+            entity_hash, _ = self.engine.send_tokens(self.account1.address, [('@symbol.xym', 0.001)], 'Hello NEM!', True, self.pw)
+            assert entity_hash is not None
+        entity_hash, status = self.engine.send_tokens(self.account1.address, [('@symbol.xym', 0.001)], 'Hello NEM!', False, self.pw)
+        assert entity_hash is not None
+        self.entity_hash = entity_hash
         tr_conf = XYMEngine.check_transaction_confirmation(self.entity_hash)
         assert tr_conf == TransactionStatus.NOT_FOUND
 

@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class Dividers:
+    """Accumulates information about dividers for offline work"""
     dividers = {}
 
     def __iter__(self):
@@ -36,7 +37,7 @@ dividers = Dividers()
 
 
 class Message(bytes):
-
+    """Base class for messages, does the necessary checks"""
     def __new__(cls, message: Union[str, bytes], is_encrypted: bool) -> bytes:
         if is_encrypted and not message:
             raise RuntimeError('Message payload cannot be empty for encrypted message')
@@ -49,7 +50,7 @@ class Message(bytes):
 
 
 class PlainMessage(bytes):
-
+    """Plain messages"""
     def __new__(cls, message: Union[str, bytes]):
         message = Message(message, False)
         # add the message type code to the beginning of the byte sequence
@@ -62,7 +63,7 @@ class PlainMessage(bytes):
 
 
 class EncryptMessage(bytes):
-
+    """Encrypted messages requiring additional arguments"""
     def __new__(cls, message: Union[str, bytes], sender_private_key: str, recipient_pub: str):
         #  https://docs.symbolplatform.com/concepts/transfer-transaction.html#encrypted-message
         message = Message(message, True)
@@ -75,7 +76,7 @@ class EncryptMessage(bytes):
 
 
 class Namespace(str):
-
+    """Building namespace hashes"""
     def __new__(cls, name: str) -> str:
         ns_sns = name.split('.')
         if len(ns_sns) > 3:
@@ -92,7 +93,7 @@ class Namespace(str):
 
 
 class Mosaic(tuple):
-
+    """Builds a mosaic. Gets additional data by divisor and mosaic ID by name"""
     def __new__(cls, mosaic_id: str, amount: float):
         cls.size = 16
         if mosaic_id.startswith('@'):
@@ -105,6 +106,7 @@ class Mosaic(tuple):
 
     @staticmethod
     def get_divisibility(mosaic_id: str):
+        """Gets the divisibility by mosaic ID"""
         if mosaic_id in dividers:
             return dividers.get(mosaic_id)
         else:
@@ -115,6 +117,7 @@ class Mosaic(tuple):
 
     @staticmethod
     def alias_to_mosaic_id(alis):
+        """Translates aliases to mosaic id"""
         namespace_id = Namespace(alis)
         namespace_info = network.get_namespace_info(namespace_id)
         if namespace_info is None or namespace_info == {}:
@@ -124,12 +127,13 @@ class Mosaic(tuple):
 
 
 class Transaction:
-    # Size of transaction with empty message
-    MIN_TRANSACTION_SIZE = 160
+    """Class for working with transfer transactions"""
+
+    MIN_TRANSACTION_SIZE = 160  #: Size of transaction with empty message
 
     def __init__(self):
-        self.size: int = -1
-        self.max_fee: int = -1
+        self.size: int = -1  #: transaction size
+        self.max_fee: int = -1  #: The maximum amount of network currency that the sender of the transaction is willing to pay to get the transaction accepted
 
         self.network_type: NetworkType = network.get_node_network()
         self.timing: network.Timing = network.Timing(self.network_type)
@@ -142,6 +146,7 @@ class Transaction:
                message: Union[PlainMessage, EncryptMessage] = PlainMessage(''),
                fee_type: Fees = Fees.SLOWEST,
                deadline: Optional[dict] = None) -> Tuple[str, bytes]:
+        """Create a transaction"""
 
         if deadline is None:
             deadline = {'minutes': 2}
@@ -190,6 +195,7 @@ class Transaction:
 
     @staticmethod
     def calc_max_fee(transaction_size: int, fee_type: Fees):
+        """Calculation of the transaction fee"""
         # network fee multipliers
         nfm = network.get_fee_multipliers()
         if nfm is None:
@@ -227,6 +233,8 @@ class Transaction:
 
     @staticmethod
     def entity_hash_gen(signature: Signature, public_key: PublicKey, transaction, generation_hash: Hash256):
+        """Calculate the transaction hash by applying SHA3-256 hashing algorithm to the first 32 bytes of signature,
+        the signer public key, nemesis block generation hash, and the remaining transaction payload."""
         # https://symbol-docs.netlify.app/concepts/transaction.html
         tr_sr = transaction.serialize()
         is_aggregate = transaction.type in [TransactionTypes.AGGREGATE_BONDED, TransactionTypes.AGGREGATE_COMPLETE]
