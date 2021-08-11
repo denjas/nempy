@@ -59,8 +59,10 @@ entity_hash, status = engine.send_tokens(recipient_address='TDPFLBK4NSCKUBGAZDWQ
 print(status.name, status.value)
 ```
 You can get funds for the balance for testing in the [Faucet](http://faucet.testnet.symboldev.network/).
-## Command-line interface (CLI)
 
+Additional [documentation](https://denjas.github.io/nempy/) can be found [here](https://denjas.github.io/nempy/)
+## Command-line interface (CLI)
+You can get acquainted with the capabilities of the CLI interface [here](https://github.com/denjas/nempy/blob/docgen/docs/cli.md)
 
 ## Working with [pipenv](https://pipenv.pypa.io/) environment
 1. Clone the repository `git clone https://github.com/denjas/nempy.git`
