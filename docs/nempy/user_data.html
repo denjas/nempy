@@ -1,0 +1,1105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>nempy.user_data API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>nempy.user_data</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import abc
+import copy
+import logging
+import os
+import pickle
+from base64 import b64decode
+from base64 import b64encode
+from binascii import unhexlify
+from enum import Enum
+from hashlib import blake2b
+from typing import Union, Dict, Optional
+
+import bcrypt
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
+from Crypto.Util.Padding import unpad
+from nempy.config import C
+from nempy.sym.constants import NetworkType, AccountValidationState
+from nempy.sym.ed25519 import check_address
+from pydantic import BaseModel, validator, StrictStr, StrictBytes
+from symbolchain.core.Bip32 import Bip32
+from symbolchain.core.CryptoTypes import PrivateKey
+from symbolchain.core.facade.SymFacade import SymFacade
+from symbolchain.core.sym.KeyPair import KeyPair
+from tabulate import tabulate
+
+logger = logging.getLogger(__name__)
+
+
+def encryption(password: str, data: bytes) -&gt; bytes:
+    key = blake2b(password.encode(), digest_size=16).hexdigest().encode()
+    cipher = AES.new(key, AES.MODE_CBC)
+    ct_bytes = cipher.encrypt(pad(data, AES.block_size))
+    iv = b64encode(cipher.iv)
+    ct = b64encode(ct_bytes)
+    result = iv + ct
+    return result
+
+
+def decryption(password: str, encrypted_data: bytes) -&gt; [bytes, None]:
+    encrypted_data = encrypted_data.decode(&#39;utf-8&#39;)
+    key = blake2b(password.encode(), digest_size=16).hexdigest().encode()
+    try:
+        iv = b64decode(encrypted_data[0:24])
+        ct = b64decode(encrypted_data[24:])
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        pt = unpad(cipher.decrypt(ct), AES.block_size)
+        return pt
+    except (ValueError, KeyError):
+        return None
+
+
+class GenerationType(Enum):
+    MNEMONIC = 0
+    PRIVATE_KEY = 1
+
+
+class DecoderStatus(Enum):
+    DECRYPTED = None
+    NO_DATA = &#39;Missing data to decode&#39;
+    WRONG_DATA = &#39;Wrong data format, expected `bytes`&#39;
+    WRONG_PASS = &#39;Wrong password&#39;
+
+
+class UserData(BaseModel):
+    name: Optional[str] = None
+    network_type: NetworkType
+
+    def __repr__(self, ):
+        return f&#39;&lt;class `{type(self).__name__}`&gt;&#39;
+
+    @abc.abstractmethod
+    def __str__(self): pass
+
+    def __eq__(self, other: &#39;UserData&#39;):
+        if other.dict() == self.dict():
+            return True
+        return False
+
+    @classmethod
+    @abc.abstractmethod
+    def read(cls, path: str) -&gt; &#39;UserData&#39;: pass
+
+    @abc.abstractmethod
+    def write(self, path: str): pass
+
+    def serialize(self) -&gt; bytes:
+        serialized_data = pickle.dumps(self.dict())
+        return serialized_data
+
+    @classmethod
+    def deserialize(cls, data) -&gt; &#39;UserData&#39;:
+        deserialized_date = pickle.loads(data)
+        return cls(**deserialized_date)
+
+
+class AccountData(UserData):
+    address: StrictStr
+    public_key: StrictStr
+    private_key: Union[StrictStr, StrictBytes]
+    path: Optional[StrictStr] = None
+    mnemonic: Union[StrictStr, StrictBytes] = None
+    profile: Optional[str] = None
+
+    class Config:
+        validate_assignment = True
+
+    @validator(&#39;address&#39;)
+    def validate_address(cls, address):
+        address = address.replace(&#39;-&#39;, &#39;&#39;)
+        if (avs := check_address(address)) != AccountValidationState.OK:
+            raise ValueError(avs.value)
+        return address
+
+    def __str__(self):
+        prepare = list()
+        for key, value in self.dict().items():
+            if key == &#39;address&#39;:
+                value = &#39;-&#39;.join(value[i:i + 6] for i in range(0, len(value), 6))
+            if key == &#39;mnemonic&#39; and not isinstance(value, bytes):
+                positions = [pos for pos, char in enumerate(value) if char == &#39; &#39;]
+                value = C.OKBLUE + value[:positions[8]] + f&#39;{C.END}\n&#39; + C.OKBLUE + value[positions[8] + 1:positions[16]] + f&#39;{C.END}\n&#39; + C.OKBLUE + value[positions[16] + 1:] + C.END
+            elif key == &#39;mnemonic&#39; and isinstance(value, bytes):
+                value = f&#39;{C.OKBLUE}******* **** ********** ******* ***** *********** ******** *****{C.END}&#39;
+            if key == &#39;private_key&#39; and isinstance(value, bytes):
+                value = &#39;*&#39; * 64
+            if key == &#39;private_key&#39; and isinstance(value, str):
+                value = C.OKBLUE + value + C.END
+            if isinstance(value, NetworkType):
+                value = value.name
+            key = key.replace(&#39;_&#39;, &#39; &#39;).title()
+            prepare.append([key, value])
+        account = f&#39;Account - {self.name}&#39;
+        indent = (len(self.public_key) - len(account)) // 2
+        account = C.INVERT + &#39; &#39; * indent + account + &#39; &#39; * indent + C.END
+        table = tabulate(prepare, headers=[&#39;&#39;, f&#39;{account}&#39;], tablefmt=&#39;grid&#39;)
+        return table
+
+    @classmethod
+    def create(cls, private_key: str, network_type: NetworkType) -&gt; &#39;AccountData&#39;:
+        private_key = private_key.upper()
+        facade = SymFacade(network_type.value)
+        key_pair = KeyPair(PrivateKey(unhexlify(private_key)))
+        public_key = str(key_pair.public_key).upper()
+        address = str(facade.network.public_key_to_address(key_pair.public_key)).upper()
+        return cls(private_key=private_key, public_key=public_key, address=address, network_type=network_type)
+
+    def decrypt(self, password: str) -&gt; &#39;AccountData&#39;:
+        if not isinstance(self.private_key, bytes):
+            logger.error(&#39;Unencrypted account?&#39;)
+            raise ValueError(DecoderStatus.WRONG_DATA.value)
+        decrypted_account = copy.deepcopy(self)
+        decrypted_key = decryption(password, self.private_key)
+        if decrypted_key is None:
+            logger.error(DecoderStatus.WRONG_PASS.value)
+            raise ValueError(DecoderStatus.WRONG_PASS.value)
+        decrypted_account.private_key = pickle.loads(decrypted_key)
+        if decrypted_account.mnemonic is not None:
+            decrypted_account.mnemonic = pickle.loads(decryption(password, self.mnemonic))
+        return decrypted_account
+
+    @classmethod
+    def read(cls, path: str) -&gt; Union[&#39;AccountData&#39;, DecoderStatus]:
+        if not os.path.exists(path):
+            logger.error(DecoderStatus.NO_DATA.value)
+            return DecoderStatus.NO_DATA
+        account = cls.deserialize(open(path, &#39;rb&#39;).read())
+        return account
+
+    def encrypt(self, password: str) -&gt; &#39;AccountData&#39;:
+        pickle_private_key = pickle.dumps(self.private_key)
+        # encrypt the private key
+        self.private_key = encryption(password=password, data=pickle_private_key)
+        if self.mnemonic is not None:
+            pickle_mnemonic = pickle.dumps(self.mnemonic)
+            # encrypt the mnemonic
+            self.mnemonic = encryption(password=password, data=pickle_mnemonic)
+        return self
+
+    def is_encrypted(self):
+        return isinstance(self.private_key, bytes)
+
+    def write(self, path: str):
+        if not isinstance(self.private_key, bytes):
+            raise ValueError(&#39;Account data is recorded unencrypted&#39;)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+
+        pickled_data = self.serialize()
+        with open(path, &#39;wb&#39;) as opened_file:
+            opened_file.write(pickled_data)
+        logger.debug(f&#39;Wallet saved along the way: {path}&#39;)
+
+    @staticmethod
+    def accounts_pool_by_mnemonic(network_type: NetworkType,
+                                  bip32_coin_id: int,
+                                  mnemonic: str) -&gt; Dict[str, &#39;AccountData&#39;]:
+        facade = SymFacade(network_type.value)
+
+        bip = Bip32(facade.BIP32_CURVE_NAME)
+        root_node = bip.from_mnemonic(mnemonic, &#39;&#39;)
+        accounts = {}
+        for i in range(10):
+            path = [44, bip32_coin_id, i, 0, 0]
+            child_node = root_node.derive_path(path)
+            child_key_pair = facade.bip32_node_to_key_pair(child_node)
+            private_key = str(child_key_pair.private_key).upper()
+            public_key = str(child_key_pair.public_key).upper()
+            address = str(facade.network.public_key_to_address(child_key_pair.public_key)).upper()
+            accounts[address] = AccountData(**{&#39;address&#39;: address,
+                                               &#39;public_key&#39;: public_key,
+                                               &#39;private_key&#39;: private_key,
+                                               &#39;mnemonic&#39;: mnemonic,
+                                               &#39;path&#39;: f&#34;m/44&#39;/{path[1]}&#39;/{path[2]}&#39;/0&#39;/0&#39;&#34;,
+                                               &#39;network_type&#39;: network_type})
+        return accounts
+
+
+class ProfileData(UserData):
+    pass_hash: StrictBytes
+
+    def __str__(self):
+        prepare = [[key.replace(&#39;_&#39;, &#39; &#39;).title(), value]
+                   for key, value in self.dict().items() if key not in [&#39;network_type&#39;, &#39;pass_hash&#39;]]
+        prepare.append([&#39;Network Type&#39;, self.network_type.name])
+        prepare.append([&#39;Pass Hash&#39;, C.OKBLUE + &#39;*&#39; * len(self.pass_hash) + C.END])
+        profile = f&#39;Profile - {self.name}&#39;
+        indent = (len(self.pass_hash) - len(profile)) // 2
+        profile = C.INVERT + &#39; &#39; * indent + profile + &#39; &#39; * indent + C.END
+
+        table = tabulate(prepare, headers=[&#39;&#39;, f&#39;{profile}&#39;], tablefmt=&#39;grid&#39;)
+        return table
+
+    @classmethod
+    def read(cls, path) -&gt; &#39;ProfileData&#39;:
+        with open(path, &#39;rb&#39;) as opened_file:
+            deserialized = cls.deserialize(opened_file.read())
+            return deserialized
+
+    def write(self, path):
+        pickled = self.serialize()
+        with open(path, &#39;wb&#39;) as opened_file:
+            opened_file.write(pickled)
+
+    def check_pass(self, password: str) -&gt; bool:
+        &#34;&#34;&#34;
+        Verifies the password from the profile
+        Args:
+            password: verifiable password
+
+        Returns:
+            True if password confirmed or False if password is failed
+
+        &#34;&#34;&#34;
+        if password is not None:
+            if bcrypt.checkpw(password.encode(&#39;utf-8&#39;), self.pass_hash):
+                return True
+            else:
+                logger.error(&#39;Incorrect password&#39;)
+                return False</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="nempy.user_data.decryption"><code class="name flex">
+<span>def <span class="ident">decryption</span></span>(<span>password: str, encrypted_data: bytes) ‑> [<class 'bytes'>, None]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def decryption(password: str, encrypted_data: bytes) -&gt; [bytes, None]:
+    encrypted_data = encrypted_data.decode(&#39;utf-8&#39;)
+    key = blake2b(password.encode(), digest_size=16).hexdigest().encode()
+    try:
+        iv = b64decode(encrypted_data[0:24])
+        ct = b64decode(encrypted_data[24:])
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        pt = unpad(cipher.decrypt(ct), AES.block_size)
+        return pt
+    except (ValueError, KeyError):
+        return None</code></pre>
+</details>
+</dd>
+<dt id="nempy.user_data.encryption"><code class="name flex">
+<span>def <span class="ident">encryption</span></span>(<span>password: str, data: bytes) ‑> bytes</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def encryption(password: str, data: bytes) -&gt; bytes:
+    key = blake2b(password.encode(), digest_size=16).hexdigest().encode()
+    cipher = AES.new(key, AES.MODE_CBC)
+    ct_bytes = cipher.encrypt(pad(data, AES.block_size))
+    iv = b64encode(cipher.iv)
+    ct = b64encode(ct_bytes)
+    result = iv + ct
+    return result</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="nempy.user_data.AccountData"><code class="flex name class">
+<span>class <span class="ident">AccountData</span></span>
+<span>(</span><span>**data: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class AccountData(UserData):
+    address: StrictStr
+    public_key: StrictStr
+    private_key: Union[StrictStr, StrictBytes]
+    path: Optional[StrictStr] = None
+    mnemonic: Union[StrictStr, StrictBytes] = None
+    profile: Optional[str] = None
+
+    class Config:
+        validate_assignment = True
+
+    @validator(&#39;address&#39;)
+    def validate_address(cls, address):
+        address = address.replace(&#39;-&#39;, &#39;&#39;)
+        if (avs := check_address(address)) != AccountValidationState.OK:
+            raise ValueError(avs.value)
+        return address
+
+    def __str__(self):
+        prepare = list()
+        for key, value in self.dict().items():
+            if key == &#39;address&#39;:
+                value = &#39;-&#39;.join(value[i:i + 6] for i in range(0, len(value), 6))
+            if key == &#39;mnemonic&#39; and not isinstance(value, bytes):
+                positions = [pos for pos, char in enumerate(value) if char == &#39; &#39;]
+                value = C.OKBLUE + value[:positions[8]] + f&#39;{C.END}\n&#39; + C.OKBLUE + value[positions[8] + 1:positions[16]] + f&#39;{C.END}\n&#39; + C.OKBLUE + value[positions[16] + 1:] + C.END
+            elif key == &#39;mnemonic&#39; and isinstance(value, bytes):
+                value = f&#39;{C.OKBLUE}******* **** ********** ******* ***** *********** ******** *****{C.END}&#39;
+            if key == &#39;private_key&#39; and isinstance(value, bytes):
+                value = &#39;*&#39; * 64
+            if key == &#39;private_key&#39; and isinstance(value, str):
+                value = C.OKBLUE + value + C.END
+            if isinstance(value, NetworkType):
+                value = value.name
+            key = key.replace(&#39;_&#39;, &#39; &#39;).title()
+            prepare.append([key, value])
+        account = f&#39;Account - {self.name}&#39;
+        indent = (len(self.public_key) - len(account)) // 2
+        account = C.INVERT + &#39; &#39; * indent + account + &#39; &#39; * indent + C.END
+        table = tabulate(prepare, headers=[&#39;&#39;, f&#39;{account}&#39;], tablefmt=&#39;grid&#39;)
+        return table
+
+    @classmethod
+    def create(cls, private_key: str, network_type: NetworkType) -&gt; &#39;AccountData&#39;:
+        private_key = private_key.upper()
+        facade = SymFacade(network_type.value)
+        key_pair = KeyPair(PrivateKey(unhexlify(private_key)))
+        public_key = str(key_pair.public_key).upper()
+        address = str(facade.network.public_key_to_address(key_pair.public_key)).upper()
+        return cls(private_key=private_key, public_key=public_key, address=address, network_type=network_type)
+
+    def decrypt(self, password: str) -&gt; &#39;AccountData&#39;:
+        if not isinstance(self.private_key, bytes):
+            logger.error(&#39;Unencrypted account?&#39;)
+            raise ValueError(DecoderStatus.WRONG_DATA.value)
+        decrypted_account = copy.deepcopy(self)
+        decrypted_key = decryption(password, self.private_key)
+        if decrypted_key is None:
+            logger.error(DecoderStatus.WRONG_PASS.value)
+            raise ValueError(DecoderStatus.WRONG_PASS.value)
+        decrypted_account.private_key = pickle.loads(decrypted_key)
+        if decrypted_account.mnemonic is not None:
+            decrypted_account.mnemonic = pickle.loads(decryption(password, self.mnemonic))
+        return decrypted_account
+
+    @classmethod
+    def read(cls, path: str) -&gt; Union[&#39;AccountData&#39;, DecoderStatus]:
+        if not os.path.exists(path):
+            logger.error(DecoderStatus.NO_DATA.value)
+            return DecoderStatus.NO_DATA
+        account = cls.deserialize(open(path, &#39;rb&#39;).read())
+        return account
+
+    def encrypt(self, password: str) -&gt; &#39;AccountData&#39;:
+        pickle_private_key = pickle.dumps(self.private_key)
+        # encrypt the private key
+        self.private_key = encryption(password=password, data=pickle_private_key)
+        if self.mnemonic is not None:
+            pickle_mnemonic = pickle.dumps(self.mnemonic)
+            # encrypt the mnemonic
+            self.mnemonic = encryption(password=password, data=pickle_mnemonic)
+        return self
+
+    def is_encrypted(self):
+        return isinstance(self.private_key, bytes)
+
+    def write(self, path: str):
+        if not isinstance(self.private_key, bytes):
+            raise ValueError(&#39;Account data is recorded unencrypted&#39;)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+
+        pickled_data = self.serialize()
+        with open(path, &#39;wb&#39;) as opened_file:
+            opened_file.write(pickled_data)
+        logger.debug(f&#39;Wallet saved along the way: {path}&#39;)
+
+    @staticmethod
+    def accounts_pool_by_mnemonic(network_type: NetworkType,
+                                  bip32_coin_id: int,
+                                  mnemonic: str) -&gt; Dict[str, &#39;AccountData&#39;]:
+        facade = SymFacade(network_type.value)
+
+        bip = Bip32(facade.BIP32_CURVE_NAME)
+        root_node = bip.from_mnemonic(mnemonic, &#39;&#39;)
+        accounts = {}
+        for i in range(10):
+            path = [44, bip32_coin_id, i, 0, 0]
+            child_node = root_node.derive_path(path)
+            child_key_pair = facade.bip32_node_to_key_pair(child_node)
+            private_key = str(child_key_pair.private_key).upper()
+            public_key = str(child_key_pair.public_key).upper()
+            address = str(facade.network.public_key_to_address(child_key_pair.public_key)).upper()
+            accounts[address] = AccountData(**{&#39;address&#39;: address,
+                                               &#39;public_key&#39;: public_key,
+                                               &#39;private_key&#39;: private_key,
+                                               &#39;mnemonic&#39;: mnemonic,
+                                               &#39;path&#39;: f&#34;m/44&#39;/{path[1]}&#39;/{path[2]}&#39;/0&#39;/0&#39;&#34;,
+                                               &#39;network_type&#39;: network_type})
+        return accounts</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nempy.user_data.UserData" href="#nempy.user_data.UserData">UserData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nempy.user_data.AccountData.Config"><code class="name">var <span class="ident">Config</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.user_data.AccountData.address"><code class="name">var <span class="ident">address</span> : pydantic.types.StrictStr</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.user_data.AccountData.mnemonic"><code class="name">var <span class="ident">mnemonic</span> : Union[pydantic.types.StrictStr, pydantic.types.StrictBytes]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.user_data.AccountData.path"><code class="name">var <span class="ident">path</span> : Optional[pydantic.types.StrictStr]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.user_data.AccountData.private_key"><code class="name">var <span class="ident">private_key</span> : Union[pydantic.types.StrictStr, pydantic.types.StrictBytes]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.user_data.AccountData.profile"><code class="name">var <span class="ident">profile</span> : Optional[str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.user_data.AccountData.public_key"><code class="name">var <span class="ident">public_key</span> : pydantic.types.StrictStr</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="nempy.user_data.AccountData.accounts_pool_by_mnemonic"><code class="name flex">
+<span>def <span class="ident">accounts_pool_by_mnemonic</span></span>(<span>network_type: <a title="nempy.sym.constants.NetworkType" href="sym/constants.html#nempy.sym.constants.NetworkType">NetworkType</a>, bip32_coin_id: int, mnemonic: str) ‑> Dict[str, <a title="nempy.user_data.AccountData" href="#nempy.user_data.AccountData">AccountData</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def accounts_pool_by_mnemonic(network_type: NetworkType,
+                              bip32_coin_id: int,
+                              mnemonic: str) -&gt; Dict[str, &#39;AccountData&#39;]:
+    facade = SymFacade(network_type.value)
+
+    bip = Bip32(facade.BIP32_CURVE_NAME)
+    root_node = bip.from_mnemonic(mnemonic, &#39;&#39;)
+    accounts = {}
+    for i in range(10):
+        path = [44, bip32_coin_id, i, 0, 0]
+        child_node = root_node.derive_path(path)
+        child_key_pair = facade.bip32_node_to_key_pair(child_node)
+        private_key = str(child_key_pair.private_key).upper()
+        public_key = str(child_key_pair.public_key).upper()
+        address = str(facade.network.public_key_to_address(child_key_pair.public_key)).upper()
+        accounts[address] = AccountData(**{&#39;address&#39;: address,
+                                           &#39;public_key&#39;: public_key,
+                                           &#39;private_key&#39;: private_key,
+                                           &#39;mnemonic&#39;: mnemonic,
+                                           &#39;path&#39;: f&#34;m/44&#39;/{path[1]}&#39;/{path[2]}&#39;/0&#39;/0&#39;&#34;,
+                                           &#39;network_type&#39;: network_type})
+    return accounts</code></pre>
+</details>
+</dd>
+<dt id="nempy.user_data.AccountData.create"><code class="name flex">
+<span>def <span class="ident">create</span></span>(<span>private_key: str, network_type: <a title="nempy.sym.constants.NetworkType" href="sym/constants.html#nempy.sym.constants.NetworkType">NetworkType</a>) ‑> <a title="nempy.user_data.AccountData" href="#nempy.user_data.AccountData">AccountData</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+def create(cls, private_key: str, network_type: NetworkType) -&gt; &#39;AccountData&#39;:
+    private_key = private_key.upper()
+    facade = SymFacade(network_type.value)
+    key_pair = KeyPair(PrivateKey(unhexlify(private_key)))
+    public_key = str(key_pair.public_key).upper()
+    address = str(facade.network.public_key_to_address(key_pair.public_key)).upper()
+    return cls(private_key=private_key, public_key=public_key, address=address, network_type=network_type)</code></pre>
+</details>
+</dd>
+<dt id="nempy.user_data.AccountData.read"><code class="name flex">
+<span>def <span class="ident">read</span></span>(<span>path: str) ‑> Union[<a title="nempy.user_data.AccountData" href="#nempy.user_data.AccountData">AccountData</a>, <a title="nempy.user_data.DecoderStatus" href="#nempy.user_data.DecoderStatus">DecoderStatus</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+def read(cls, path: str) -&gt; Union[&#39;AccountData&#39;, DecoderStatus]:
+    if not os.path.exists(path):
+        logger.error(DecoderStatus.NO_DATA.value)
+        return DecoderStatus.NO_DATA
+    account = cls.deserialize(open(path, &#39;rb&#39;).read())
+    return account</code></pre>
+</details>
+</dd>
+<dt id="nempy.user_data.AccountData.validate_address"><code class="name flex">
+<span>def <span class="ident">validate_address</span></span>(<span>address)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@validator(&#39;address&#39;)
+def validate_address(cls, address):
+    address = address.replace(&#39;-&#39;, &#39;&#39;)
+    if (avs := check_address(address)) != AccountValidationState.OK:
+        raise ValueError(avs.value)
+    return address</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nempy.user_data.AccountData.decrypt"><code class="name flex">
+<span>def <span class="ident">decrypt</span></span>(<span>self, password: str) ‑> <a title="nempy.user_data.AccountData" href="#nempy.user_data.AccountData">AccountData</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def decrypt(self, password: str) -&gt; &#39;AccountData&#39;:
+    if not isinstance(self.private_key, bytes):
+        logger.error(&#39;Unencrypted account?&#39;)
+        raise ValueError(DecoderStatus.WRONG_DATA.value)
+    decrypted_account = copy.deepcopy(self)
+    decrypted_key = decryption(password, self.private_key)
+    if decrypted_key is None:
+        logger.error(DecoderStatus.WRONG_PASS.value)
+        raise ValueError(DecoderStatus.WRONG_PASS.value)
+    decrypted_account.private_key = pickle.loads(decrypted_key)
+    if decrypted_account.mnemonic is not None:
+        decrypted_account.mnemonic = pickle.loads(decryption(password, self.mnemonic))
+    return decrypted_account</code></pre>
+</details>
+</dd>
+<dt id="nempy.user_data.AccountData.encrypt"><code class="name flex">
+<span>def <span class="ident">encrypt</span></span>(<span>self, password: str) ‑> <a title="nempy.user_data.AccountData" href="#nempy.user_data.AccountData">AccountData</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def encrypt(self, password: str) -&gt; &#39;AccountData&#39;:
+    pickle_private_key = pickle.dumps(self.private_key)
+    # encrypt the private key
+    self.private_key = encryption(password=password, data=pickle_private_key)
+    if self.mnemonic is not None:
+        pickle_mnemonic = pickle.dumps(self.mnemonic)
+        # encrypt the mnemonic
+        self.mnemonic = encryption(password=password, data=pickle_mnemonic)
+    return self</code></pre>
+</details>
+</dd>
+<dt id="nempy.user_data.AccountData.is_encrypted"><code class="name flex">
+<span>def <span class="ident">is_encrypted</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_encrypted(self):
+    return isinstance(self.private_key, bytes)</code></pre>
+</details>
+</dd>
+<dt id="nempy.user_data.AccountData.write"><code class="name flex">
+<span>def <span class="ident">write</span></span>(<span>self, path: str)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def write(self, path: str):
+    if not isinstance(self.private_key, bytes):
+        raise ValueError(&#39;Account data is recorded unencrypted&#39;)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    pickled_data = self.serialize()
+    with open(path, &#39;wb&#39;) as opened_file:
+        opened_file.write(pickled_data)
+    logger.debug(f&#39;Wallet saved along the way: {path}&#39;)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nempy.user_data.DecoderStatus"><code class="flex name class">
+<span>class <span class="ident">DecoderStatus</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DecoderStatus(Enum):
+    DECRYPTED = None
+    NO_DATA = &#39;Missing data to decode&#39;
+    WRONG_DATA = &#39;Wrong data format, expected `bytes`&#39;
+    WRONG_PASS = &#39;Wrong password&#39;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nempy.user_data.DecoderStatus.DECRYPTED"><code class="name">var <span class="ident">DECRYPTED</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.user_data.DecoderStatus.NO_DATA"><code class="name">var <span class="ident">NO_DATA</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.user_data.DecoderStatus.WRONG_DATA"><code class="name">var <span class="ident">WRONG_DATA</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.user_data.DecoderStatus.WRONG_PASS"><code class="name">var <span class="ident">WRONG_PASS</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nempy.user_data.GenerationType"><code class="flex name class">
+<span>class <span class="ident">GenerationType</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class GenerationType(Enum):
+    MNEMONIC = 0
+    PRIVATE_KEY = 1</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nempy.user_data.GenerationType.MNEMONIC"><code class="name">var <span class="ident">MNEMONIC</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.user_data.GenerationType.PRIVATE_KEY"><code class="name">var <span class="ident">PRIVATE_KEY</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nempy.user_data.ProfileData"><code class="flex name class">
+<span>class <span class="ident">ProfileData</span></span>
+<span>(</span><span>**data: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ProfileData(UserData):
+    pass_hash: StrictBytes
+
+    def __str__(self):
+        prepare = [[key.replace(&#39;_&#39;, &#39; &#39;).title(), value]
+                   for key, value in self.dict().items() if key not in [&#39;network_type&#39;, &#39;pass_hash&#39;]]
+        prepare.append([&#39;Network Type&#39;, self.network_type.name])
+        prepare.append([&#39;Pass Hash&#39;, C.OKBLUE + &#39;*&#39; * len(self.pass_hash) + C.END])
+        profile = f&#39;Profile - {self.name}&#39;
+        indent = (len(self.pass_hash) - len(profile)) // 2
+        profile = C.INVERT + &#39; &#39; * indent + profile + &#39; &#39; * indent + C.END
+
+        table = tabulate(prepare, headers=[&#39;&#39;, f&#39;{profile}&#39;], tablefmt=&#39;grid&#39;)
+        return table
+
+    @classmethod
+    def read(cls, path) -&gt; &#39;ProfileData&#39;:
+        with open(path, &#39;rb&#39;) as opened_file:
+            deserialized = cls.deserialize(opened_file.read())
+            return deserialized
+
+    def write(self, path):
+        pickled = self.serialize()
+        with open(path, &#39;wb&#39;) as opened_file:
+            opened_file.write(pickled)
+
+    def check_pass(self, password: str) -&gt; bool:
+        &#34;&#34;&#34;
+        Verifies the password from the profile
+        Args:
+            password: verifiable password
+
+        Returns:
+            True if password confirmed or False if password is failed
+
+        &#34;&#34;&#34;
+        if password is not None:
+            if bcrypt.checkpw(password.encode(&#39;utf-8&#39;), self.pass_hash):
+                return True
+            else:
+                logger.error(&#39;Incorrect password&#39;)
+                return False</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nempy.user_data.UserData" href="#nempy.user_data.UserData">UserData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nempy.user_data.ProfileData.pass_hash"><code class="name">var <span class="ident">pass_hash</span> : pydantic.types.StrictBytes</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="nempy.user_data.ProfileData.read"><code class="name flex">
+<span>def <span class="ident">read</span></span>(<span>path) ‑> <a title="nempy.user_data.ProfileData" href="#nempy.user_data.ProfileData">ProfileData</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+def read(cls, path) -&gt; &#39;ProfileData&#39;:
+    with open(path, &#39;rb&#39;) as opened_file:
+        deserialized = cls.deserialize(opened_file.read())
+        return deserialized</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nempy.user_data.ProfileData.check_pass"><code class="name flex">
+<span>def <span class="ident">check_pass</span></span>(<span>self, password: str) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Verifies the password from the profile</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>password</code></strong></dt>
+<dd>verifiable password</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>True if password confirmed or False if password is failed</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def check_pass(self, password: str) -&gt; bool:
+    &#34;&#34;&#34;
+    Verifies the password from the profile
+    Args:
+        password: verifiable password
+
+    Returns:
+        True if password confirmed or False if password is failed
+
+    &#34;&#34;&#34;
+    if password is not None:
+        if bcrypt.checkpw(password.encode(&#39;utf-8&#39;), self.pass_hash):
+            return True
+        else:
+            logger.error(&#39;Incorrect password&#39;)
+            return False</code></pre>
+</details>
+</dd>
+<dt id="nempy.user_data.ProfileData.write"><code class="name flex">
+<span>def <span class="ident">write</span></span>(<span>self, path)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def write(self, path):
+    pickled = self.serialize()
+    with open(path, &#39;wb&#39;) as opened_file:
+        opened_file.write(pickled)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nempy.user_data.UserData"><code class="flex name class">
+<span>class <span class="ident">UserData</span></span>
+<span>(</span><span>**data: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class UserData(BaseModel):
+    name: Optional[str] = None
+    network_type: NetworkType
+
+    def __repr__(self, ):
+        return f&#39;&lt;class `{type(self).__name__}`&gt;&#39;
+
+    @abc.abstractmethod
+    def __str__(self): pass
+
+    def __eq__(self, other: &#39;UserData&#39;):
+        if other.dict() == self.dict():
+            return True
+        return False
+
+    @classmethod
+    @abc.abstractmethod
+    def read(cls, path: str) -&gt; &#39;UserData&#39;: pass
+
+    @abc.abstractmethod
+    def write(self, path: str): pass
+
+    def serialize(self) -&gt; bytes:
+        serialized_data = pickle.dumps(self.dict())
+        return serialized_data
+
+    @classmethod
+    def deserialize(cls, data) -&gt; &#39;UserData&#39;:
+        deserialized_date = pickle.loads(data)
+        return cls(**deserialized_date)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="nempy.user_data.AccountData" href="#nempy.user_data.AccountData">AccountData</a></li>
+<li><a title="nempy.user_data.ProfileData" href="#nempy.user_data.ProfileData">ProfileData</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nempy.user_data.UserData.name"><code class="name">var <span class="ident">name</span> : Optional[str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.user_data.UserData.network_type"><code class="name">var <span class="ident">network_type</span> : <a title="nempy.sym.constants.NetworkType" href="sym/constants.html#nempy.sym.constants.NetworkType">NetworkType</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="nempy.user_data.UserData.deserialize"><code class="name flex">
+<span>def <span class="ident">deserialize</span></span>(<span>data) ‑> <a title="nempy.user_data.UserData" href="#nempy.user_data.UserData">UserData</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+def deserialize(cls, data) -&gt; &#39;UserData&#39;:
+    deserialized_date = pickle.loads(data)
+    return cls(**deserialized_date)</code></pre>
+</details>
+</dd>
+<dt id="nempy.user_data.UserData.read"><code class="name flex">
+<span>def <span class="ident">read</span></span>(<span>path: str) ‑> <a title="nempy.user_data.UserData" href="#nempy.user_data.UserData">UserData</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+@abc.abstractmethod
+def read(cls, path: str) -&gt; &#39;UserData&#39;: pass</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nempy.user_data.UserData.serialize"><code class="name flex">
+<span>def <span class="ident">serialize</span></span>(<span>self) ‑> bytes</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def serialize(self) -&gt; bytes:
+    serialized_data = pickle.dumps(self.dict())
+    return serialized_data</code></pre>
+</details>
+</dd>
+<dt id="nempy.user_data.UserData.write"><code class="name flex">
+<span>def <span class="ident">write</span></span>(<span>self, path: str)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@abc.abstractmethod
+def write(self, path: str): pass</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="nempy" href="index.html">nempy</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="nempy.user_data.decryption" href="#nempy.user_data.decryption">decryption</a></code></li>
+<li><code><a title="nempy.user_data.encryption" href="#nempy.user_data.encryption">encryption</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="nempy.user_data.AccountData" href="#nempy.user_data.AccountData">AccountData</a></code></h4>
+<ul class="">
+<li><code><a title="nempy.user_data.AccountData.Config" href="#nempy.user_data.AccountData.Config">Config</a></code></li>
+<li><code><a title="nempy.user_data.AccountData.accounts_pool_by_mnemonic" href="#nempy.user_data.AccountData.accounts_pool_by_mnemonic">accounts_pool_by_mnemonic</a></code></li>
+<li><code><a title="nempy.user_data.AccountData.address" href="#nempy.user_data.AccountData.address">address</a></code></li>
+<li><code><a title="nempy.user_data.AccountData.create" href="#nempy.user_data.AccountData.create">create</a></code></li>
+<li><code><a title="nempy.user_data.AccountData.decrypt" href="#nempy.user_data.AccountData.decrypt">decrypt</a></code></li>
+<li><code><a title="nempy.user_data.AccountData.encrypt" href="#nempy.user_data.AccountData.encrypt">encrypt</a></code></li>
+<li><code><a title="nempy.user_data.AccountData.is_encrypted" href="#nempy.user_data.AccountData.is_encrypted">is_encrypted</a></code></li>
+<li><code><a title="nempy.user_data.AccountData.mnemonic" href="#nempy.user_data.AccountData.mnemonic">mnemonic</a></code></li>
+<li><code><a title="nempy.user_data.AccountData.path" href="#nempy.user_data.AccountData.path">path</a></code></li>
+<li><code><a title="nempy.user_data.AccountData.private_key" href="#nempy.user_data.AccountData.private_key">private_key</a></code></li>
+<li><code><a title="nempy.user_data.AccountData.profile" href="#nempy.user_data.AccountData.profile">profile</a></code></li>
+<li><code><a title="nempy.user_data.AccountData.public_key" href="#nempy.user_data.AccountData.public_key">public_key</a></code></li>
+<li><code><a title="nempy.user_data.AccountData.read" href="#nempy.user_data.AccountData.read">read</a></code></li>
+<li><code><a title="nempy.user_data.AccountData.validate_address" href="#nempy.user_data.AccountData.validate_address">validate_address</a></code></li>
+<li><code><a title="nempy.user_data.AccountData.write" href="#nempy.user_data.AccountData.write">write</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nempy.user_data.DecoderStatus" href="#nempy.user_data.DecoderStatus">DecoderStatus</a></code></h4>
+<ul class="">
+<li><code><a title="nempy.user_data.DecoderStatus.DECRYPTED" href="#nempy.user_data.DecoderStatus.DECRYPTED">DECRYPTED</a></code></li>
+<li><code><a title="nempy.user_data.DecoderStatus.NO_DATA" href="#nempy.user_data.DecoderStatus.NO_DATA">NO_DATA</a></code></li>
+<li><code><a title="nempy.user_data.DecoderStatus.WRONG_DATA" href="#nempy.user_data.DecoderStatus.WRONG_DATA">WRONG_DATA</a></code></li>
+<li><code><a title="nempy.user_data.DecoderStatus.WRONG_PASS" href="#nempy.user_data.DecoderStatus.WRONG_PASS">WRONG_PASS</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nempy.user_data.GenerationType" href="#nempy.user_data.GenerationType">GenerationType</a></code></h4>
+<ul class="">
+<li><code><a title="nempy.user_data.GenerationType.MNEMONIC" href="#nempy.user_data.GenerationType.MNEMONIC">MNEMONIC</a></code></li>
+<li><code><a title="nempy.user_data.GenerationType.PRIVATE_KEY" href="#nempy.user_data.GenerationType.PRIVATE_KEY">PRIVATE_KEY</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nempy.user_data.ProfileData" href="#nempy.user_data.ProfileData">ProfileData</a></code></h4>
+<ul class="">
+<li><code><a title="nempy.user_data.ProfileData.check_pass" href="#nempy.user_data.ProfileData.check_pass">check_pass</a></code></li>
+<li><code><a title="nempy.user_data.ProfileData.pass_hash" href="#nempy.user_data.ProfileData.pass_hash">pass_hash</a></code></li>
+<li><code><a title="nempy.user_data.ProfileData.read" href="#nempy.user_data.ProfileData.read">read</a></code></li>
+<li><code><a title="nempy.user_data.ProfileData.write" href="#nempy.user_data.ProfileData.write">write</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nempy.user_data.UserData" href="#nempy.user_data.UserData">UserData</a></code></h4>
+<ul class="two-column">
+<li><code><a title="nempy.user_data.UserData.deserialize" href="#nempy.user_data.UserData.deserialize">deserialize</a></code></li>
+<li><code><a title="nempy.user_data.UserData.name" href="#nempy.user_data.UserData.name">name</a></code></li>
+<li><code><a title="nempy.user_data.UserData.network_type" href="#nempy.user_data.UserData.network_type">network_type</a></code></li>
+<li><code><a title="nempy.user_data.UserData.read" href="#nempy.user_data.UserData.read">read</a></code></li>
+<li><code><a title="nempy.user_data.UserData.serialize" href="#nempy.user_data.UserData.serialize">serialize</a></code></li>
+<li><code><a title="nempy.user_data.UserData.write" href="#nempy.user_data.UserData.write">write</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
