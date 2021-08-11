@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class SymbolNetworkException(Exception):
+    """Is one exception for the convenience of working with the blockchain network"""
     codes = {
         'ResourceNotFound': 404,
         'InvalidAddress': 409,
@@ -46,7 +47,8 @@ class SymbolNetworkException(Exception):
 
 
 def url_validation(url):
-    # django url validation regex
+    """django URL validation regex
+    Raise an exception if the url is not valid"""
     regex = re.compile(
         r'^(?:http|ftp)s?://'  # http:// or https://
         r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
@@ -59,6 +61,26 @@ def url_validation(url):
 
 
 def mosaic_id_to_name_n_real(mosaic_id: str, amount: int) -> Dict[str, float]:
+    """
+    Converts mosaic identifiers to names and integer numbers to real numbers.
+
+    Parameters
+    ----------
+    mosaic_id
+        Mosaic ID as string
+    amount
+        Mosaic units in Symbol are defined as absolute amounts. To get an absolute amount,
+        multiply the amount of assets you want to create or send by 10^divisibility.
+        For example, if the mosaic has divisibility 2, to create or send 10 units (relative)
+        you should define 1,000 (absolute) instead.
+    Returns
+    -------
+    Dict[str, float]
+        A dictionary with a name and a real amount value. For example
+    ```py
+    {'id': 'symbol.xym', 'amount': 1.1}
+    ```
+    """
     if not isinstance(amount, int):
         raise TypeError('To avoid confusion, automatic conversion to integer is prohibited')
     divisibility = get_divisibility(mosaic_id)
@@ -72,6 +94,7 @@ def mosaic_id_to_name_n_real(mosaic_id: str, amount: int) -> Dict[str, float]:
 
 
 class Meta(BaseModel):
+    """Transaction meta information"""
     height: int
     hash: str
     merkleComponentHash: str
@@ -79,6 +102,7 @@ class Meta(BaseModel):
 
 
 class MosaicInfo(BaseModel):
+    """Mosaic information in a transaction"""
     id: str
     amount: Union[StrictInt, StrictFloat]
 
@@ -87,6 +111,7 @@ class MosaicInfo(BaseModel):
 
 
 class TransactionInfo(BaseModel):
+    """Contains information about transactions of the blockchain network"""
     size: int
     signature: str
     signerPublicKey: str
@@ -101,6 +126,7 @@ class TransactionInfo(BaseModel):
     mosaics: List[MosaicInfo]
 
     def humanization(self):
+        """Converts information from the blockchain into a readable form"""
         self.deadline = Timing().deadline_to_date(self.deadline)
         if self.message is not None:
             self.message = unhexlify(self.message)[1:].decode('utf-8')
@@ -142,7 +168,7 @@ class TransactionResponse(BaseModel):
 
 
 def send_transaction(payload: bytes) -> bool:
-
+    """Announces a transaction to the network"""
     try:
         headers = {'Content-type': 'application/json'}
         answer = requests.put(f'{node_selector.url}/transactions', data=payload, headers=headers, timeout=10)
@@ -157,9 +183,19 @@ def send_transaction(payload: bytes) -> bool:
 
 def get_mosaic_names(mosaics_ids: Union[list, str]) -> Optional[dict]:
     """
-    Get readable names for a set of mosaics
-    :param mosaics_ids:
-    :return: dict of mosaics {'mosaicNames': [{'mosaicId': '091F837E059AE13C', 'names': ['symbol.xym']}]}
+    Get readable names for a set of mosaics.
+
+    Parameters
+    ----------
+    mosaics_ids
+        IDs of mosaic as list or str if there is only one mosaic
+    Returns
+    -------
+    Optional[Dict[str, list]]
+        dict of mosaics. For example:
+    ```py
+    {"mosaicNames": [{"mosaicId": "091F837E059AE13C", "names": ["symbol.xym"]}]}
+    ```
     """
     if isinstance(mosaics_ids, str):
         mosaics_ids = [mosaics_ids]
@@ -409,6 +445,7 @@ def get_balance(address: str) -> Optional[dict]:
 
 
 class Monitor:
+    """Allows you to subscribe to events on the blockchain network"""
     where_to_subscribe = {
             'confirmedAdded': 'address',
             'unconfirmedAdded': 'address',
@@ -471,7 +508,7 @@ class Monitor:
 
 
 class Timing:
-
+    """Works with network time"""
     def __init__(self, network_type: Optional[NetworkType] = None):
         if network_type is None:
             network_type = node_selector.network_type
@@ -515,7 +552,7 @@ class Timing:
 
 
 class Thread:
-
+    """A helper class for working with a thread, starting and stopping it by signals"""
     def __init__(self):
         self.stop_event: Optional[threading.Event] = None
         self.thread: Optional[threading.Thread] = None
@@ -546,6 +583,10 @@ class Thread:
 
 
 class NodeSelector:
+    """Works with a list of nodes in both the main and test networks.
+       Offline finds the best connection options and makes adjustments if conditions change.
+       Also allows you to add connections manually.
+    """
     _URL: Optional[str] = None
     _URLs: Optional[list] = None
     is_elections: bool = False
@@ -624,12 +665,32 @@ class NodeSelector:
             raise TypeError('Unknown network type')
 
     @staticmethod
-    def health(url):
+    def health(url) -> BlockchainStatuses:
+        """
+        Returns the statuses of node services
+        Parameters
+        ----------
+        url
+            URL node in the form of http://ngl-dual-001.testnet.symboldev.network:3000
+        Returns
+        -------
+        BlockchainStatuses
+            The statuses of node services
+        ```py
+        BlockchainStatuses.DB_FAILURE
+        BlockchainStatuses.NO_NODES_AVAILABLE
+        BlockchainStatuses.NOT_INITIALIZED
+        BlockchainStatuses.REST_FAILURE
+        BlockchainStatuses.OK
+        BlockchainStatuses.UNKNOWN
+        ```
+        """
         if url is None:
             return BlockchainStatuses.NO_NODES_AVAILABLE
         try:
             answer = requests.get(f'{url}/node/health', timeout=1)
-        except:
+        except Exception as e:
+            logger.exception(e)
             return BlockchainStatuses.REST_FAILURE
         if answer.status_code == HTTPStatus.OK:
             node_info = answer.json()
@@ -642,14 +703,25 @@ class NodeSelector:
         return BlockchainStatuses.UNKNOWN
 
     @staticmethod
-    def simple_health(url):
+    def simple_health(url) -> bool:
         health_status = NodeSelector.health(url)
         if health_status == BlockchainStatuses.OK:
             return True
         return False
 
     @staticmethod
-    def get_height(url):
+    def get_height(url) -> int:
+        """
+        Returns the last block known to the node
+        Parameters
+        ----------
+        url
+            URL node in the form of http://ngl-dual-001.testnet.symboldev.network:3000
+
+        Returns
+        -------
+
+        """
         try:
             answer = requests.get(f'{url}/chain/info', timeout=1)
         except Exception:
@@ -659,7 +731,8 @@ class NodeSelector:
         return int(height)
 
     @staticmethod
-    def ping(url):
+    def ping(url) -> Optional[float]:
+        """Calculate and return a latency point using sockets"""
         if multiprocessing.current_process().daemon:
             asyncio.set_event_loop(asyncio.new_event_loop())
         parse_result = urlparse(url)
@@ -679,8 +752,23 @@ class NodeSelector:
             wait: float = 0,
     ) -> list:
         """
-        :rtype: list
         Builds a list composed of latency_points
+        Parameters
+        ----------
+        host
+            Host name
+        port
+            Port
+        timeout
+            Server response timeout
+        runs
+            Number of attempts
+        wait
+            Delay before request
+        Returns
+        -------
+        list
+            list of latency for all runs
         """
         tasks = []
         latency_points = []
@@ -693,11 +781,22 @@ class NodeSelector:
         return latency_points
 
     @staticmethod
-    async def latency_point(host: str, port: int = 443, timeout: float = 5) -> [float, None]:
-        '''
-        :rtype: Returns float if possible
+    async def latency_point(host: str, port: int = 443, timeout: float = 5) -> Optional[float]:
+        """
         Calculate a latency point using sockets. If something bad happens the point returned is None
-        '''
+        Parameters
+        ----------
+        host
+            Host name
+        port
+            Port
+        timeout
+            Server response timeout
+        Returns
+        -------
+        Optional[float]
+            Returns float if possible
+        """
         # New Socket and Time out
         # Start a timer
         s_start = time.time()

@@ -174,21 +174,20 @@ def send(address: str, plain_message: str, encrypted_message: str, mosaics: str,
     is_encrypted = True if encrypted_message else False
     confirmation(address, mosaics, message, is_encrypted, fee, deadline, balance, wallet.profile.data.network_type)
     password = stdiomask.getpass(f'Enter your `{wallet.profile.data.name} [{wallet.profile.data.network_type.name}]` profile password: ')
-    result = engine.send_tokens(recipient_address=address,
-                                mosaics=mosaics,
-                                message=message,
-                                is_encrypted=is_encrypted,
-                                password=password,
-                                deadline={'minutes': deadline})
-    if isinstance(result, EngineStatusCode):
-        if result == EngineStatusCode.INVALID_ACCOUNT_INFO:
-            print(result.value, '\nThe account either does not exist, or there were no transactions on it.'
+    entity_hash, status = engine.send_tokens(recipient_address=address,
+                                             mosaics=mosaics,
+                                             message=message,
+                                             is_encrypted=is_encrypted,
+                                             password=password,
+                                             deadline={'minutes': deadline})
+    if status != EngineStatusCode.ACCEPTED:
+        if status == EngineStatusCode.INVALID_ACCOUNT_INFO:
+            print(status.value, '\nThe account either does not exist, or there were no transactions on it.'
                                 '\nUnable to get the public key from the network')
-            exit(1)
-    if result:
-        subscribers = ['confirmedAdded', 'unconfirmedAdded', 'status']
-        subscribers = [os.path.join(subscribe, address) for subscribe in subscribers]
-        Monitor(engine.node_selector.url, subscribers, formatting=True, callback=_monitoring_callback)
+        exit(1)
+    subscribers = ['confirmedAdded', 'unconfirmedAdded', 'status']
+    subscribers = [os.path.join(subscribe, address) for subscribe in subscribers]
+    Monitor(engine.node_selector.url, subscribers, formatting=True, callback=_monitoring_callback)
 
 
 @main.command('history')
