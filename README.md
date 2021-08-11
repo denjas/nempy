@@ -51,11 +51,12 @@ PASSWORD = '<YOUR_PASS>'
 account = AccountData.create(PRIVATE_KEY, NetworkType.TEST_NET).encrypt(PASSWORD)
 
 engine = XYMEngine(account)
-engine.send_tokens(recipient_address='TDPFLBK4NSCKUBGAZDWQWCUFNJOJB33Y5R5AWPQ',
-                   mosaics=[('@symbol.xym', 0.1), ],
-                   message='Hallo NEM!',
-                   password=PASSWORD,
-                   fee_type=Fees.SLOWEST)
+entity_hash, status = engine.send_tokens(recipient_address='TDPFLBK4NSCKUBGAZDWQWCUFNJOJB33Y5R5AWPQ',
+                                         mosaics=[('@symbol.xym', 0.1), ],
+                                         message='Hallo NEM!',
+                                         password=PASSWORD,
+                                         fee_type=Fees.SLOWEST)
+print(status.name, status.value)
 ```
 You can get funds for the balance for testing in the [Faucet](http://faucet.testnet.symboldev.network/).
 ## Command-line interface (CLI)
