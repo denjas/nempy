@@ -61,7 +61,7 @@ You can get funds for the balance for testing in the [Faucet](http://faucet.test
 
 Additional [documentation](https://denjas.github.io/nempy/) can be found [here](https://denjas.github.io/nempy/)
 ## Command-line interface (CLI)
-You can get acquainted with the capabilities of the CLI interface [here](https://github.com/denjas/nempy/blob/docgen/docs/cli.md)
+You can get acquainted with the capabilities of the CLI interface [here](https://github.com/denjas/nempy/blob/dev/docs/cli.md)
 
 ## Working with [pipenv](https://pipenv.pypa.io/) environment
 1. Clone the repository `git clone https://github.com/denjas/nempy.git`
