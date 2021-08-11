@@ -50,7 +50,8 @@ class Message(bytes):
 
 
 class PlainMessage(bytes):
-    """Plain messages"""
+    """Plain messages
+    Returns the message as bytes with the necessary flags at the beginning"""
     def __new__(cls, message: Union[str, bytes]):
         message = Message(message, False)
         # add the message type code to the beginning of the byte sequence
@@ -63,7 +64,8 @@ class PlainMessage(bytes):
 
 
 class EncryptMessage(bytes):
-    """Encrypted messages requiring additional arguments"""
+    """Encrypted messages requiring additional arguments
+    Returns the message as encrypted bytes with the necessary flags at the beginning"""
     def __new__(cls, message: Union[str, bytes], sender_private_key: str, recipient_pub: str):
         #  https://docs.symbolplatform.com/concepts/transfer-transaction.html#encrypted-message
         message = Message(message, True)

@@ -7,6 +7,7 @@ from nempy.sym.constants import BlockchainStatuses, Fees, TransactionStatus
 
 from .sym import api as sym
 from .sym import network
+from .sym.network import NodeSelector
 
 logger = logging.getLogger(__name__)
 
@@ -59,12 +60,17 @@ class NEMEngine:
 
 
 class XYMEngine(NEMEngine):
-    """ An interface that combines a user account of the transaction and work with the network
+    """
+    An interface that combines a user account of the transaction and work with the network
     """
     def __init__(self, account: AccountData):
-        """Inits SampleClass with AccountData
-        Args:
-            account: User account data
+        """
+        Inits SampleClass with AccountData
+
+        Parameters
+        ----------
+        account
+            User account data
         """
         self.node_selector = network.node_selector
         self.node_selector.network_type = account.network_type
@@ -82,33 +88,68 @@ class XYMEngine(NEMEngine):
         fee_type: Fees = Fees.SLOWEST,
         deadline: Optional[Dict[str, float]] = None,
     ) -> Tuple[Optional[str], EngineStatusCode]:
-        """Allows you to send funds or a message to the specified account
-        Args:
-            recipient_address: Beneficiary address of funds or message
-            mosaics: Funds in the form of mosaics
-            message: Plain or encrypted messages
-            is_encrypted: Indication for encrypting a message or sending in plain text
-            password: Password for decrypting secret account data
-            fee_type: One of the types of fee that affects the speed and cost of
-                confirming a transaction by the blockchain network. The following types are available:
-                .. admonition::
-                    ZERO | SLOWEST | SLOW | AVERAGE | FAST
-            deadline: A transaction has a time window to be accepted before it reaches its deadline.
-                The transaction expires when the deadline is reached and all the nodes reject the transaction.
-                Maximum expiration time 6 hours. The default is 2 minutes. To install a custom deadline,
-                pass a dictionary specifying the type / types and their duration. For example:
-            ```py
-            {
-                "minutes": 2.0,
-                "seconds": 30.0
-            }
-            ```
-            Which corresponds to 2 minutes and 30 seconds. Keys available:
-            .. admonition::
-                days | seconds | milliseconds | minutes | hours | weeks
+        """
+        Allows you to send funds or a message to the specified account
 
-        Returns:
-            A hash of the transaction or None and status
+        Parameters
+        ----------
+        recipient_address
+            Beneficiary address of funds or message
+        mosaics
+            Funds in the form of mosaics
+        message
+            Plain or encrypted messages
+        is_encrypted
+            Indication for encrypting a message or sending in plain text
+        password
+            Password for decrypting secret account data
+        fee_type
+            One of the types of fee that affects the speed and cost of
+            confirming a transaction by the blockchain network. The following types are available:
+            .. admonition::
+                ZERO | SLOWEST | SLOW | AVERAGE | FAST
+        deadline
+            A transaction has a time window to be accepted before it reaches its deadline.
+            The transaction expires when the deadline is reached and all the nodes reject the transaction.
+            Maximum expiration time 6 hours. The default is 2 minutes. To install a custom deadline,
+            pass a dictionary specifying the type / types and their duration. For example:
+        ```py
+        {
+            "minutes": 2.0,
+            "seconds": 30.0
+        }
+        ```
+         Which corresponds to 2 minutes and 30 seconds. Keys available:
+        .. admonition::
+            days | seconds | milliseconds | minutes | hours | weeks
+        Returns
+        -------
+        A hash of the transaction or None and status
+        Notes
+        -----
+        **_Attention!_**
+        The example below is intended to demonstrate ease of use, but it is **_not secure_**!
+        Use this code only on the `NetworkType.TEST_NET`
+
+        Example:
+        ```py
+        from nempy.user_data import AccountData
+        from nempy.engine import XYMEngine
+        from nempy.sym.network import NetworkType
+        from nempy.sym.constants import Fees
+
+        PRIVATE_KEY = '<YOUR_PRIVATE_KEY>'
+        PASSWORD = '<YOUR_PASS>'
+        account = AccountData.create(PRIVATE_KEY, NetworkType.TEST_NET).encrypt(PASSWORD)
+
+        engine = XYMEngine(account)
+        entity_hash, status = engine.send_tokens(recipient_address='TDPFLBK4NSCKUBGAZDWQWCUFNJOJB33Y5R5AWPQ',
+                                                 mosaics=[('@symbol.xym', 0.1), ],
+                                                 message='Hallo NEM!',
+                                                 password=PASSWORD,
+                                                 fee_type=Fees.SLOWEST)
+        print(status.name, status.value)
+        ```
         """
         recipient_address = recipient_address.replace("-", "")
         mosaics = [
@@ -139,26 +180,34 @@ class XYMEngine(NEMEngine):
 
     def check_status(self) -> BlockchainStatuses:
         """ Checking the status of a blockchain node
+
         Returns:
             BlockchainStatuses with detailed status description
         """
         if self.account is None:
             return BlockchainStatuses.NOT_INITIALIZED
-        return network.NodeSelector.health(self.node_selector.url)
+        return NodeSelector.health(self.node_selector.url)
 
     def get_balance(self, nem_address: str = "", humanization: bool = False) -> Dict[str, float]:
-        """ Gets account balance
-        Args:
-            nem_address: If the account address is specified, then the balance of this account is returned.
-                Otherwise, the balance of the current account is returned
-            humanization: Specifies whether to translate mosaic IDs into friendly names (linked namespaces)
-        Returns:
+        """
+        Gets account balance
+
+        Parameters
+        ----------
+        nem_address
+            If the account address is specified, then the balance of this account is returned.
+            Otherwise, the balance of the current account is returned
+        humanization
+            Specifies whether to translate mosaic IDs into friendly names (linked namespaces)
+        Returns
+        -------
+        Dict[str, float]
             A dictionary with the name or identifier of the mosaic and its amount . For example:
-            ```py
-            {
-                "symbol.xym": "100.00"
-            }
-            ```
+        ```py
+        {
+            "symbol.xym": "100.00"
+        }
+        ```
         """
         if not nem_address:
             nem_address = self.account.address
@@ -169,22 +218,27 @@ class XYMEngine(NEMEngine):
 
     @staticmethod
     def mosaic_humanization(mosaics: Dict[str, float]) -> Dict[str, float]:
-        """ Translates mosaic IDs into friendly names (linked namespaces)
-        Args:
-            mosaics: A dictionary in which the key is the identifier of the mosaic and the value is its number.
-                For example:
-            ```py
-            {
-                "091F837E059AE13C": "100.00"
-            }
-            ```
-        Returns:
+        """Translates mosaic IDs into friendly names (linked namespaces)
+
+        Parameters
+        ----------
+        mosaics
+            A dictionary in which the key is the identifier of the mosaic and the value is its number. For example:
+        ```py
+        {
+            "091F837E059AE13C": "100.00"
+        }
+        ```
+        Returns
+        -------
+        Dict[str, float]
             A dictionary with the name or identifier of the mosaic and its amount . For example:
-            ```py
-            {
-                "symbol.xym": "100.00"
-            }
-            ```
+        ```py
+        {
+            "symbol.xym": "100.00"
+        }
+        ```
+
         """
         mosaics_ids = list(mosaics.keys())
         mosaic_names = network.get_mosaic_names(mosaics_ids)
@@ -204,15 +258,23 @@ class XYMEngine(NEMEngine):
 
     @staticmethod
     def check_transaction_confirmation(transaction_hash) -> TransactionStatus:
-        """Determines the current status of a transaction by its hash
-        Args:
-            transaction_hash: Transaction hash
+        """
+        Determines the current status of a transaction by its hash
 
-        Returns:
-            TransactionStatus: One of the transaction statuses
-            NOT_FOUND  
-            UNCONFIRMED_ADDED  
-            CONFIRMED_ADDED  
-            PARTIAL_ADDED  
+        Parameters
+        ----------
+        transaction_hash
+            Transaction hash as string hexadecimal representation
+
+        Returns
+        -------
+        TransactionStatus
+            One of the transaction statuses
+        ```py
+        TransactionStatus.NOT_FOUND
+        TransactionStatus.UNCONFIRMED_ADDED
+        TransactionStatus.CONFIRMED_ADDED
+        TransactionStatus.PARTIAL_ADDED
+        ```
         """
         return network.check_transaction_state(transaction_hash)
