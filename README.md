@@ -24,8 +24,7 @@ To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
 
-This is an example of how to list things you need to use the software and how to install them.
-* pipenv
+For convenient work with the project, you will need [pipenv tool](https://pypi.org/project/pipenv/).
   ```shell
   pip install pipenv
   ```
