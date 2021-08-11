@@ -1,0 +1,1130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>nempy.engine API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>nempy.engine</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import abc
+import logging
+from enum import Enum
+from typing import List, Tuple, Union, Dict, Optional
+from nempy.user_data import AccountData
+from nempy.sym.constants import BlockchainStatuses, Fees, TransactionStatus
+
+from .sym import api as sym
+from .sym import network
+from .sym.network import NodeSelector
+
+logger = logging.getLogger(__name__)
+
+
+class EngineStatusCode(Enum):
+    &#34;&#34;&#34;Contains status for sending transactions&#34;&#34;&#34;
+
+    INVALID_ACCOUNT_INFO = &#34;There is no information on the network for this account.&#34;
+    &#34;&#34;&#34;There is no information on the network for this account.&#34;&#34;&#34;
+    ANNOUNCE_ERROR = &#34;Transaction announce error&#34;
+    &#34;&#34;&#34;Transaction announce error&#34;&#34;&#34;
+    ACCEPTED = &#34;Request accepted, processing continues off-line&#34;
+    &#34;&#34;&#34;Request accepted&#34;&#34;&#34;
+
+
+class NEMEngine:
+    account = None
+
+    def __init__(self, url: str, account: AccountData):
+        self.url = url
+        self.account = account
+
+    def __str__(self):
+        return f&#34;URL: {self.url}\nAddress: {self.account.address}\nPublic Key: {self.account.public_key}&#34;
+
+    def __iter__(self):
+        yield &#34;url&#34;, self.url
+        yield &#34;address&#34;, self.account.address
+        yield &#34;public_key&#34;, self.account.public_key
+
+    @abc.abstractmethod
+    def send_tokens(
+        self,
+        recipient_address: str,
+        mosaics: List[Tuple[str, float]],
+        message: Union[str, bytes] = &#34;&#34;,
+        is_encrypted=False,
+        password: str = &#34;&#34;,
+        deadline: Optional[dict] = None,
+    ):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def check_status(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_balance(self, nem_address, test=False):
+        raise NotImplementedError
+
+
+class XYMEngine(NEMEngine):
+    &#34;&#34;&#34;
+    An interface that combines a user account of the transaction and work with the network
+    &#34;&#34;&#34;
+    def __init__(self, account: AccountData):
+        &#34;&#34;&#34;
+        Inits SampleClass with AccountData
+
+        Parameters
+        ----------
+        account
+            User account data
+        &#34;&#34;&#34;
+        self.node_selector = network.node_selector
+        self.node_selector.network_type = account.network_type
+        self.transaction = sym.Transaction()
+        self.timing = self.transaction.timing
+        super().__init__(self.node_selector.url, account)
+
+    def send_tokens(
+        self,
+        recipient_address: str,
+        mosaics: List[Tuple[str, float]],
+        message: Union[str, bytes] = &#34;&#34;,
+        is_encrypted=False,
+        password: str = &#34;&#34;,
+        fee_type: Fees = Fees.SLOWEST,
+        deadline: Optional[Dict[str, float]] = None,
+    ) -&gt; Tuple[Optional[str], EngineStatusCode]:
+        &#34;&#34;&#34;
+        Allows you to send funds or a message to the specified account
+
+        Parameters
+        ----------
+        recipient_address
+            Beneficiary address of funds or message
+        mosaics
+            Funds in the form of mosaics
+        message
+            Plain or encrypted messages
+        is_encrypted
+            Indication for encrypting a message or sending in plain text
+        password
+            Password for decrypting secret account data
+        fee_type
+            One of the types of fee that affects the speed and cost of
+            confirming a transaction by the blockchain network. The following types are available:
+            .. admonition::
+                ZERO | SLOWEST | SLOW | AVERAGE | FAST
+        deadline
+            A transaction has a time window to be accepted before it reaches its deadline.
+            The transaction expires when the deadline is reached and all the nodes reject the transaction.
+            Maximum expiration time 6 hours. The default is 2 minutes. To install a custom deadline,
+            pass a dictionary specifying the type / types and their duration. For example:
+        ```py
+        {
+            &#34;minutes&#34;: 2.0,
+            &#34;seconds&#34;: 30.0
+        }
+        ```
+         Which corresponds to 2 minutes and 30 seconds. Keys available:
+        .. admonition::
+            days | seconds | milliseconds | minutes | hours | weeks
+        Returns
+        -------
+        A hash of the transaction or None and status
+        Notes
+        -----
+        **_Attention!_**
+        The example below is intended to demonstrate ease of use, but it is **_not secure_**!
+        Use this code only on the `NetworkType.TEST_NET`
+
+        Example:
+        ```py
+        from nempy.user_data import AccountData
+        from nempy.engine import XYMEngine
+        from nempy.sym.network import NetworkType
+        from nempy.sym.constants import Fees
+
+        PRIVATE_KEY = &#39;&lt;YOUR_PRIVATE_KEY&gt;&#39;
+        PASSWORD = &#39;&lt;YOUR_PASS&gt;&#39;
+        account = AccountData.create(PRIVATE_KEY, NetworkType.TEST_NET).encrypt(PASSWORD)
+
+        engine = XYMEngine(account)
+        entity_hash, status = engine.send_tokens(recipient_address=&#39;TDPFLBK4NSCKUBGAZDWQWCUFNJOJB33Y5R5AWPQ&#39;,
+                                                 mosaics=[(&#39;@symbol.xym&#39;, 0.1), ],
+                                                 message=&#39;Hallo NEM!&#39;,
+                                                 password=PASSWORD,
+                                                 fee_type=Fees.SLOWEST)
+        print(status.name, status.value)
+        ```
+        &#34;&#34;&#34;
+        recipient_address = recipient_address.replace(&#34;-&#34;, &#34;&#34;)
+        mosaics = [
+            sym.Mosaic(mosaic_id=mosaic[0], amount=mosaic[1]) for mosaic in mosaics
+        ]
+        if is_encrypted:
+            address_info = network.get_accounts_info(address=recipient_address)
+            if address_info is None:
+                return None, EngineStatusCode.INVALID_ACCOUNT_INFO
+            public_key = address_info[&#34;account&#34;][&#34;publicKey&#34;]
+            message = sym.EncryptMessage(
+                message, self.account.decrypt(password).private_key, public_key
+            )
+        else:
+            message = sym.PlainMessage(message)
+        entity_hash, payload = self.transaction.create(
+            pr_key=self.account.decrypt(password).private_key,
+            recipient_address=recipient_address,
+            mosaics=mosaics,
+            message=message,
+            deadline=deadline,
+            fee_type=fee_type,
+        )
+        is_sent = network.send_transaction(payload)
+        if is_sent:
+            return entity_hash, EngineStatusCode.ACCEPTED
+        return None, EngineStatusCode.ANNOUNCE_ERROR
+
+    def check_status(self) -&gt; BlockchainStatuses:
+        &#34;&#34;&#34; Checking the status of a blockchain node
+
+        Returns:
+            BlockchainStatuses with detailed status description
+        &#34;&#34;&#34;
+        if self.account is None:
+            return BlockchainStatuses.NOT_INITIALIZED
+        return NodeSelector.health(self.node_selector.url)
+
+    def get_balance(self, nem_address: str = &#34;&#34;, humanization: bool = False) -&gt; Dict[str, float]:
+        &#34;&#34;&#34;
+        Gets account balance
+
+        Parameters
+        ----------
+        nem_address
+            If the account address is specified, then the balance of this account is returned.
+            Otherwise, the balance of the current account is returned
+        humanization
+            Specifies whether to translate mosaic IDs into friendly names (linked namespaces)
+        Returns
+        -------
+        Dict[str, float]
+            A dictionary with the name or identifier of the mosaic and its amount . For example:
+        ```py
+        {
+            &#34;symbol.xym&#34;: &#34;100.00&#34;
+        }
+        ```
+        &#34;&#34;&#34;
+        if not nem_address:
+            nem_address = self.account.address
+        amount = network.get_balance(nem_address)
+        if humanization:
+            amount = XYMEngine.mosaic_humanization(amount)
+        return amount
+
+    @staticmethod
+    def mosaic_humanization(mosaics: Dict[str, float]) -&gt; Dict[str, float]:
+        &#34;&#34;&#34;Translates mosaic IDs into friendly names (linked namespaces)
+
+        Parameters
+        ----------
+        mosaics
+            A dictionary in which the key is the identifier of the mosaic and the value is its number. For example:
+        ```py
+        {
+            &#34;091F837E059AE13C&#34;: &#34;100.00&#34;
+        }
+        ```
+        Returns
+        -------
+        Dict[str, float]
+            A dictionary with the name or identifier of the mosaic and its amount . For example:
+        ```py
+        {
+            &#34;symbol.xym&#34;: &#34;100.00&#34;
+        }
+        ```
+
+        &#34;&#34;&#34;
+        mosaics_ids = list(mosaics.keys())
+        mosaic_names = network.get_mosaic_names(mosaics_ids)
+        if mosaic_names is not None:
+            mosaic_names = mosaic_names[&#34;mosaicNames&#34;]
+            rf_mosaic_names = {
+                mn.get(&#34;mosaicId&#34;): mn.get(&#34;names&#34;)[0]
+                for mn in mosaic_names
+                if len(mn.get(&#34;names&#34;))
+            }
+            named_mosaic = {
+                rf_mosaic_names.get(m_id, m_id): mosaics[m_id] for m_id in mosaics_ids
+            }
+            return named_mosaic
+        else:
+            return mosaics
+
+    @staticmethod
+    def check_transaction_confirmation(transaction_hash) -&gt; TransactionStatus:
+        &#34;&#34;&#34;
+        Determines the current status of a transaction by its hash
+
+        Parameters
+        ----------
+        transaction_hash
+            Transaction hash as string hexadecimal representation
+
+        Returns
+        -------
+        TransactionStatus
+            One of the transaction statuses
+        ```py
+        TransactionStatus.NOT_FOUND
+        TransactionStatus.UNCONFIRMED_ADDED
+        TransactionStatus.CONFIRMED_ADDED
+        TransactionStatus.PARTIAL_ADDED
+        ```
+        &#34;&#34;&#34;
+        return network.check_transaction_state(transaction_hash)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="nempy.engine.EngineStatusCode"><code class="flex name class">
+<span>class <span class="ident">EngineStatusCode</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Contains status for sending transactions</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class EngineStatusCode(Enum):
+    &#34;&#34;&#34;Contains status for sending transactions&#34;&#34;&#34;
+
+    INVALID_ACCOUNT_INFO = &#34;There is no information on the network for this account.&#34;
+    &#34;&#34;&#34;There is no information on the network for this account.&#34;&#34;&#34;
+    ANNOUNCE_ERROR = &#34;Transaction announce error&#34;
+    &#34;&#34;&#34;Transaction announce error&#34;&#34;&#34;
+    ACCEPTED = &#34;Request accepted, processing continues off-line&#34;
+    &#34;&#34;&#34;Request accepted&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nempy.engine.EngineStatusCode.ACCEPTED"><code class="name">var <span class="ident">ACCEPTED</span></code></dt>
+<dd>
+<div class="desc"><p>Request accepted</p></div>
+</dd>
+<dt id="nempy.engine.EngineStatusCode.ANNOUNCE_ERROR"><code class="name">var <span class="ident">ANNOUNCE_ERROR</span></code></dt>
+<dd>
+<div class="desc"><p>Transaction announce error</p></div>
+</dd>
+<dt id="nempy.engine.EngineStatusCode.INVALID_ACCOUNT_INFO"><code class="name">var <span class="ident">INVALID_ACCOUNT_INFO</span></code></dt>
+<dd>
+<div class="desc"><p>There is no information on the network for this account.</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nempy.engine.NEMEngine"><code class="flex name class">
+<span>class <span class="ident">NEMEngine</span></span>
+<span>(</span><span>url: str, account: <a title="nempy.user_data.AccountData" href="user_data.html#nempy.user_data.AccountData">AccountData</a>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class NEMEngine:
+    account = None
+
+    def __init__(self, url: str, account: AccountData):
+        self.url = url
+        self.account = account
+
+    def __str__(self):
+        return f&#34;URL: {self.url}\nAddress: {self.account.address}\nPublic Key: {self.account.public_key}&#34;
+
+    def __iter__(self):
+        yield &#34;url&#34;, self.url
+        yield &#34;address&#34;, self.account.address
+        yield &#34;public_key&#34;, self.account.public_key
+
+    @abc.abstractmethod
+    def send_tokens(
+        self,
+        recipient_address: str,
+        mosaics: List[Tuple[str, float]],
+        message: Union[str, bytes] = &#34;&#34;,
+        is_encrypted=False,
+        password: str = &#34;&#34;,
+        deadline: Optional[dict] = None,
+    ):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def check_status(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_balance(self, nem_address, test=False):
+        raise NotImplementedError</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="nempy.engine.XYMEngine" href="#nempy.engine.XYMEngine">XYMEngine</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nempy.engine.NEMEngine.account"><code class="name">var <span class="ident">account</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nempy.engine.NEMEngine.check_status"><code class="name flex">
+<span>def <span class="ident">check_status</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@abc.abstractmethod
+def check_status(self):
+    raise NotImplementedError</code></pre>
+</details>
+</dd>
+<dt id="nempy.engine.NEMEngine.get_balance"><code class="name flex">
+<span>def <span class="ident">get_balance</span></span>(<span>self, nem_address, test=False)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@abc.abstractmethod
+def get_balance(self, nem_address, test=False):
+    raise NotImplementedError</code></pre>
+</details>
+</dd>
+<dt id="nempy.engine.NEMEngine.send_tokens"><code class="name flex">
+<span>def <span class="ident">send_tokens</span></span>(<span>self, recipient_address: str, mosaics: List[Tuple[str, float]], message: Union[str, bytes] = '', is_encrypted=False, password: str = '', deadline: Optional[dict] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@abc.abstractmethod
+def send_tokens(
+    self,
+    recipient_address: str,
+    mosaics: List[Tuple[str, float]],
+    message: Union[str, bytes] = &#34;&#34;,
+    is_encrypted=False,
+    password: str = &#34;&#34;,
+    deadline: Optional[dict] = None,
+):
+    raise NotImplementedError</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nempy.engine.XYMEngine"><code class="flex name class">
+<span>class <span class="ident">XYMEngine</span></span>
+<span>(</span><span>account: <a title="nempy.user_data.AccountData" href="user_data.html#nempy.user_data.AccountData">AccountData</a>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An interface that combines a user account of the transaction and work with the network</p>
+<p>Inits SampleClass with AccountData</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>account</code></strong></dt>
+<dd>User account data</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class XYMEngine(NEMEngine):
+    &#34;&#34;&#34;
+    An interface that combines a user account of the transaction and work with the network
+    &#34;&#34;&#34;
+    def __init__(self, account: AccountData):
+        &#34;&#34;&#34;
+        Inits SampleClass with AccountData
+
+        Parameters
+        ----------
+        account
+            User account data
+        &#34;&#34;&#34;
+        self.node_selector = network.node_selector
+        self.node_selector.network_type = account.network_type
+        self.transaction = sym.Transaction()
+        self.timing = self.transaction.timing
+        super().__init__(self.node_selector.url, account)
+
+    def send_tokens(
+        self,
+        recipient_address: str,
+        mosaics: List[Tuple[str, float]],
+        message: Union[str, bytes] = &#34;&#34;,
+        is_encrypted=False,
+        password: str = &#34;&#34;,
+        fee_type: Fees = Fees.SLOWEST,
+        deadline: Optional[Dict[str, float]] = None,
+    ) -&gt; Tuple[Optional[str], EngineStatusCode]:
+        &#34;&#34;&#34;
+        Allows you to send funds or a message to the specified account
+
+        Parameters
+        ----------
+        recipient_address
+            Beneficiary address of funds or message
+        mosaics
+            Funds in the form of mosaics
+        message
+            Plain or encrypted messages
+        is_encrypted
+            Indication for encrypting a message or sending in plain text
+        password
+            Password for decrypting secret account data
+        fee_type
+            One of the types of fee that affects the speed and cost of
+            confirming a transaction by the blockchain network. The following types are available:
+            .. admonition::
+                ZERO | SLOWEST | SLOW | AVERAGE | FAST
+        deadline
+            A transaction has a time window to be accepted before it reaches its deadline.
+            The transaction expires when the deadline is reached and all the nodes reject the transaction.
+            Maximum expiration time 6 hours. The default is 2 minutes. To install a custom deadline,
+            pass a dictionary specifying the type / types and their duration. For example:
+        ```py
+        {
+            &#34;minutes&#34;: 2.0,
+            &#34;seconds&#34;: 30.0
+        }
+        ```
+         Which corresponds to 2 minutes and 30 seconds. Keys available:
+        .. admonition::
+            days | seconds | milliseconds | minutes | hours | weeks
+        Returns
+        -------
+        A hash of the transaction or None and status
+        Notes
+        -----
+        **_Attention!_**
+        The example below is intended to demonstrate ease of use, but it is **_not secure_**!
+        Use this code only on the `NetworkType.TEST_NET`
+
+        Example:
+        ```py
+        from nempy.user_data import AccountData
+        from nempy.engine import XYMEngine
+        from nempy.sym.network import NetworkType
+        from nempy.sym.constants import Fees
+
+        PRIVATE_KEY = &#39;&lt;YOUR_PRIVATE_KEY&gt;&#39;
+        PASSWORD = &#39;&lt;YOUR_PASS&gt;&#39;
+        account = AccountData.create(PRIVATE_KEY, NetworkType.TEST_NET).encrypt(PASSWORD)
+
+        engine = XYMEngine(account)
+        entity_hash, status = engine.send_tokens(recipient_address=&#39;TDPFLBK4NSCKUBGAZDWQWCUFNJOJB33Y5R5AWPQ&#39;,
+                                                 mosaics=[(&#39;@symbol.xym&#39;, 0.1), ],
+                                                 message=&#39;Hallo NEM!&#39;,
+                                                 password=PASSWORD,
+                                                 fee_type=Fees.SLOWEST)
+        print(status.name, status.value)
+        ```
+        &#34;&#34;&#34;
+        recipient_address = recipient_address.replace(&#34;-&#34;, &#34;&#34;)
+        mosaics = [
+            sym.Mosaic(mosaic_id=mosaic[0], amount=mosaic[1]) for mosaic in mosaics
+        ]
+        if is_encrypted:
+            address_info = network.get_accounts_info(address=recipient_address)
+            if address_info is None:
+                return None, EngineStatusCode.INVALID_ACCOUNT_INFO
+            public_key = address_info[&#34;account&#34;][&#34;publicKey&#34;]
+            message = sym.EncryptMessage(
+                message, self.account.decrypt(password).private_key, public_key
+            )
+        else:
+            message = sym.PlainMessage(message)
+        entity_hash, payload = self.transaction.create(
+            pr_key=self.account.decrypt(password).private_key,
+            recipient_address=recipient_address,
+            mosaics=mosaics,
+            message=message,
+            deadline=deadline,
+            fee_type=fee_type,
+        )
+        is_sent = network.send_transaction(payload)
+        if is_sent:
+            return entity_hash, EngineStatusCode.ACCEPTED
+        return None, EngineStatusCode.ANNOUNCE_ERROR
+
+    def check_status(self) -&gt; BlockchainStatuses:
+        &#34;&#34;&#34; Checking the status of a blockchain node
+
+        Returns:
+            BlockchainStatuses with detailed status description
+        &#34;&#34;&#34;
+        if self.account is None:
+            return BlockchainStatuses.NOT_INITIALIZED
+        return NodeSelector.health(self.node_selector.url)
+
+    def get_balance(self, nem_address: str = &#34;&#34;, humanization: bool = False) -&gt; Dict[str, float]:
+        &#34;&#34;&#34;
+        Gets account balance
+
+        Parameters
+        ----------
+        nem_address
+            If the account address is specified, then the balance of this account is returned.
+            Otherwise, the balance of the current account is returned
+        humanization
+            Specifies whether to translate mosaic IDs into friendly names (linked namespaces)
+        Returns
+        -------
+        Dict[str, float]
+            A dictionary with the name or identifier of the mosaic and its amount . For example:
+        ```py
+        {
+            &#34;symbol.xym&#34;: &#34;100.00&#34;
+        }
+        ```
+        &#34;&#34;&#34;
+        if not nem_address:
+            nem_address = self.account.address
+        amount = network.get_balance(nem_address)
+        if humanization:
+            amount = XYMEngine.mosaic_humanization(amount)
+        return amount
+
+    @staticmethod
+    def mosaic_humanization(mosaics: Dict[str, float]) -&gt; Dict[str, float]:
+        &#34;&#34;&#34;Translates mosaic IDs into friendly names (linked namespaces)
+
+        Parameters
+        ----------
+        mosaics
+            A dictionary in which the key is the identifier of the mosaic and the value is its number. For example:
+        ```py
+        {
+            &#34;091F837E059AE13C&#34;: &#34;100.00&#34;
+        }
+        ```
+        Returns
+        -------
+        Dict[str, float]
+            A dictionary with the name or identifier of the mosaic and its amount . For example:
+        ```py
+        {
+            &#34;symbol.xym&#34;: &#34;100.00&#34;
+        }
+        ```
+
+        &#34;&#34;&#34;
+        mosaics_ids = list(mosaics.keys())
+        mosaic_names = network.get_mosaic_names(mosaics_ids)
+        if mosaic_names is not None:
+            mosaic_names = mosaic_names[&#34;mosaicNames&#34;]
+            rf_mosaic_names = {
+                mn.get(&#34;mosaicId&#34;): mn.get(&#34;names&#34;)[0]
+                for mn in mosaic_names
+                if len(mn.get(&#34;names&#34;))
+            }
+            named_mosaic = {
+                rf_mosaic_names.get(m_id, m_id): mosaics[m_id] for m_id in mosaics_ids
+            }
+            return named_mosaic
+        else:
+            return mosaics
+
+    @staticmethod
+    def check_transaction_confirmation(transaction_hash) -&gt; TransactionStatus:
+        &#34;&#34;&#34;
+        Determines the current status of a transaction by its hash
+
+        Parameters
+        ----------
+        transaction_hash
+            Transaction hash as string hexadecimal representation
+
+        Returns
+        -------
+        TransactionStatus
+            One of the transaction statuses
+        ```py
+        TransactionStatus.NOT_FOUND
+        TransactionStatus.UNCONFIRMED_ADDED
+        TransactionStatus.CONFIRMED_ADDED
+        TransactionStatus.PARTIAL_ADDED
+        ```
+        &#34;&#34;&#34;
+        return network.check_transaction_state(transaction_hash)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nempy.engine.NEMEngine" href="#nempy.engine.NEMEngine">NEMEngine</a></li>
+</ul>
+<h3>Static methods</h3>
+<dl>
+<dt id="nempy.engine.XYMEngine.check_transaction_confirmation"><code class="name flex">
+<span>def <span class="ident">check_transaction_confirmation</span></span>(<span>transaction_hash) ‑> <a title="nempy.sym.constants.TransactionStatus" href="sym/constants.html#nempy.sym.constants.TransactionStatus">TransactionStatus</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Determines the current status of a transaction by its hash</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>transaction_hash</code></strong></dt>
+<dd>Transaction hash as string hexadecimal representation</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>TransactionStatus</code></dt>
+<dd>One of the transaction statuses</dd>
+</dl>
+<pre><code class="language-py">TransactionStatus.NOT_FOUND
+TransactionStatus.UNCONFIRMED_ADDED
+TransactionStatus.CONFIRMED_ADDED
+TransactionStatus.PARTIAL_ADDED
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def check_transaction_confirmation(transaction_hash) -&gt; TransactionStatus:
+    &#34;&#34;&#34;
+    Determines the current status of a transaction by its hash
+
+    Parameters
+    ----------
+    transaction_hash
+        Transaction hash as string hexadecimal representation
+
+    Returns
+    -------
+    TransactionStatus
+        One of the transaction statuses
+    ```py
+    TransactionStatus.NOT_FOUND
+    TransactionStatus.UNCONFIRMED_ADDED
+    TransactionStatus.CONFIRMED_ADDED
+    TransactionStatus.PARTIAL_ADDED
+    ```
+    &#34;&#34;&#34;
+    return network.check_transaction_state(transaction_hash)</code></pre>
+</details>
+</dd>
+<dt id="nempy.engine.XYMEngine.mosaic_humanization"><code class="name flex">
+<span>def <span class="ident">mosaic_humanization</span></span>(<span>mosaics: Dict[str, float]) ‑> Dict[str, float]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Translates mosaic IDs into friendly names (linked namespaces)</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>mosaics</code></strong></dt>
+<dd>A dictionary in which the key is the identifier of the mosaic and the value is its number. For example:</dd>
+</dl>
+<pre><code class="language-py">{
+    &quot;091F837E059AE13C&quot;: &quot;100.00&quot;
+}
+</code></pre>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict[str, float]</code></dt>
+<dd>A dictionary with the name or identifier of the mosaic and its amount . For example:</dd>
+</dl>
+<pre><code class="language-py">{
+    &quot;symbol.xym&quot;: &quot;100.00&quot;
+}
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def mosaic_humanization(mosaics: Dict[str, float]) -&gt; Dict[str, float]:
+    &#34;&#34;&#34;Translates mosaic IDs into friendly names (linked namespaces)
+
+    Parameters
+    ----------
+    mosaics
+        A dictionary in which the key is the identifier of the mosaic and the value is its number. For example:
+    ```py
+    {
+        &#34;091F837E059AE13C&#34;: &#34;100.00&#34;
+    }
+    ```
+    Returns
+    -------
+    Dict[str, float]
+        A dictionary with the name or identifier of the mosaic and its amount . For example:
+    ```py
+    {
+        &#34;symbol.xym&#34;: &#34;100.00&#34;
+    }
+    ```
+
+    &#34;&#34;&#34;
+    mosaics_ids = list(mosaics.keys())
+    mosaic_names = network.get_mosaic_names(mosaics_ids)
+    if mosaic_names is not None:
+        mosaic_names = mosaic_names[&#34;mosaicNames&#34;]
+        rf_mosaic_names = {
+            mn.get(&#34;mosaicId&#34;): mn.get(&#34;names&#34;)[0]
+            for mn in mosaic_names
+            if len(mn.get(&#34;names&#34;))
+        }
+        named_mosaic = {
+            rf_mosaic_names.get(m_id, m_id): mosaics[m_id] for m_id in mosaics_ids
+        }
+        return named_mosaic
+    else:
+        return mosaics</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nempy.engine.XYMEngine.check_status"><code class="name flex">
+<span>def <span class="ident">check_status</span></span>(<span>self) ‑> <a title="nempy.sym.constants.BlockchainStatuses" href="sym/constants.html#nempy.sym.constants.BlockchainStatuses">BlockchainStatuses</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checking the status of a blockchain node</p>
+<h2 id="returns">Returns</h2>
+<p>BlockchainStatuses with detailed status description</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def check_status(self) -&gt; BlockchainStatuses:
+    &#34;&#34;&#34; Checking the status of a blockchain node
+
+    Returns:
+        BlockchainStatuses with detailed status description
+    &#34;&#34;&#34;
+    if self.account is None:
+        return BlockchainStatuses.NOT_INITIALIZED
+    return NodeSelector.health(self.node_selector.url)</code></pre>
+</details>
+</dd>
+<dt id="nempy.engine.XYMEngine.get_balance"><code class="name flex">
+<span>def <span class="ident">get_balance</span></span>(<span>self, nem_address: str = '', humanization: bool = False) ‑> Dict[str, float]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Gets account balance</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>nem_address</code></strong></dt>
+<dd>If the account address is specified, then the balance of this account is returned.
+Otherwise, the balance of the current account is returned</dd>
+<dt><strong><code>humanization</code></strong></dt>
+<dd>Specifies whether to translate mosaic IDs into friendly names (linked namespaces)</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict[str, float]</code></dt>
+<dd>A dictionary with the name or identifier of the mosaic and its amount . For example:</dd>
+</dl>
+<pre><code class="language-py">{
+    &quot;symbol.xym&quot;: &quot;100.00&quot;
+}
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_balance(self, nem_address: str = &#34;&#34;, humanization: bool = False) -&gt; Dict[str, float]:
+    &#34;&#34;&#34;
+    Gets account balance
+
+    Parameters
+    ----------
+    nem_address
+        If the account address is specified, then the balance of this account is returned.
+        Otherwise, the balance of the current account is returned
+    humanization
+        Specifies whether to translate mosaic IDs into friendly names (linked namespaces)
+    Returns
+    -------
+    Dict[str, float]
+        A dictionary with the name or identifier of the mosaic and its amount . For example:
+    ```py
+    {
+        &#34;symbol.xym&#34;: &#34;100.00&#34;
+    }
+    ```
+    &#34;&#34;&#34;
+    if not nem_address:
+        nem_address = self.account.address
+    amount = network.get_balance(nem_address)
+    if humanization:
+        amount = XYMEngine.mosaic_humanization(amount)
+    return amount</code></pre>
+</details>
+</dd>
+<dt id="nempy.engine.XYMEngine.send_tokens"><code class="name flex">
+<span>def <span class="ident">send_tokens</span></span>(<span>self, recipient_address: str, mosaics: List[Tuple[str, float]], message: Union[str, bytes] = '', is_encrypted=False, password: str = '', fee_type: <a title="nempy.sym.constants.Fees" href="sym/constants.html#nempy.sym.constants.Fees">Fees</a> = Fees.SLOWEST, deadline: Optional[Dict[str, float]] = None) ‑> Tuple[Optional[str], <a title="nempy.engine.EngineStatusCode" href="#nempy.engine.EngineStatusCode">EngineStatusCode</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Allows you to send funds or a message to the specified account</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>recipient_address</code></strong></dt>
+<dd>Beneficiary address of funds or message</dd>
+<dt><strong><code>mosaics</code></strong></dt>
+<dd>Funds in the form of mosaics</dd>
+<dt><strong><code>message</code></strong></dt>
+<dd>Plain or encrypted messages</dd>
+<dt><strong><code>is_encrypted</code></strong></dt>
+<dd>Indication for encrypting a message or sending in plain text</dd>
+<dt><strong><code>password</code></strong></dt>
+<dd>Password for decrypting secret account data</dd>
+<dt><strong><code>fee_type</code></strong></dt>
+<dd>One of the types of fee that affects the speed and cost of
+confirming a transaction by the blockchain network. The following types are available:<div class="admonition admonition">ZERO | SLOWEST | SLOW | AVERAGE | FAST</div>
+</dd>
+<dt><strong><code>deadline</code></strong></dt>
+<dd>A transaction has a time window to be accepted before it reaches its deadline.
+The transaction expires when the deadline is reached and all the nodes reject the transaction.
+Maximum expiration time 6 hours. The default is 2 minutes. To install a custom deadline,
+pass a dictionary specifying the type / types and their duration. For example:</dd>
+</dl>
+<pre><code class="language-py">{
+    &quot;minutes&quot;: 2.0,
+    &quot;seconds&quot;: 30.0
+}
+</code></pre>
+<p>Which corresponds to 2 minutes and 30 seconds. Keys available:</p>
+<div class="admonition admonition">
+<p>days | seconds | milliseconds | minutes | hours | weeks</p>
+</div>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>A hash</code> of <code>the transaction</code> or <code>None and status</code></dt>
+<dd>&nbsp;</dd>
+</dl>
+<h2 id="notes">Notes</h2>
+<p><strong><em>Attention!</em></strong>
+The example below is intended to demonstrate ease of use, but it is <strong><em>not secure</em></strong>!
+Use this code only on the <code>NetworkType.TEST_NET</code></p>
+<p>Example:</p>
+<pre><code class="language-py">from nempy.user_data import AccountData
+from nempy.engine import XYMEngine
+from nempy.sym.network import NetworkType
+from nempy.sym.constants import Fees
+
+PRIVATE_KEY = '&lt;YOUR_PRIVATE_KEY&gt;'
+PASSWORD = '&lt;YOUR_PASS&gt;'
+account = AccountData.create(PRIVATE_KEY, NetworkType.TEST_NET).encrypt(PASSWORD)
+
+engine = XYMEngine(account)
+entity_hash, status = engine.send_tokens(recipient_address='TDPFLBK4NSCKUBGAZDWQWCUFNJOJB33Y5R5AWPQ',
+                                         mosaics=[('@symbol.xym', 0.1), ],
+                                         message='Hallo NEM!',
+                                         password=PASSWORD,
+                                         fee_type=Fees.SLOWEST)
+print(status.name, status.value)
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def send_tokens(
+    self,
+    recipient_address: str,
+    mosaics: List[Tuple[str, float]],
+    message: Union[str, bytes] = &#34;&#34;,
+    is_encrypted=False,
+    password: str = &#34;&#34;,
+    fee_type: Fees = Fees.SLOWEST,
+    deadline: Optional[Dict[str, float]] = None,
+) -&gt; Tuple[Optional[str], EngineStatusCode]:
+    &#34;&#34;&#34;
+    Allows you to send funds or a message to the specified account
+
+    Parameters
+    ----------
+    recipient_address
+        Beneficiary address of funds or message
+    mosaics
+        Funds in the form of mosaics
+    message
+        Plain or encrypted messages
+    is_encrypted
+        Indication for encrypting a message or sending in plain text
+    password
+        Password for decrypting secret account data
+    fee_type
+        One of the types of fee that affects the speed and cost of
+        confirming a transaction by the blockchain network. The following types are available:
+        .. admonition::
+            ZERO | SLOWEST | SLOW | AVERAGE | FAST
+    deadline
+        A transaction has a time window to be accepted before it reaches its deadline.
+        The transaction expires when the deadline is reached and all the nodes reject the transaction.
+        Maximum expiration time 6 hours. The default is 2 minutes. To install a custom deadline,
+        pass a dictionary specifying the type / types and their duration. For example:
+    ```py
+    {
+        &#34;minutes&#34;: 2.0,
+        &#34;seconds&#34;: 30.0
+    }
+    ```
+     Which corresponds to 2 minutes and 30 seconds. Keys available:
+    .. admonition::
+        days | seconds | milliseconds | minutes | hours | weeks
+    Returns
+    -------
+    A hash of the transaction or None and status
+    Notes
+    -----
+    **_Attention!_**
+    The example below is intended to demonstrate ease of use, but it is **_not secure_**!
+    Use this code only on the `NetworkType.TEST_NET`
+
+    Example:
+    ```py
+    from nempy.user_data import AccountData
+    from nempy.engine import XYMEngine
+    from nempy.sym.network import NetworkType
+    from nempy.sym.constants import Fees
+
+    PRIVATE_KEY = &#39;&lt;YOUR_PRIVATE_KEY&gt;&#39;
+    PASSWORD = &#39;&lt;YOUR_PASS&gt;&#39;
+    account = AccountData.create(PRIVATE_KEY, NetworkType.TEST_NET).encrypt(PASSWORD)
+
+    engine = XYMEngine(account)
+    entity_hash, status = engine.send_tokens(recipient_address=&#39;TDPFLBK4NSCKUBGAZDWQWCUFNJOJB33Y5R5AWPQ&#39;,
+                                             mosaics=[(&#39;@symbol.xym&#39;, 0.1), ],
+                                             message=&#39;Hallo NEM!&#39;,
+                                             password=PASSWORD,
+                                             fee_type=Fees.SLOWEST)
+    print(status.name, status.value)
+    ```
+    &#34;&#34;&#34;
+    recipient_address = recipient_address.replace(&#34;-&#34;, &#34;&#34;)
+    mosaics = [
+        sym.Mosaic(mosaic_id=mosaic[0], amount=mosaic[1]) for mosaic in mosaics
+    ]
+    if is_encrypted:
+        address_info = network.get_accounts_info(address=recipient_address)
+        if address_info is None:
+            return None, EngineStatusCode.INVALID_ACCOUNT_INFO
+        public_key = address_info[&#34;account&#34;][&#34;publicKey&#34;]
+        message = sym.EncryptMessage(
+            message, self.account.decrypt(password).private_key, public_key
+        )
+    else:
+        message = sym.PlainMessage(message)
+    entity_hash, payload = self.transaction.create(
+        pr_key=self.account.decrypt(password).private_key,
+        recipient_address=recipient_address,
+        mosaics=mosaics,
+        message=message,
+        deadline=deadline,
+        fee_type=fee_type,
+    )
+    is_sent = network.send_transaction(payload)
+    if is_sent:
+        return entity_hash, EngineStatusCode.ACCEPTED
+    return None, EngineStatusCode.ANNOUNCE_ERROR</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="nempy" href="index.html">nempy</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="nempy.engine.EngineStatusCode" href="#nempy.engine.EngineStatusCode">EngineStatusCode</a></code></h4>
+<ul class="">
+<li><code><a title="nempy.engine.EngineStatusCode.ACCEPTED" href="#nempy.engine.EngineStatusCode.ACCEPTED">ACCEPTED</a></code></li>
+<li><code><a title="nempy.engine.EngineStatusCode.ANNOUNCE_ERROR" href="#nempy.engine.EngineStatusCode.ANNOUNCE_ERROR">ANNOUNCE_ERROR</a></code></li>
+<li><code><a title="nempy.engine.EngineStatusCode.INVALID_ACCOUNT_INFO" href="#nempy.engine.EngineStatusCode.INVALID_ACCOUNT_INFO">INVALID_ACCOUNT_INFO</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nempy.engine.NEMEngine" href="#nempy.engine.NEMEngine">NEMEngine</a></code></h4>
+<ul class="">
+<li><code><a title="nempy.engine.NEMEngine.account" href="#nempy.engine.NEMEngine.account">account</a></code></li>
+<li><code><a title="nempy.engine.NEMEngine.check_status" href="#nempy.engine.NEMEngine.check_status">check_status</a></code></li>
+<li><code><a title="nempy.engine.NEMEngine.get_balance" href="#nempy.engine.NEMEngine.get_balance">get_balance</a></code></li>
+<li><code><a title="nempy.engine.NEMEngine.send_tokens" href="#nempy.engine.NEMEngine.send_tokens">send_tokens</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nempy.engine.XYMEngine" href="#nempy.engine.XYMEngine">XYMEngine</a></code></h4>
+<ul class="">
+<li><code><a title="nempy.engine.XYMEngine.check_status" href="#nempy.engine.XYMEngine.check_status">check_status</a></code></li>
+<li><code><a title="nempy.engine.XYMEngine.check_transaction_confirmation" href="#nempy.engine.XYMEngine.check_transaction_confirmation">check_transaction_confirmation</a></code></li>
+<li><code><a title="nempy.engine.XYMEngine.get_balance" href="#nempy.engine.XYMEngine.get_balance">get_balance</a></code></li>
+<li><code><a title="nempy.engine.XYMEngine.mosaic_humanization" href="#nempy.engine.XYMEngine.mosaic_humanization">mosaic_humanization</a></code></li>
+<li><code><a title="nempy.engine.XYMEngine.send_tokens" href="#nempy.engine.XYMEngine.send_tokens">send_tokens</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
