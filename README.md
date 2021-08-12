@@ -3,7 +3,7 @@
 [![tests](https://github.com/denjas/nempy/actions/workflows/tests.yml/badge.svg)](https://github.com/denjas/nempy/actions/workflows/tests.yml)
 [![build](https://github.com/denjas/nempy/actions/workflows/build.yml/badge.svg)](https://github.com/denjas/nempy/actions/workflows/build.yml)
 [![python-ver](https://github.com/denjas/nempy/blob/dev/.github/badges/python-version.svg)](https://www.python.org/)
-[![license](https://github.com/denjas/nempy/blob/dev/.github/badges/license.svg)](https://github.com/nempy/nempy/blob/dev/LICENSE)
+[![license](https://github.com/denjas/nempy/blob/dev/.github/badges/license.svg)](https://github.com/denjas/nempy/blob/main/LICENSE)
 ![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/denjas/9c7a615b3b16ced41d8530c7535ca131/raw/coverage.json)
 
 
@@ -12,8 +12,8 @@ High-level python wrapper for working with cryptocurrencies of the NEM ecosystem
 
 Implemented on the basis symbol project [core sdk python library](https://github.com/symbol/symbol-sdk-core-python)
 ## Possibilities
-* Creating a wallet with profiles and accounts
-* Using a wallet to send funds view activity history and balance
+* Creating a wallet with profiles and accounts. Importing account by mnemonic.
+* Using a wallet to send funds, view activity history and balance
 * Blockchain [monitoring](https://docs.symbolplatform.com/api.html#websockets) via [websocket](https://ru.wikipedia.org/wiki/WebSocket)
 * Ability to use all the above in third-party products and services
 
