@@ -8,3 +8,4 @@ __pdoc__ = {
     "nempy.sym.ed25519": False,
 }
 
+__version__ = open('version.txt', 'rt').read()
