@@ -14,7 +14,7 @@ High-level python wrapper for working with cryptocurrencies of the NEM ecosystem
 Implemented on the basis symbol project [core sdk python library](https://github.com/symbol/symbol-sdk-core-python)
 ## Possibilities
 * Creating a wallet with profiles and accounts. Importing account by mnemonic.
-* Using a wallet to send funds, view activity history and balance
+* Using a wallet to send funds, message (plain/encrypted), view activity history and balance
 * Blockchain [monitoring](https://docs.symbolplatform.com/api.html#websockets) via [websocket](https://ru.wikipedia.org/wiki/WebSocket)
 * Ability to use all the above in third-party products and services
 
@@ -33,7 +33,7 @@ For convenient work with the project, you will need [pipenv tool](https://pypi.o
 # Installing
 Install and update using pip:
   ```shell
-  pip install nempy
+  pip install nem-py
   ```
 ## A Simple Example
 
@@ -68,17 +68,12 @@ You can get acquainted with the capabilities of the CLI interface [here](https:/
 1. Clone the repository `git clone https://github.com/denjas/nempy.git`
 2. Go to the directory with the project `cd nempy`
 3. Install virtualenv package `pip install pipenv`
-4. Setting up a virtual environment `pipenv install`
+4. Setting up a virtual environment `pipenv install --dev`
+5. Installing a nem-py package into the environment `pipenv run pip install .` or `pipenv run pip install -e .` for development mode.
 ### Running CLI utility
 ```shell
 pipenv run nempy-cli.py
 ```
-### For development
-To set up development in a virtual environment. Follow the previous steps then:
-```shell
-pipenv run pip inasall -e .
-```
-
 ### Testing
 Follow the previous steps to set up your environment.
 
