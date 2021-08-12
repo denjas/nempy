@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "ff2ef343f5814ad721325d7c4c675c972dba7b034ce619a1103768ea185dea3b"
+            "sha256": "edec94bb83adb1ce66e6351179f2efcd04466ef2053d4264046d0d895134f680"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -171,10 +171,6 @@
                 "sha256:a8d78c5100acfa7df9bab6b9db7390831b0e54490934b718ff9efd68f0d731a6"
             ],
             "version": "==0.19"
-        },
-        "nem-py": {
-            "path": ".",
-            "version": "==0.0.4.dev0"
         },
         "nose": {
             "hashes": [

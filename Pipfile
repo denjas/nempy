@@ -20,7 +20,7 @@ tabulate = "==0.8.9"
 bcrypt = "==3.2.0"
 pyfiglet = "==0.7.6"
 pydantic = "==1.8.2"
-nem-py = {path = "."}
+
 
 [dev-packages]
 pytest = "==6.2.4"
