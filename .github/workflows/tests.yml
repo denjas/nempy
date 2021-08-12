@@ -41,7 +41,9 @@ jobs:
           python3 -m pip install .
       - name: Tests and Coverage
         run: |
-          echo COVERAGE=$(pytest --cov=nempy | grep TOTAL | grep -Eo '[0-9]+%') >> $GITHUB_ENV
+          cov=$(pytest --cov=nempy | grep TOTAL | grep -Eo '[0-9]+%')
+          echo $cov
+          echo "COVERAGE=$cov" >> $GITHUB_ENV
       # Runs a set of commands using the runners shell
       - name: Create Coverage Badge
         uses: schneegans/dynamic-badges-action@v1.1.0
