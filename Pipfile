@@ -20,6 +20,7 @@ tabulate = "==0.8.9"
 bcrypt = "==3.2.0"
 pyfiglet = "==0.7.6"
 pydantic = "==1.8.2"
+nem-py = {path = "."}
 
 [dev-packages]
 pytest = "==6.2.4"
@@ -27,8 +28,6 @@ coverage = "==5.5"
 pytest-cov = "==2.12.1"
 flake8 = "==3.9.2"
 pdoc3 = "==0.10.0"
-sphinx = "==4.1.2"
-markdown = "3.3.4"
 
 [scripts]
 tests = "pytest"

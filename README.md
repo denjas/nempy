@@ -9,7 +9,7 @@
 
 
 
-High-level python wrapper for working with cryptocurrencies of the NEM ecosystem
+High-level python wrapper for working with cryptocurrencies of the NEM ecosystem (Currently only work with Symbol is supported)
 
 Implemented on the basis symbol project [core sdk python library](https://github.com/symbol/symbol-sdk-core-python)
 ## Possibilities
@@ -82,7 +82,7 @@ pipenv run pip inasall -e .
 ### Testing
 Follow the previous steps to set up your environment.
 
-Running tests `pipenv run tests` or `pipenv run tests --cov=src` to assess coverage
+Running tests `pipenv run tests` or `pipenv run tests --cov=nempy` to assess coverage
 
 ## Version Numbers
 Version numbers will be assigned according to the [Semantic Versioning](https://semver.org/) scheme.
