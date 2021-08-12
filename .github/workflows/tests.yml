@@ -38,12 +38,12 @@ jobs:
           set -xe && apt update && apt install python3-pip -y
           python3 -m pip install pip==21.1.2 pipenv==2021.5.29
           python3 -m pip --version
-          set -ex && python3 -m pipenv install --deploy --system --dev
-          python3 -m pip install --use-feature=in-tree-build --no-dependencies .
+#          set -ex && python3 -m pipenv install --deploy --system --dev
+          python3 -m pip install .
       - name: Tests and Coverage
         run: |
-          pytest --cov=src
-          echo COVERAGE=$(pytest --cov=src | grep TOTAL | grep -Eo '[0-9]+%') >> $GITHUB_ENV
+          pipenv install --dev
+          echo COVERAGE=$(pipenv run tests --cov=src | grep TOTAL | grep -Eo '[0-9]+%') >> $GITHUB_ENV
 #        run: echo "COVERAGE=42%" >> $GITHUB_ENV
       # Runs a set of commands using the runners shell
       - name: Create Coverage Badge
