@@ -21,11 +21,11 @@ def get_packages_from_pipfile_lock(path: str, version):
         return packages
 
 
-version = '0.0.1'
+version = open('version.txt', 'r').read()
 
 
 setup(
-    name='nempy',
+    name='nem-py',
     version=version,
     python_requires='>=3.6.0',
     author="Denys Shcheglov",
@@ -42,8 +42,8 @@ setup(
     ],
     package_dir={"": "src"},
     packages=(find_packages(where="src")),
-    # install_requires=get_packages_from_pipfile_lock('Pipfile.lock', version),
-    install_requires=open('requirements.txt').read(),
+    # install_requires=open('requirements.txt').read(),
+    install_requires=get_packages_from_pipfile_lock('Pipfile.lock', version),
     scripts=['src/nempy/bin/nempy-cli.py', ],
     test_suite='tests',
     include_package_data=True

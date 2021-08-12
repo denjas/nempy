@@ -10,6 +10,7 @@ http://code.activestate.com/recipes/579102-ed25519/
 
 import collections
 import hashlib
+import logging
 import os
 from base64 import b32decode, b32encode
 from binascii import hexlify, unhexlify
@@ -20,7 +21,9 @@ from Cryptodome.Hash import RIPEMD160
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from .constants import HexSequenceSizes
+from .constants import HexSequenceSizes, AccountValidationState
+
+logger = logging.getLogger(__name__)
 
 Point = collections.namedtuple('Point', ['x', 'y'])
 
@@ -42,15 +45,17 @@ def check_hex(hex_sequence: str, size: HexSequenceSizes):
     return False
 
 
-def check_address(address, prefix=None):
+def check_address(address: str) -> AccountValidationState:
+    if len(address) != 39:
+        return AccountValidationState.LENGTH_FAILURE
     try:
         raw = b32decode((address + '=').encode())
         header, ripe, checksum = raw[:1], raw[1:1 + 20], raw[1 + 20:]
         f_body = (checksum == hashlib.sha3_256(header + ripe).digest()[0:3])
-    except:
-        return False
-    f_header = (prefix is None or header == prefix)
-    return f_body and f_header
+    except Exception as e:
+        logger.exception(e)
+        return AccountValidationState.CHECKSUM_FAILURE
+    return AccountValidationState.OK if f_body else AccountValidationState.CHECKSUM_FAILURE
 
 
 class Ed25519:
@@ -87,17 +92,17 @@ class Ed25519:
                 m = seed
         h = self.to_hash(m)
         k = self.as_key(h)
-        return hexlify(self.to_bytes(k))
+        return hexlify(self.to_bytes(k)).upper()
 
     def public_key(self, sk):
         """ compute the public key from the secret one """
         h = self.to_hash(unhexlify(sk))
         a = self.as_key(h)
         c = self.outer(self.B, a)
-        return hexlify(self.point_to_bytes(c))
+        return hexlify(self.point_to_bytes(c)).upper()
 
     @staticmethod
-    def get_address( public_key, main_net=True, prefix=None):
+    def get_address(public_key, main_net=False, prefix=None):
         """ compute the nem-py address from the public one """
         public_key = unhexlify(Ed25519.str2bytes(public_key))
         if isinstance(public_key, str):
@@ -110,15 +115,15 @@ class Ed25519:
         else:
             assert isinstance(prefix, bytes), 'Set prefix 1 bytes'
             body = prefix + ripe
-        checksum = hashlib.sha3_256(body).digest()[0:4]
-        return b32encode(body + checksum[0:3]).decode()[0:-1]
+        checksum = hashlib.sha3_256(body).digest()[0:3]
+        return b32encode(body + checksum).decode()[0:-1]
 
     def inverse(self, x):
         return pow(x, q - 2, q)
 
     @staticmethod
     def str2bytes(string):
-        return string if type(string) is bytes else string.encode('utf8')
+        return string if isinstance(string, bytes) else string.encode('utf8')
 
     @staticmethod
     def encrypt(private_key, public_key, message):
@@ -176,14 +181,6 @@ class Ed25519:
     def point_to_bytes(self, P):
         return (P.y + ((P.x & 1) << 255)).to_bytes(b // 8, 'little')
 
-    def bytes_to_point(self, b):
-        i = self.from_bytes(b)
-        y = i % 2 ** (b - 1)
-        x = self.recover(y)
-        if (x & 1) != ((i >> (b - 1)) & 1):
-            x = q - x
-        return Point(x, y)
-
 
 class SignClass:
     l = 2 ** 252 + 27742317777372353535851937790883648493
@@ -215,50 +212,11 @@ class SignClass:
     def to_hash(m):
         return hashlib.sha512(m).digest()
 
-    @staticmethod
-    def to_hash_sha3_256(m):
-        return hashlib.sha256(m).digest()
-        # return sha3_256(m).digest()
-
-    def sign(self, m, sk, pk):
-        h = self.to_hash(sk)
-        a = 2 ** (b - 2) + sum(2 ** i * self.bit(h, i) for i in range(3, b - 2))
-
-        m_raw = bytes([getitem(h, j) for j in range(b // 8, b // 4)]) + m
-        r = self.Hint_hash(m_raw)
-
-        R = self.scalarmult_B(r)
-        S = (r + self.Hint_hash(self.encodepoint(R) + pk + m) * a) % self.l
-
-        return self.encodepoint(R) + self.encodeint(S)
-
-    def verify(self, s, m, pk):
-        if len(s) != b // 4:
-            raise ValueError("signature length is wrong")
-
-        if len(pk) != b // 8:
-            raise ValueError("public-key length is wrong")
-
-        R = self.decodepoint(s[:b // 8])
-        A = self.decodepoint(pk)
-        S = self.decodeint(s[b // 8:b // 4])
-        h = self.Hint_hash(self.encodepoint(R) + pk + m)
-
-        (x1, y1, z1, t1) = P = self.scalarmult_B(S)
-        (x2, y2, z2, t2) = Q = self.edwards_add(R, self.scalarmult(A, h))
-
-        fP_on = not self.isoncurve(P)
-        fQ_on = not self.isoncurve(Q)
-        fX_on = (x1 * z2 - x2 * z1) % q != 0
-        fY_on = (y1 * z2 - y2 * z1) % q != 0
-
-        if fP_on or fQ_on or fX_on or fY_on:
-            return False
-        else:
-            return True
 
     def inv(self, z):
-        """$= z^{-1} \mod q$, for z != 0"""
+        """
+        $= z^{-1} \\ mod q$, for z != 0
+        """
         # Adapted from curve25519_athlon.c in djb's Curve25519.
         z2 = z * z % q  # 2
         z9 = self.pow2(z2, 2) * z % q  # 9
@@ -344,12 +302,6 @@ class SignClass:
             for i in range(b // 8)
         ])
 
-    def encodeint(self, y):
-        bits = [(y >> i) & 1 for i in range(b)]
-        return b''.join([
-            self.int2byte(sum([bits[i * 8 + j] << j for j in range(8)]))
-            for i in range(b // 8)
-        ])
 
     def decodepoint(self, s):
         y = sum(2 ** i * self.bit(s, i) for i in range(0, b - 1))
@@ -373,23 +325,6 @@ class SignClass:
             Q = self.edwards_add(Q, P)
         return Q
 
-    def scalarmult_B(self, e):
-        """
-        Implements scalarmult(B, e) more efficiently.
-        """
-        # scalarmult(B, l) is the identity
-        e = e % self.l
-        P = self.ident
-        for i in range(253):
-            if e & 1:
-                P = self.edwards_add(P, self.Bpow[i])
-            e = e // 2
-        assert e == 0, e
-        return P
-
-    def Hint_hash(self, m):
-        h = hashlib.sha512(m).digest()
-        return sum(2 ** i * self.bit(h, i) for i in range(2 * b))
 
     def isoncurve(self, P):
         (x, y, z, t) = P

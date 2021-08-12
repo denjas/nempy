@@ -1,18 +1,24 @@
 import hashlib
 import logging
+import re
+
 from binascii import unhexlify
-from typing import List
+from typing import Union, Optional, List, Tuple
 
 from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.CryptoTypes import PrivateKey
 from symbolchain.core.CryptoTypes import Signature, PublicKey
 from symbolchain.core.facade.SymFacade import SymFacade
+from symbolchain.core.sym.IdGenerator import generate_namespace_id
 
 from . import ed25519, network
-from .constants import Fees, FM, TransactionTypes, TransactionMetrics
+from .constants import Fees, FM, TransactionTypes, TransactionMetrics, HexSequenceSizes, NetworkType
+
+logger = logging.getLogger(__name__)
 
 
 class Dividers:
+    """Accumulates information about dividers for offline work"""
     dividers = {}
 
     def __iter__(self):
@@ -31,8 +37,8 @@ dividers = Dividers()
 
 
 class Message(bytes):
-
-    def __new__(cls, message: [str, bytes], is_encrypted: bool):
+    """Base class for messages, does the necessary checks"""
+    def __new__(cls, message: Union[str, bytes], is_encrypted: bool) -> bytes:
         if is_encrypted and not message:
             raise RuntimeError('Message payload cannot be empty for encrypted message')
         if len(message) > ed25519.SignClass.PLAIN_MESSAGE_SIZE:
@@ -44,32 +50,56 @@ class Message(bytes):
 
 
 class PlainMessage(bytes):
-
-    def __new__(cls, message: [str, bytes]):
-        message = Message(message, True)
+    """Plain messages
+    Returns the message as bytes with the necessary flags at the beginning"""
+    def __new__(cls, message: Union[str, bytes]):
+        message = Message(message, False)
         # add the message type code to the beginning of the byte sequence
-        payload_message = int(0).to_bytes(1, byteorder='big') + message
+        if message:
+            payload_message = b'\x00' + message
+        else:
+            payload_message = message
         cls.size = len(payload_message)
         return bytes.__new__(PlainMessage, payload_message)
 
 
 class EncryptMessage(bytes):
-
-    def __new__(cls, sender_private_key: str, recipient_pub: str, message: str):
+    """Encrypted messages requiring additional arguments
+    Returns the message as encrypted bytes with the necessary flags at the beginning"""
+    def __new__(cls, message: Union[str, bytes], sender_private_key: str, recipient_pub: str):
         #  https://docs.symbolplatform.com/concepts/transfer-transaction.html#encrypted-message
         message = Message(message, True)
         hex_encrypted_message = ed25519.Ed25519.encrypt(sender_private_key, recipient_pub, message)
         if len(hex_encrypted_message) > ed25519.SignClass.PLAIN_MESSAGE_SIZE:
             raise OverflowError(f'Encrypted message length cannot exceed {ed25519.SignClass.PLAIN_MESSAGE_SIZE} bytes. Current length: {len(hex_encrypted_message)}')
-        payload_message = int(1).to_bytes(1, byteorder='big') + hex_encrypted_message
+        payload_message = b'\x01' + hex_encrypted_message
         cls.size = len(payload_message)
         return bytes.__new__(EncryptMessage, payload_message)
 
 
-class Mosaic(tuple):
+class Namespace(str):
+    """Building namespace hashes"""
+    def __new__(cls, name: str) -> str:
+        ns_sns = name.split('.')
+        if len(ns_sns) > 3:
+            raise ValueError(f'Invalid name for namespace `{name}` - namespaces can have up to 3 levels—a namespace and its two levels of subnamespace domains')
+        namespace_id = 0
+        for ns in ns_sns:
+            result = re.match('^[a-z0-9][a-z0-9_-]+$', ns)
+            if len(ns) > 64:
+                raise ValueError(f'Invalid name for namespace `{name}` - maximum length of 64 characters')
+            if result is None:
+                raise ValueError(f'Invalid name for namespace `{name}` - start with number or letter allowed characters are a, b, c, …, z, 0, 1, 2, …, 9, _ , -')
+            namespace_id = generate_namespace_id(ns, namespace_id)
+        return str.__new__(Namespace, hex(namespace_id).upper()[2:])
 
+
+class Mosaic(tuple):
+    """Builds a mosaic. Gets additional data by divisor and mosaic ID by name"""
     def __new__(cls, mosaic_id: str, amount: float):
         cls.size = 16
+        if mosaic_id.startswith('@'):
+            mosaic_id = Mosaic.alias_to_mosaic_id(mosaic_id[1:])
         divisibility = Mosaic.get_divisibility(mosaic_id)
         if divisibility is None:
             raise ValueError(f'Failed to get divisibility from network')
@@ -78,6 +108,7 @@ class Mosaic(tuple):
 
     @staticmethod
     def get_divisibility(mosaic_id: str):
+        """Gets the divisibility by mosaic ID"""
         if mosaic_id in dividers:
             return dividers.get(mosaic_id)
         else:
@@ -86,40 +117,50 @@ class Mosaic(tuple):
                 dividers.set(mosaic_id, divisibility)
             return divisibility
 
+    @staticmethod
+    def alias_to_mosaic_id(alis):
+        """Translates aliases to mosaic id"""
+        namespace_id = Namespace(alis)
+        namespace_info = network.get_namespace_info(namespace_id)
+        if namespace_info is None or namespace_info == {}:
+            raise ValueError(f'Failed to get mosaic_id by name `{alis}`')
+        mosaic_id = namespace_info['namespace']['alias']['mosaicId']
+        return mosaic_id
+
 
 class Transaction:
-    # Size of transaction with empty message
-    MIN_TRANSACTION_SIZE = 160
-    XYM_ID = int('091F837E059AE13C', 16)
+    """Class for working with transfer transactions"""
+
+    MIN_TRANSACTION_SIZE = 160  #: Size of transaction with empty message
 
     def __init__(self):
-        self.size = None
-        self.max_fee = None
+        self.size: int = -1  #: transaction size
+        self.max_fee: int = -1  #: The maximum amount of network currency that the sender of the transaction is willing to pay to get the transaction accepted
 
-        self.network_type = network.get_node_network()
-        self.timing = network.Timing(self.network_type)
-        self.sym_facade = SymFacade(self.network_type)
+        self.network_type: NetworkType = network.get_node_network()
+        self.timing: network.Timing = network.Timing(self.network_type)
+        self.sym_facade: SymFacade = SymFacade(self.network_type.value)
 
     def create(self,
                pr_key: str,
                recipient_address: str,
-               mosaics: [Mosaic, List[Mosaic]] = None,
-               message: [PlainMessage, EncryptMessage, None] = None,
+               mosaics: Union[Mosaic, List[Mosaic], None] = None,
+               message: Union[PlainMessage, EncryptMessage] = PlainMessage(''),
                fee_type: Fees = Fees.SLOWEST,
-               deadline: [dict, None] = None) -> (Hash256, bytes):
+               deadline: Optional[dict] = None) -> Tuple[str, bytes]:
+        """Create a transaction"""
 
         if deadline is None:
             deadline = {'minutes': 2}
         if mosaics is None:
             mosaics = []
-        if not isinstance(mosaics, list):
+        if not isinstance(mosaics, list) and isinstance(mosaics, Mosaic):
             mosaics = [mosaics]
-
+        if not isinstance(mosaics, list) and not isinstance(mosaics, Mosaic):
+            raise ValueError(f'Expected type of `Mosaic` for mosaic got `{type(mosaics)}`')
         if len(mosaics) > 1:
-            for i, mosaic in enumerate(mosaics):
-                if mosaic[0] == self.XYM_ID:
-                    # Mosaic XYM should be in the first place in the list
-                    mosaics.insert(0, mosaics.pop(i))
+            # sorting mosaic by ID (blockchain requirement)
+            mosaics = sorted(mosaics, key=lambda tup: tup[0])
 
         key_pair = self.sym_facade.KeyPair(PrivateKey(unhexlify(pr_key)))
 
@@ -132,7 +173,7 @@ class Transaction:
             'mosaics': mosaics,
             'fee': self.max_fee,
             'deadline': deadline,
-            'message': message if message is not None else b''
+            'message': message
         }
 
         self.size = self.MIN_TRANSACTION_SIZE + descriptor['message'].size + sum(mosaic.size for mosaic in descriptor['mosaics'])
@@ -150,12 +191,13 @@ class Transaction:
         # print(transaction)
         # print(hexlify(transaction.serialize()))
         # print(answer.status_code, answer.text)
-        logging.debug(f'Transaction hash: {entity_hash}')
+        logger.debug(f'Transaction hash: {entity_hash}')
 
         return entity_hash, payload_bytes
 
     @staticmethod
     def calc_max_fee(transaction_size: int, fee_type: Fees):
+        """Calculation of the transaction fee"""
         # network fee multipliers
         nfm = network.get_fee_multipliers()
         if nfm is None:
@@ -165,12 +207,15 @@ class Transaction:
         average_fee_multiplier = nfm[FM.min] + nfm[FM.average] * 0.65
         slow_fee_multiplier = nfm[FM.min] + nfm[FM.average] * 0.35
         slowest_fee_multiplier = nfm[FM.min]
+        # sometimes the average is less than fast
+        slowest_fee_multiplier, slow_fee_multiplier, average_fee_multiplier, fast_fee_multiplier = sorted(
+            [slowest_fee_multiplier, slow_fee_multiplier, average_fee_multiplier, fast_fee_multiplier])
 
         div = 1000000
-        logging.debug(f'Fees.FAST.name: {fast_fee_multiplier * transaction_size / div}')
-        logging.debug(f'Fees.AVERAGE.name: {average_fee_multiplier * transaction_size / div}')
-        logging.debug(f'Fees.SLOW.name: {slow_fee_multiplier * transaction_size / div}')
-        logging.debug(f'Fees.SLOWEST.name: {slowest_fee_multiplier * transaction_size / div}')
+        logger.debug(f'Fees.FAST.name: {fast_fee_multiplier * transaction_size / div}')
+        logger.debug(f'Fees.AVERAGE.name: {average_fee_multiplier * transaction_size / div}')
+        logger.debug(f'Fees.SLOW.name: {slow_fee_multiplier * transaction_size / div}')
+        logger.debug(f'Fees.SLOWEST.name: {slowest_fee_multiplier * transaction_size / div}')
 
         fee_multiplier = None
         if fee_type == Fees.FAST:
@@ -185,21 +230,20 @@ class Transaction:
             fee_multiplier = 0
 
         max_fee = int(fee_multiplier * transaction_size)
-        # ограничение при получении при просчёте слишком высокой комисии
-        # TODO более детально рассмотреть регулирование комисси для транзакций
+        # TODO whether restrictions are needed for too high a fee, can this be?
         return max_fee
 
     @staticmethod
     def entity_hash_gen(signature: Signature, public_key: PublicKey, transaction, generation_hash: Hash256):
+        """Calculate the transaction hash by applying SHA3-256 hashing algorithm to the first 32 bytes of signature,
+        the signer public key, nemesis block generation hash, and the remaining transaction payload."""
         # https://symbol-docs.netlify.app/concepts/transaction.html
         tr_sr = transaction.serialize()
         is_aggregate = transaction.type in [TransactionTypes.AGGREGATE_BONDED, TransactionTypes.AGGREGATE_COMPLETE]
-        # TODO проверить правильность работы на агрегированных транзакциях
+        # TODO check if it works correctly on aggregated transactions
         if is_aggregate:
-            raise RuntimeError('Working with aggregated transactions has not been tested !!!')
-        if is_aggregate:
-            transaction_body = tr_sr[
-                               TransactionMetrics.TRANSACTION_HEADER_SIZE:TransactionMetrics.TRANSACTION_BODY_INDEX + 32]
+            raise NotImplementedError('Working with aggregated transactions has not been tested !!!')
+            transaction_body = tr_sr[TransactionMetrics.TRANSACTION_HEADER_SIZE:TransactionMetrics.TRANSACTION_BODY_INDEX + 32]
         else:
             transaction_body = tr_sr[TransactionMetrics.TRANSACTION_HEADER_SIZE:]
         # https://symbol-docs.netlify.app/concepts/transaction.html#signing-a-transaction

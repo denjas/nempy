@@ -1,6 +1,5 @@
-from enum import Enum, EnumMeta
 import datetime
-
+from enum import Enum, EnumMeta, IntEnum
 
 NETWORK_GENERATION_HASH_SEED_PUBLIC = '57F7DA205008026C776CB6AED843393F04CD458E0AA2D9F1D5F31A402072B2D6'
 NETWORK_GENERATION_HASH_SEED_TEST = '3B5E1FA6445653C971A50687E75E6D09FB30481055E3990C84B25E9222DC1155'
@@ -9,19 +8,24 @@ EPOCH_TIME_MAINNET = datetime.datetime(2021, 3, 16, 0, 6, 25, tzinfo=datetime.ti
 EPOCH_TIME_TESTNET = datetime.datetime(2021, 3, 25, 17, 56, 17, tzinfo=datetime.timezone.utc)
 
 
+class AccountValidationState(Enum):
+    OK = 'The address is correct'
+    LENGTH_FAILURE = 'The address length must be 39 characters'
+    CHECKSUM_FAILURE = 'Checksum does not match'
+
+
+class NetworkType(Enum):
+    TEST_NET = 'public_test'
+    MAIN_NET = 'public'
+
+
 class TransactionStatus(Enum):
-    NOT_FOUND = - 1
-    UNCONFIRMED_ADDED = 0
-    CONFIRMED_ADDED = 1
-    PARTIAL_ADDED = 2
+    NOT_FOUND = None
+    UNCONFIRMED_ADDED = 'unconfirmed'
+    CONFIRMED_ADDED = 'confirmed'
+    PARTIAL_ADDED = 'partial'
     # UNCONFIRMED_REMOVED = 3
     # PARTIAL_REMOVED = 4
-
-
-class DecoderStatus(Enum):
-    DECRYPTED = None
-    NO_DATA = 'Missing data to decode'
-    WRONG_PASS = 'Wrong password'
 
 
 class BlockchainStatuses(Enum):
@@ -34,10 +38,10 @@ class BlockchainStatuses(Enum):
     NO_NODES_AVAILABLE = 'No nodes available in the picklist (URL is None)'
 
 
-class HexSequenceSizes:
-    address = 39
-    public_key = private_key = 64
-    mosaic_id = namespace_id = 16
+class HexSequenceSizes(IntEnum):
+    ADDRESS = 39
+    PUBLIC_KEY = PRIVATE_KEY = 64
+    MOSAIC_ID = NAMESPACE_ID = 16
 
 
 class Fees(Enum):
@@ -62,7 +66,7 @@ class TransactionMetrics:
     TRANSACTION_BODY_INDEX = TRANSACTION_HEADER_SIZE + 1 + 1 + 2 + 8 + 8
 
 
-class TransactionTypes:
+class TransactionTypes(IntEnum):
     #  Reserved entity type.
     RESERVED = 0
     #  Transfer Transaction transaction type.
@@ -113,3 +117,9 @@ class TransactionTypes:
     VOTING_KEY_LINK = 16707
     #  Link node key transaction
     NODE_KEY_LINK = 16972
+
+    @staticmethod
+    def get_type_by_id(_id) -> 'TransactionTypes':
+        attributes = TransactionTypes.__dict__
+        attributes = {key: attributes[key] for key in attributes if not key.startswith('_') and key != 'get_type_by_id'}
+        return TransactionTypes[list(attributes.keys())[list(attributes.values()).index(_id)]]

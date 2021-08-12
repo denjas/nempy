@@ -1,170 +1,280 @@
 import abc
-from binascii import unhexlify
-from collections.abc import Callable
-from http import HTTPStatus
-from symbolchain.core.CryptoTypes import Hash256
-from symbolchain.core.CryptoTypes import PrivateKey
-from symbolchain.core.sym.KeyPair import KeyPair
+import logging
+from enum import Enum
+from typing import List, Tuple, Union, Dict, Optional
+from nempy.user_data import AccountData
+from nempy.sym.constants import BlockchainStatuses, Fees, TransactionStatus
 
 from .sym import api as sym
 from .sym import network
-from .sym.constants import BlockchainStatuses, DecoderStatus
+from .sym.network import NodeSelector
+
+logger = logging.getLogger(__name__)
+
+
+class EngineStatusCode(Enum):
+    """Contains status for sending transactions"""
+
+    INVALID_ACCOUNT_INFO = "There is no information on the network for this account."
+    """There is no information on the network for this account."""
+    ANNOUNCE_ERROR = "Transaction announce error"
+    """Transaction announce error"""
+    ACCEPTED = "Request accepted, processing continues off-line"
+    """Request accepted"""
 
 
 class NEMEngine:
+    account = None
 
-    def __init__(self,
-                 url: str,
-                 decryptor: Callable[str, str],
-                 wallet_path: str,
-                 wallet_pass: str):
+    def __init__(self, url: str, account: AccountData):
         self.url = url
-        self.decryptor = decryptor
-        self.wallet_path = wallet_path
-        self.wallet_pass = wallet_pass
-
-        self._private_key = self.get_private_key()
-        self._public_key, self._address = self.build_public(self._private_key)
+        self.account = account
 
     def __str__(self):
-        return f'URL: {self.url}\nAddress: {self._address}\nPublic Key: {self._public_key}'
+        return f"URL: {self.url}\nAddress: {self.account.address}\nPublic Key: {self.account.public_key}"
 
     def __iter__(self):
-        yield 'url', self.url
-        yield 'address', self._address
-        yield 'public_key', self._public_key
+        yield "url", self.url
+        yield "address", self.account.address
+        yield "public_key", self.account.public_key
 
     @abc.abstractmethod
-    def send_tokens(self, recipient_address: str, amount: float):
-        pass
+    def send_tokens(
+        self,
+        recipient_address: str,
+        mosaics: List[Tuple[str, float]],
+        message: Union[str, bytes] = "",
+        is_encrypted=False,
+        password: str = "",
+        deadline: Optional[dict] = None,
+    ):
+        raise NotImplementedError
 
     @abc.abstractmethod
-    def check_status(self, is_logging):
-        pass
+    def check_status(self):
+        raise NotImplementedError
 
     @abc.abstractmethod
     def get_balance(self, nem_address, test=False):
-        pass
-
-    @abc.abstractmethod
-    def build_public(self, private_key):
-        pass
-
-    @property
-    def private_key(self):
-        if self._private_key is None:
-            self._private_key = self.get_private_key()
-            self._public_key, self._address = self.build_public(self._private_key)
-        return self._private_key
-
-    @property
-    def public_key(self):
-        if self._public_key is None:
-            self._private_key = self.get_private_key()
-            self._public_key, self._address = self.build_public(self._private_key)
-        return self._public_key
-
-    @property
-    def address(self):
-        if self._address is None:
-            self._private_key = self.get_private_key()
-            self._public_key, self._address = self.build_public(self._private_key)
-        return self._address
-
-    def get_private_key(self):
-        private_key = self.decryptor(self.wallet_path, self.wallet_pass)
-        if isinstance(private_key, DecoderStatus):
-            if private_key == DecoderStatus.WRONG_PASS:
-                print(DecoderStatus.WRONG_PASS.value + ' for wallet')
-                return None
-            elif private_key == DecoderStatus.NO_DATA:
-                print(DecoderStatus.NO_DATA.value + ' wallet')
-                return None
-        else:
-            return private_key
-
-
-# class XEMEngine(NEMEngine):
-#
-#     def __init__(self, url: str, wallet_path: str, wallet_pass: str, decryptor: Callable[str, str], namespace: str, mosaic_name: str):
-#         self.decryptor: Callable[str, str] = decryptor
-#         self.mosaic_name = mosaic_name
-#         self.namespace = namespace
-#         self.token = f'{namespace}:{mosaic_name}'
-#         super().__init__(url, decryptor=decryptor, wallet_path=wallet_path, wallet_pass=wallet_pass)
-#
-#     def build_public(self, private_key):
-#         public_key = address = None
-#         if private_key is not None:
-#             ed25519 = Ed25519(main_net=False)
-#             public_key = ed25519.public_key(private_key).decode("utf-8")
-#             address = ed25519.get_address(public_key).decode("utf-8")
-#         return public_key, address
-#
-#     def send_tokens(self, recipient_address: str, amount: float):
-#         status_code, message = xem.send_token(self.url, recipient_address,
-#                                               self.private_key,
-#                                               self._public_key,
-#                                               self.namespace,
-#                                               self.mosaic_name,
-#                                               amount)
-#         return message, status_code
-#
-#     def check_status(self, is_logging):
-#         if self.private_key is None:
-#             return NISStatuses.S10
-#         nis_status = xem.check_status(self.url, is_logging)
-#         return nis_status
-#
-#     def get_balance(self, nem_address, test=False):
-#         amount, status_code = xem.get_balance(self.url, nem_address, test)
-#         return amount, status_code
-#
-#     def check_transaction_confirmation(self, nem_address, transaction_hash):
-#         return xem.check_transaction_confirmation(self.url,  nem_address, transaction_hash)
+        raise NotImplementedError
 
 
 class XYMEngine(NEMEngine):
+    """
+    An interface that combines a user account of the transaction and work with the network
+    """
+    def __init__(self, account: AccountData):
+        """
+        Inits SampleClass with AccountData
 
-    def __init__(self, wallet_path: str, wallet_pass: str, decryptor: Callable[str, str], namespace: str, mosaic_name: str, mosaic_id: str):
-        self.mosaic_name = mosaic_name
-        self.token = f'{namespace}:{mosaic_name}'
-        self.mosaic_id = mosaic_id
+        Parameters
+        ----------
+        account
+            User account data
+        """
         self.node_selector = network.node_selector
+        self.node_selector.network_type = account.network_type
         self.transaction = sym.Transaction()
-        self.network_type = self.transaction.network_type
         self.timing = self.transaction.timing
-        super().__init__(self.node_selector.url, decryptor=decryptor, wallet_path=wallet_path, wallet_pass=wallet_pass)
+        super().__init__(self.node_selector.url, account)
 
-    def build_public(self, private_key):
-        public_key = address = None
-        if private_key is not None:
-            key_pair = KeyPair(PrivateKey(unhexlify(private_key)))
-            public_key = str(key_pair.public_key)
-            address = str(self.transaction.sym_facade.network.public_key_to_address(Hash256(public_key)))
-        return public_key, address
+    def send_tokens(
+        self,
+        recipient_address: str,
+        mosaics: List[Tuple[str, float]],
+        message: Union[str, bytes] = "",
+        is_encrypted=False,
+        password: str = "",
+        fee_type: Fees = Fees.SLOWEST,
+        deadline: Optional[Dict[str, float]] = None,
+    ) -> Tuple[Optional[str], EngineStatusCode]:
+        """
+        Allows you to send funds or a message to the specified account
 
-    def send_tokens(self, recipient_address: str, amount: float, message: [str, bytes] = ''):
-        mosaic = sym.Mosaic(self.mosaic_id, amount=amount)
-        message = sym.PlainMessage(message)
-        entity_hash, payload = self.transaction.create(pr_key=self.private_key,
-                                                       recipient_address=recipient_address,
-                                                       mosaics=mosaic,
-                                                       message=message)
-        text, status_code = network.send_transaction(payload)
-        if status_code != HTTPStatus.ACCEPTED:
-            return text, status_code
-        return entity_hash, status_code
+        Parameters
+        ----------
+        recipient_address
+            Beneficiary address of funds or message
+        mosaics
+            Funds in the form of mosaics
+        message
+            Plain or encrypted messages
+        is_encrypted
+            Indication for encrypting a message or sending in plain text
+        password
+            Password for decrypting secret account data
+        fee_type
+            One of the types of fee that affects the speed and cost of
+            confirming a transaction by the blockchain network. The following types are available:
+            .. admonition::
+                ZERO | SLOWEST | SLOW | AVERAGE | FAST
+        deadline
+            A transaction has a time window to be accepted before it reaches its deadline.
+            The transaction expires when the deadline is reached and all the nodes reject the transaction.
+            Maximum expiration time 6 hours. The default is 2 minutes. To install a custom deadline,
+            pass a dictionary specifying the type / types and their duration. For example:
+        ```py
+        {
+            "minutes": 2.0,
+            "seconds": 30.0
+        }
+        ```
+         Which corresponds to 2 minutes and 30 seconds. Keys available:
+        .. admonition::
+            days | seconds | milliseconds | minutes | hours | weeks
+        Returns
+        -------
+        A hash of the transaction or None and status
+        Notes
+        -----
+        **_Attention!_**
+        The example below is intended to demonstrate ease of use, but it is **_not secure_**!
+        Use this code only on the `NetworkType.TEST_NET`
 
-    def check_status(self, is_logging):
-        if self.private_key is None:
+        Example:
+        ```py
+        from nempy.user_data import AccountData
+        from nempy.engine import XYMEngine
+        from nempy.sym.network import NetworkType
+        from nempy.sym.constants import Fees
+
+        PRIVATE_KEY = '<YOUR_PRIVATE_KEY>'
+        PASSWORD = '<YOUR_PASS>'
+        account = AccountData.create(PRIVATE_KEY, NetworkType.TEST_NET).encrypt(PASSWORD)
+
+        engine = XYMEngine(account)
+        entity_hash, status = engine.send_tokens(recipient_address='TDPFLBK4NSCKUBGAZDWQWCUFNJOJB33Y5R5AWPQ',
+                                                 mosaics=[('@symbol.xym', 0.1), ],
+                                                 message='Hallo NEM!',
+                                                 password=PASSWORD,
+                                                 fee_type=Fees.SLOWEST)
+        print(status.name, status.value)
+        ```
+        """
+        recipient_address = recipient_address.replace("-", "")
+        mosaics = [
+            sym.Mosaic(mosaic_id=mosaic[0], amount=mosaic[1]) for mosaic in mosaics
+        ]
+        if is_encrypted:
+            address_info = network.get_accounts_info(address=recipient_address)
+            if address_info is None:
+                return None, EngineStatusCode.INVALID_ACCOUNT_INFO
+            public_key = address_info["account"]["publicKey"]
+            message = sym.EncryptMessage(
+                message, self.account.decrypt(password).private_key, public_key
+            )
+        else:
+            message = sym.PlainMessage(message)
+        entity_hash, payload = self.transaction.create(
+            pr_key=self.account.decrypt(password).private_key,
+            recipient_address=recipient_address,
+            mosaics=mosaics,
+            message=message,
+            deadline=deadline,
+            fee_type=fee_type,
+        )
+        is_sent = network.send_transaction(payload)
+        if is_sent:
+            return entity_hash, EngineStatusCode.ACCEPTED
+        return None, EngineStatusCode.ANNOUNCE_ERROR
+
+    def check_status(self) -> BlockchainStatuses:
+        """ Checking the status of a blockchain node
+
+        Returns:
+            BlockchainStatuses with detailed status description
+        """
+        if self.account is None:
             return BlockchainStatuses.NOT_INITIALIZED
-        return network.NodeSelector.health(self.node_selector.url)
+        return NodeSelector.health(self.node_selector.url)
 
-    def get_balance(self, nem_address, test=False):
-        amount, status_code = network.get_balance(nem_address)
-        return amount, status_code
+    def get_balance(self, nem_address: str = "", humanization: bool = False) -> Dict[str, float]:
+        """
+        Gets account balance
+
+        Parameters
+        ----------
+        nem_address
+            If the account address is specified, then the balance of this account is returned.
+            Otherwise, the balance of the current account is returned
+        humanization
+            Specifies whether to translate mosaic IDs into friendly names (linked namespaces)
+        Returns
+        -------
+        Dict[str, float]
+            A dictionary with the name or identifier of the mosaic and its amount . For example:
+        ```py
+        {
+            "symbol.xym": "100.00"
+        }
+        ```
+        """
+        if not nem_address:
+            nem_address = self.account.address
+        amount = network.get_balance(nem_address)
+        if humanization:
+            amount = XYMEngine.mosaic_humanization(amount)
+        return amount
 
     @staticmethod
-    def check_transaction_confirmation(transaction_hash):
-        return network.check_transaction_confirmation(transaction_hash)
+    def mosaic_humanization(mosaics: Dict[str, float]) -> Dict[str, float]:
+        """Translates mosaic IDs into friendly names (linked namespaces)
+
+        Parameters
+        ----------
+        mosaics
+            A dictionary in which the key is the identifier of the mosaic and the value is its number. For example:
+        ```py
+        {
+            "091F837E059AE13C": "100.00"
+        }
+        ```
+        Returns
+        -------
+        Dict[str, float]
+            A dictionary with the name or identifier of the mosaic and its amount . For example:
+        ```py
+        {
+            "symbol.xym": "100.00"
+        }
+        ```
+
+        """
+        mosaics_ids = list(mosaics.keys())
+        mosaic_names = network.get_mosaic_names(mosaics_ids)
+        if mosaic_names is not None:
+            mosaic_names = mosaic_names["mosaicNames"]
+            rf_mosaic_names = {
+                mn.get("mosaicId"): mn.get("names")[0]
+                for mn in mosaic_names
+                if len(mn.get("names"))
+            }
+            named_mosaic = {
+                rf_mosaic_names.get(m_id, m_id): mosaics[m_id] for m_id in mosaics_ids
+            }
+            return named_mosaic
+        else:
+            return mosaics
+
+    @staticmethod
+    def check_transaction_confirmation(transaction_hash) -> TransactionStatus:
+        """
+        Determines the current status of a transaction by its hash
+
+        Parameters
+        ----------
+        transaction_hash
+            Transaction hash as string hexadecimal representation
+
+        Returns
+        -------
+        TransactionStatus
+            One of the transaction statuses
+        ```py
+        TransactionStatus.NOT_FOUND
+        TransactionStatus.UNCONFIRMED_ADDED
+        TransactionStatus.CONFIRMED_ADDED
+        TransactionStatus.PARTIAL_ADDED
+        ```
+        """
+        return network.check_transaction_state(transaction_hash)
