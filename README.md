@@ -9,7 +9,7 @@
 
 
 
-High-level python wrapper for working with cryptocurrencies of the NEM ecosystem (Currently only work with Symbol is supported)
+High-level python wrapper for working with NEM cryptocurrencies ecosystem (only Symbol supported)
 
 Implemented on the basis symbol project [core sdk python library](https://github.com/symbol/symbol-sdk-core-python)
 ## Possibilities
@@ -20,12 +20,12 @@ Implemented on the basis symbol project [core sdk python library](https://github
 
 ## Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+This is an example of how you can set up your project locally. 
+For up and running the wrapper locally please follow the next simple example steps.
 
 ### Prerequisites
 
-For convenient work with the project, you will need [pipenv tool](https://pypi.org/project/pipenv/).
+To work with the project, you will need [pipenv tool](https://pypi.org/project/pipenv/).
   ```shell
   pip install pipenv
   ```
@@ -39,7 +39,7 @@ Install and update using pip:
 
 **_Attention!_**
 
-The example below is intended to demonstrate ease of use, but it is **_not secure_**! Use this code only on the `NetworkType.TEST_NET`
+The example below is intended to demonstrate the ease of use, but it is **_not secure_**! Use this code only on the `NetworkType.TEST_NET`
 ```python
 from nempy.user_data import AccountData
 from nempy.engine import XYMEngine
