@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-symbol-sdk-core-python = "==1.0.1"
+symbol-sdk-core-python = "==1.0.3"
 websockets = "==9.1"
 click = "==7.1.2"
 pycryptodomex = "==3.10.1"
