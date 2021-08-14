@@ -1,0 +1,2732 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>nempy.sym.network API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>nempy.sym.network</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import asyncio
+import datetime
+import json
+import logging
+import multiprocessing
+import threading
+import time
+import re
+from base64 import b32encode
+from binascii import unhexlify
+from http import HTTPStatus
+from typing import Optional, Union, List, Callable, Dict
+from urllib.parse import urlparse
+from requests.exceptions import RequestException
+
+import requests
+import websockets
+from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TIME_MAINNET, NetworkType, \
+    TransactionTypes, AccountValidationState
+from pydantic import BaseModel, StrictInt, StrictFloat
+from symbolchain.core.CryptoTypes import Hash256
+from symbolchain.core.facade.SymFacade import SymFacade
+from tabulate import tabulate
+from websockets import exceptions
+
+from . import ed25519, constants, config
+from .constants import TransactionStatus
+
+logger = logging.getLogger(__name__)
+
+
+class SymbolNetworkException(Exception):
+    &#34;&#34;&#34;Is one exception for the convenience of working with the blockchain network&#34;&#34;&#34;
+    codes = {
+        &#39;ResourceNotFound&#39;: 404,
+        &#39;InvalidAddress&#39;: 409,
+        &#39;InvalidArgument&#39;: 409,
+        &#39;InvalidContent&#39;: 400,
+        &#39;Internal&#39;: 500,
+    }
+
+    def __init__(self, code, message):
+        self.code = self.codes.get(code)
+        self.name = code
+        self.message = message
+        super(SymbolNetworkException, self).__init__(f&#39;{self.code} - {self.name}&#39;, self.message)
+
+
+def url_validation(url):
+    &#34;&#34;&#34;django URL validation regex
+    Raise an exception if the url is not valid&#34;&#34;&#34;
+    regex = re.compile(
+        r&#39;^(?:http|ftp)s?://&#39;  # http:// or https://
+        r&#39;(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|&#39;  # domain...
+        r&#39;localhost|&#39;  # localhost...
+        r&#39;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})&#39;  # ...or ip
+        r&#39;(?::\d+)?&#39;  # optional port
+        r&#39;(?:/?|[/?]\S+)$&#39;, re.IGNORECASE)
+    if re.match(regex, url) is None:
+        raise ValueError(f&#39;`{url}` is not a valid URL&#39;)
+
+
+def mosaic_id_to_name_n_real(mosaic_id: str, amount: int) -&gt; Dict[str, float]:
+    &#34;&#34;&#34;
+    Converts mosaic identifiers to names and integer numbers to real numbers.
+
+    Parameters
+    ----------
+    mosaic_id
+        Mosaic ID as string
+    amount
+        Mosaic units in Symbol are defined as absolute amounts. To get an absolute amount,
+        multiply the amount of assets you want to create or send by 10^divisibility.
+        For example, if the mosaic has divisibility 2, to create or send 10 units (relative)
+        you should define 1,000 (absolute) instead.
+    Returns
+    -------
+    Dict[str, float]
+        A dictionary with a name and a real amount value. For example
+    ```py
+    {&#39;id&#39;: &#39;symbol.xym&#39;, &#39;amount&#39;: 1.1}
+    ```
+    &#34;&#34;&#34;
+    if not isinstance(amount, int):
+        raise TypeError(&#39;To avoid confusion, automatic conversion to integer is prohibited&#39;)
+    divisibility = get_divisibility(mosaic_id)
+    divider = 10 ** int(divisibility)
+    mn = get_mosaic_names(mosaic_id)
+    name = mosaic_id
+    names = mn[&#39;mosaicNames&#39;][0][&#39;names&#39;]
+    if len(names) &gt; 0:
+        name = names[0]
+    return {&#39;id&#39;: name, &#39;amount&#39;: float(amount / divider)}
+
+
+class Meta(BaseModel):
+    &#34;&#34;&#34;Transaction meta information&#34;&#34;&#34;
+    height: int
+    hash: str
+    merkleComponentHash: str
+    index: int
+
+
+class MosaicInfo(BaseModel):
+    &#34;&#34;&#34;Mosaic information in a transaction&#34;&#34;&#34;
+    id: str
+    amount: Union[StrictInt, StrictFloat]
+
+    def __str__(self):
+        return f&#39;{self.amount}({self.id})&#39;
+
+
+class TransactionInfo(BaseModel):
+    &#34;&#34;&#34;Contains information about transactions of the blockchain network&#34;&#34;&#34;
+    size: int
+    signature: str
+    signerPublicKey: str
+    version: int
+    network: int
+    type: Union[int, str]
+    maxFee: int
+    deadline: Union[int, datetime.datetime]
+    recipientAddress: str
+    message: Optional[str]
+    signer_address: Optional[str]
+    mosaics: List[MosaicInfo]
+
+    def humanization(self):
+        &#34;&#34;&#34;Converts information from the blockchain into a readable form&#34;&#34;&#34;
+        self.deadline = Timing().deadline_to_date(self.deadline)
+        if self.message is not None:
+            self.message = unhexlify(self.message)[1:].decode(&#39;utf-8&#39;)
+        self.recipientAddress = b32encode(unhexlify(self.recipientAddress)).decode(&#39;utf-8&#39;)[:-1]
+        self.mosaics = [MosaicInfo(**mosaic_id_to_name_n_real(mosaic.id, mosaic.amount)) for mosaic in self.mosaics]
+        self.type = TransactionTypes.get_type_by_id(self.type).name
+        facade = SymFacade(node_selector.network_type.value)
+        self.signer_address = str(facade.network.public_key_to_address(Hash256(self.signerPublicKey)))
+
+
+class TransactionResponse(BaseModel):
+    id: str
+    meta: Meta
+    transaction: TransactionInfo
+    status: Optional[str]
+
+    def __str__(self):
+        if self.transaction.signer_address.startswith(&#39;T&#39;):
+            test_net_explorer = &#39;http://explorer.testnet.symboldev.network/transactions/&#39;
+        else:
+            test_net_explorer = &#39;http://explorer.symbolblockchain.io/transactions/&#39;
+        prepare = list()
+        mosaics = [str(mosaic) for mosaic in self.transaction.mosaics]
+        mosaics = &#39;\n&#39;.join(mosaics)
+        prepare.append([&#39;Type:&#39;, self.transaction.type.title()])
+        prepare.append([&#39;Status:&#39;, self.status.title()])
+        prepare.append([&#39;Hash:&#39;, f&#39;{test_net_explorer}{self.meta.hash}&#39;])
+        prepare.append([&#39;Paid Fee:&#39;, f&#39;{self.transaction.maxFee / 1000000}(XYM)&#39;])
+        prepare.append([&#39;Height:&#39;, self.meta.height])
+        prepare.append([&#39;Deadline:&#39;, self.transaction.deadline])
+        prepare.append([&#39;Signature:&#39;, self.transaction.signature])
+        prepare.append([&#39;Signer Public Key:&#39;, self.transaction.signerPublicKey])
+        prepare.append([&#39;From:&#39;, self.transaction.signer_address])
+        prepare.append([&#39;To:&#39;, self.transaction.recipientAddress])
+        prepare.append([&#39;Mosaic:&#39;, mosaics])
+        prepare.append([&#39;Message:&#39;, self.transaction.message])
+        table = tabulate(prepare, headers=[&#39;Property&#39;, &#39;Value&#39;], tablefmt=&#39;grid&#39;)
+        return table
+
+
+def send_transaction(payload: bytes) -&gt; bool:
+    &#34;&#34;&#34;Announces a transaction to the network&#34;&#34;&#34;
+    try:
+        headers = {&#39;Content-type&#39;: &#39;application/json&#39;}
+        answer = requests.put(f&#39;{node_selector.url}/transactions&#39;, data=payload, headers=headers, timeout=10)
+        if answer.status_code != HTTPStatus.ACCEPTED:
+            raise SymbolNetworkException(**answer.json())
+    except (RequestException, SymbolNetworkException) as e:
+        logger.exception(e)
+        return False
+    else:
+        return True
+
+
+def get_mosaic_names(mosaics_ids: Union[list, str]) -&gt; Optional[dict]:
+    &#34;&#34;&#34;
+    Get readable names for a set of mosaics.
+
+    Parameters
+    ----------
+    mosaics_ids
+        IDs of mosaic as list or str if there is only one mosaic
+    Returns
+    -------
+    Optional[Dict[str, list]]
+        dict of mosaics. For example:
+    ```py
+    {&#34;mosaicNames&#34;: [{&#34;mosaicId&#34;: &#34;091F837E059AE13C&#34;, &#34;names&#34;: [&#34;symbol.xym&#34;]}]}
+    ```
+    &#34;&#34;&#34;
+    if isinstance(mosaics_ids, str):
+        mosaics_ids = [mosaics_ids]
+    try:
+        for mosaic_id in mosaics_ids:
+            if not ed25519.check_hex(mosaic_id, constants.HexSequenceSizes.MOSAIC_ID):
+                raise SymbolNetworkException(&#39;InvalidArgument&#39;, f&#39;mosaicId `{mosaic_id}` has an invalid format&#39;)
+        payload = {&#39;mosaicIds&#39;: mosaics_ids}
+        headers = {&#39;Content-type&#39;: &#39;application/json&#39;}
+        answer = requests.post(f&#39;{node_selector.url}/namespaces/mosaic/names&#39;, json=payload, headers=headers, timeout=10)
+        if answer.status_code != HTTPStatus.OK:
+            raise SymbolNetworkException(**answer.json())
+    except (RequestException, SymbolNetworkException) as e:
+        logger.exception(e)
+        raise
+    else:
+        return answer.json()
+
+
+def get_accounts_info(address: str) -&gt; Optional[dict]:
+    try:
+        if (avs := ed25519.check_address(address)) != AccountValidationState.OK:
+            raise SymbolNetworkException(&#39;InvalidAddress&#39;, f&#39;Incorrect account address: `{address}`: {avs}&#39;)
+        endpoint = f&#39;{node_selector.url}/accounts/{address}&#39;
+        answer = requests.get(endpoint)
+        if answer.status_code != HTTPStatus.OK:
+            return None
+    except RequestException as e:
+        logger.exception(e)
+        raise
+    except SymbolNetworkException as e:
+        logger.exception(e)
+        raise
+    else:
+        return answer.json()
+
+
+def search_transactions(address: Optional[str] = None,
+                        recipient_address: Optional[str] = None,
+                        signer_public_key: Optional[str] = None,
+                        height: Optional[int] = None,
+                        from_height: Optional[int] = None,
+                        to_height: Optional[str] = None,
+                        from_transfer_amount: Optional[str] = None,
+                        to_transfer_amount: Optional[str] = None,
+                        type: int = 16724,
+                        embedded: bool = False,
+                        transfer_mosaic_id: Optional[str] = None,
+                        page_size: int = 10,
+                        page_number: int = 1,
+                        offset: Optional[str] = None,
+                        order: str = &#39;desc&#39;,
+                        transaction_status: TransactionStatus = TransactionStatus.CONFIRMED_ADDED
+                        ) -&gt; Optional[list]:
+    params = {
+        &#39;address&#39;: address,
+        &#39;recipientAddress&#39;: recipient_address,
+        &#39;signerPublicKey&#39;: signer_public_key,
+        &#39;height&#39;: height,
+        &#39;fromHeight&#39;: from_height,
+        &#39;toHeight&#39;: to_height,
+        &#39;fromTransferAmount&#39;: from_transfer_amount,
+        &#39;toTransferAmount&#39;: to_transfer_amount,
+        &#39;type&#39;: type,
+        &#39;embedded&#39;: str(embedded).lower(),
+        &#39;transferMosaicId&#39;: transfer_mosaic_id,
+        &#39;pageSize&#39;: page_size,
+        &#39;pageNumber&#39;: page_number,
+        &#39;offset&#39;: offset,
+        &#39;order&#39;: order
+    }
+    payload = {key: val for key, val in params.items() if val is not None}
+    endpoint = f&#39;{node_selector.url}/transactions/{transaction_status.value}&#39;
+    try:
+        answer = requests.get(endpoint, params=payload)
+        if answer.status_code != HTTPStatus.OK:
+            raise SymbolNetworkException(**answer.json())
+    except RequestException as e:
+        logger.exception(e)
+        raise
+    except SymbolNetworkException as e:
+        logger.exception(e)
+        raise
+    transactions = answer.json()
+    transactions_response = []
+    for transaction in transactions[&#39;data&#39;]:
+        mosaics = [MosaicInfo(id=mosaic[&#39;id&#39;], amount=int(mosaic[&#39;amount&#39;])) for mosaic in transaction[&#39;transaction&#39;][&#39;mosaics&#39;]]
+        del(transaction[&#39;transaction&#39;][&#39;mosaics&#39;])
+        _transaction = TransactionResponse(id=transaction[&#39;id&#39;],
+                                           meta=Meta(**transaction[&#39;meta&#39;]),
+                                           transaction=TransactionInfo(mosaics=mosaics, **transaction[&#39;transaction&#39;])
+                                           )
+        _transaction.status = transaction_status.value
+        transactions_response.append(_transaction)
+        _transaction.transaction.humanization()
+    return transactions_response
+
+
+def get_namespace_info(namespace_id: str) -&gt; Optional[dict]:
+    endpoint = f&#39;{node_selector.url}/namespaces/{namespace_id}&#39;
+    try:
+        answer = requests.get(endpoint)
+    except Exception as e:
+        logger.error(e)
+        return None
+    if answer.status_code != HTTPStatus.OK:
+        logger.error(answer.text)
+        if answer.status_code == HTTPStatus.NOT_FOUND:
+            logger.error(f&#39;Invalid namespace ID `{namespace_id}`&#39;)
+            return {}
+        return None
+    namespace_info = answer.json()
+    return namespace_info
+
+
+def check_transaction_state(transaction_hash):
+    timeout = 10
+    check_order = [&#39;confirmed&#39;, &#39;unconfirmed&#39;, &#39;partial&#39;]
+    status = TransactionStatus.NOT_FOUND
+    for checker in check_order:
+        endpoint = f&#39;{node_selector.url}/transactions/{checker}/{transaction_hash}&#39;
+        try:
+            answer = requests.get(endpoint, timeout=timeout)
+            if answer.status_code != 200:
+                raise SymbolNetworkException(**answer.json())
+        except (RequestException, SymbolNetworkException) as e:
+            if isinstance(e, SymbolNetworkException) and e.code == 404:
+                return TransactionStatus.NOT_FOUND
+            logger.exception(e)
+            raise
+        else:
+            if checker == &#39;confirmed&#39;:
+                status = TransactionStatus.CONFIRMED_ADDED
+            elif checker == &#39;unconfirmed&#39;:
+                status = TransactionStatus.UNCONFIRMED_ADDED
+            elif checker == &#39;partial&#39;:
+                status = TransactionStatus.PARTIAL_ADDED
+        return status
+
+
+def get_network_properties():
+    answer = requests.get(f&#39;{node_selector.url}/network/properties&#39;)
+    if answer.status_code == HTTPStatus.OK:
+        network_properties = answer.json()
+        return network_properties
+    answer.raise_for_status()
+
+
+def get_node_network():
+    try:
+        answer = requests.get(f&#39;{node_selector.url}/node/info&#39;)
+    except RequestException as e:
+        logger.exception(e)
+        raise
+    if answer.status_code == HTTPStatus.OK:
+        fee_info = answer.json()
+        network_generation_hash_seed = fee_info[&#39;networkGenerationHashSeed&#39;]
+        if network_generation_hash_seed == constants.NETWORK_GENERATION_HASH_SEED_TEST:
+            return NetworkType.TEST_NET
+        elif network_generation_hash_seed == constants.NETWORK_GENERATION_HASH_SEED_PUBLIC:
+            return NetworkType.MAIN_NET
+        else:
+            return None
+    answer.raise_for_status()
+
+
+def get_block_information(height: int):
+    answer = requests.get(f&#39;{node_selector.url}/blocks/{height}&#39;)
+    if answer.status_code == HTTPStatus.OK:
+        block_info = answer.json()
+        return block_info
+    answer.raise_for_status()
+
+
+def get_fee_multipliers():
+    try:
+        answer = requests.get(f&#39;{node_selector.url}/network/fees/transaction&#39;)
+    except RequestException as e:
+        logger.exception(e)
+        return None
+    if answer.status_code == HTTPStatus.OK:
+        fee_multipliers = answer.json()
+        return fee_multipliers
+    return None
+
+
+def get_divisibility(mosaic_id: str) -&gt; Optional[int]:
+    try:
+        if not ed25519.check_hex(mosaic_id, constants.HexSequenceSizes.MOSAIC_ID):
+            raise SymbolNetworkException(&#39;InvalidArgument&#39;, f&#39;mosaicId `{mosaic_id}` has an invalid format&#39;)
+        answer = requests.get(f&#39;{node_selector.url}/mosaics/{mosaic_id}&#39;)
+        if answer.status_code == HTTPStatus.OK:
+            node_info = answer.json()
+            divisibility = int(node_info[&#39;mosaic&#39;][&#39;divisibility&#39;])
+        else:
+            raise SymbolNetworkException(**answer.json())
+    except RequestException as e:
+        logger.exception(e)
+        raise
+    except SymbolNetworkException as e:
+        logger.exception(e)
+        raise
+    else:
+        return divisibility
+
+
+def get_divisibilities(n_pages: int = 0):
+    mosaics = {}
+    payload = {&#39;pageSize&#39;: 100}
+
+    page_count = 1
+    while True:
+        try:
+            answer = requests.get(f&#39;{node_selector.url}/mosaics&#39;, params=payload)
+        except Exception as e:
+            logger.error(e)
+            return None
+        if answer.status_code == HTTPStatus.OK:
+            mosaics_pages = answer.json()[&#39;data&#39;]
+            if len(mosaics_pages) == 0:
+                return mosaics
+            last_page = None
+            for page in mosaics_pages:
+                mosaic_id = page[&#39;mosaic&#39;][&#39;id&#39;]
+                divisibility = page[&#39;mosaic&#39;][&#39;divisibility&#39;]
+                mosaics[mosaic_id] = divisibility
+                last_page = page
+            payload[&#39;offset&#39;] = last_page[&#39;id&#39;]
+            page_count = page_count + 1 if n_pages else page_count
+            if page_count &gt; n_pages:
+                return mosaics
+
+
+def get_balance(address: str) -&gt; Optional[dict]:
+    try:
+        address_info = get_accounts_info(address)
+        if address_info is None:
+            return {}
+        mosaics = address_info[&#39;account&#39;][&#39;mosaics&#39;]
+        balance = {mosaic[&#39;id&#39;]: int(mosaic[&#39;amount&#39;]) / 10 ** get_divisibility(mosaic[&#39;id&#39;]) for mosaic in mosaics}
+    except (SymbolNetworkException, RequestException) as e:
+        if isinstance(e, SymbolNetworkException) and e.code == 404:
+            return {}
+        raise
+    else:
+        return balance
+
+
+class Monitor:
+    &#34;&#34;&#34;Allows you to subscribe to events on the blockchain network&#34;&#34;&#34;
+    where_to_subscribe = {
+            &#39;confirmedAdded&#39;: &#39;address&#39;,
+            &#39;unconfirmedAdded&#39;: &#39;address&#39;,
+            &#39;unconfirmedRemoved&#39;: &#39;address&#39;,
+            &#39;partialAdded&#39;: &#39;address&#39;,
+            &#39;partialRemoved&#39;: &#39;address&#39;,
+            &#39;cosignature&#39;: &#39;address&#39;,
+            &#39;status&#39;: &#39;address&#39;,
+            &#39;block&#39;: None,
+            &#39;finalizedBlock&#39;: None
+    }
+
+    def __init__(self,
+                 url: str,
+                 subscribers: List[str],
+                 formatting: bool = False,
+                 log: str = &#39;&#39;,
+                 callback: Optional[Callable] = None):
+        self.url = url
+        self.subscribers = subscribers
+        self.formatting = formatting
+        self.log = log
+        self.callback = callback
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.monitoring())
+
+    async def monitoring(self):
+        result = urlparse(self.url)
+        url = f&#34;ws://{result.hostname}:{result.port}/ws&#34;
+        print(f&#39;MONITORING: {url}&#39;)
+        try:
+            async with websockets.connect(url) as ws:
+                response = json.loads(await ws.recv())
+                print(f&#39;UID: {response[&#34;uid&#34;]}&#39;)
+                if &#39;uid&#39; in response:
+                    prepare = []
+                    for subscriber in self.subscribers:
+                        added = json.dumps({&#34;uid&#34;: response[&#34;uid&#34;], &#34;subscribe&#34;: f&#34;{subscriber}&#34;})
+                        await ws.send(added)
+                        # print(f&#39;Subscribed to: {subscriber}&#39;)
+                        prepare.append([subscriber])
+                    table = tabulate(prepare, headers=[&#39;Subscribers&#39;], tablefmt=&#39;grid&#39;)
+                    print(table)
+                    print(&#39;Listening... `Ctrl+C` for abort&#39;)
+                    while True:
+                        res = await ws.recv()
+                        if self.formatting:
+                            res = json.dumps(json.loads(res), indent=4)
+                        if self.callback is not None:
+                            self.callback(json.loads(res))
+                            continue
+                        print(res)
+                        if self.log:
+                            with open(self.log, &#39;a+&#39;) as f:
+                                res += &#39;\n&#39;
+                                f.write(res)
+        except exceptions.WebSocketException as e:
+            logger.exception(e)
+            raise
+
+
+class Timing:
+    &#34;&#34;&#34;Works with network time&#34;&#34;&#34;
+    def __init__(self, network_type: Optional[NetworkType] = None):
+        if network_type is None:
+            network_type = node_selector.network_type
+        if network_type == NetworkType.TEST_NET:
+            self.epoch_time = EPOCH_TIME_TESTNET
+        elif network_type == NetworkType.MAIN_NET:
+            self.epoch_time = EPOCH_TIME_MAINNET
+        else:
+            raise EnvironmentError(&#39;It is not possible to determine the type of network&#39;)
+
+    def calc_deadline(self, days: float = 0, seconds: float = 0, milliseconds: float = 0,
+                      minutes: float = 0, hours: float = 0, weeks: float = 0) -&gt; int:
+
+        if days + seconds + milliseconds + minutes + hours + weeks &lt;= 0:
+            raise TimeoutError(&#39;Added time must be positive otherwise the transaction will not have time to process&#39;)
+        # perhaps this code will be needed if you need to get time from a node
+        # node_info = json.loads(requests.get(endpoint).text)
+        # receive_timestamp = int(node_info[&#39;communicationTimestamps&#39;][&#39;receiveTimestamp&#39;])
+        # td = datetime.timedelta(milliseconds=receive_timestamp)
+        now = datetime.datetime.now(tz=datetime.timezone.utc)
+        td = now - self.epoch_time
+        td += datetime.timedelta(days=days, seconds=seconds,
+                                 milliseconds=milliseconds, minutes=minutes,
+                                 hours=hours, weeks=weeks)
+        deadline = int(td.total_seconds() * 1000)
+        return deadline
+
+    def deadline_to_date(self, deadline: int, is_local: bool = False) -&gt; datetime:
+        def utc2local(utc):
+            utc_epoch = time.mktime(utc.timetuple())
+            offset = datetime.datetime.fromtimestamp(utc_epoch) - datetime.datetime.utcfromtimestamp(utc_epoch)
+            return utc + offset
+
+        deadline = int(deadline)
+        epoch_timestamp = datetime.datetime.timestamp(self.epoch_time)
+        deadline_date_utc = datetime.datetime.utcfromtimestamp(epoch_timestamp + deadline / 1000)
+        if is_local:
+            local_deadline_date = utc2local(deadline_date_utc)
+            return local_deadline_date
+        return deadline_date_utc
+
+
+class Thread:
+    &#34;&#34;&#34;A helper class for working with a thread, starting and stopping it by signals&#34;&#34;&#34;
+    def __init__(self):
+        self.stop_event: Optional[threading.Event] = None
+        self.thread: Optional[threading.Thread] = None
+        self.is_started = False
+        self.updated = threading.Event()
+
+    def stop(self):
+        if self.thread is not None and self.thread.is_alive():
+            self.stop_event.set()
+            self.thread.join()
+            self.is_started = False
+            logger.debug(f&#39;The node actualization thread {self.thread.name} has been stopped.&#39;)
+
+    def start(self, func: Callable, interval: int = 3600):
+        self.is_started = True
+        self.stop_event = threading.Event()
+        self.updated = threading.Event()
+        params = {&#39;interval&#39;: interval, &#39;stop_event&#39;: self.stop_event, &#39;updated&#39;: self.updated}
+        self.thread = threading.Thread(target=func, kwargs=params, daemon=True)
+        self.thread.start()
+        logger.debug(f&#39;New actualizer thread started: {self.thread.name}&#39;)
+        return self
+
+    def wait(self):
+        updated_is_set = self.updated.wait(60)
+        if not updated_is_set:
+            raise RuntimeError(&#39;Very long waiting time for node selection&#39;)
+
+
+class NodeSelector:
+    &#34;&#34;&#34;Works with a list of nodes in both the main and test networks.
+       Offline finds the best connection options and makes adjustments if conditions change.
+       Also allows you to add connections manually.
+    &#34;&#34;&#34;
+    _URL: Optional[str] = None
+    _URLs: Optional[list] = None
+    is_elections: bool = False
+    _network_type: NetworkType = NetworkType.TEST_NET
+
+    def __init__(self, node_urls: Union[List[str], str]):
+        self.thread = Thread()
+        self.url = node_urls
+
+    @property
+    def url(self):
+        while self.is_elections:
+            time.sleep(0.1)
+        return self._URL
+
+    @url.setter
+    def url(self, urls: Union[list, str]):
+        self.is_elections = True
+        self.thread.stop()
+        if isinstance(urls, str):
+            urls = [urls]
+        for url in urls:
+            url_validation(url)
+        self._URLs = urls
+        if len(self._URLs) == 1:
+            self._URL = self._URLs[0]  # setting a single URL value
+            logger.debug(f&#39;Installed node: {self._URL}&#39;)
+        else:
+            self.thread.start(self.node_actualizer, interval=3600).wait()
+        self.is_elections = False
+
+    def node_actualizer(self, interval, stop_event, updated):
+        while True:
+            self.reelection_node()
+            updated.set()
+            event_is_set = stop_event.wait(interval)
+            if event_is_set:
+                break
+
+    def reelection_node(self):
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        logger.debug(&#39;Node reselecting...&#39;)
+        heights = [NodeSelector.get_height(url) for url in self._URLs]
+        max_height = max(heights)
+        heights_filter = [True if height &gt;= max_height * 0.97 else False for height in heights]
+        # filtered by block height - 97%
+        filtered_by_height = [url for i, url in enumerate(self._URLs) if heights_filter[i]]
+        urls_p_h = {url: (NodeSelector.ping(url), NodeSelector.simple_health(url)) for url in filtered_by_height}
+        # Remove non-working nodes from the dict
+        working = {key: val for key, val in urls_p_h.items() if val[1]}
+        _sorted_URLs = [k for k, v in sorted(working.items(), key=lambda item: item[1][0])]
+        new_url = _sorted_URLs[0] if len(_sorted_URLs) &gt; 0 else None
+        if new_url != self._URL and self._URL is not None:
+            logger.warning(f&#39;Reselection node: {self._URL} -&gt; {new_url}&#39;)
+        if new_url is None:
+            logger.error(&#39;It was not possible to select the current node from the list of available ones&#39;)
+        self._URL = new_url
+        logger.debug(f&#39;Selected node: {self._URL}&#39;)
+
+    @property
+    def network_type(self):
+        return self._network_type
+
+    @network_type.setter
+    def network_type(self, network_type):
+        if network_type == self.network_type:
+            return
+        self._network_type = network_type
+        if self._network_type == NetworkType.MAIN_NET:
+            logger.debug(&#39;Switch to MAIN network&#39;)
+            self.url = config.MAIN_NODE_URLs
+        elif self._network_type == NetworkType.TEST_NET:
+            logger.debug(&#39;Switch to TEST network&#39;)
+            self.url = config.TEST_NODE_URLs
+        else:
+            raise TypeError(&#39;Unknown network type&#39;)
+
+    @staticmethod
+    def health(url) -&gt; BlockchainStatuses:
+        &#34;&#34;&#34;
+        Returns the statuses of node services
+        Parameters
+        ----------
+        url
+            URL node in the form of http://ngl-dual-001.testnet.symboldev.network:3000
+        Returns
+        -------
+        BlockchainStatuses
+            The statuses of node services
+        ```py
+        BlockchainStatuses.DB_FAILURE
+        BlockchainStatuses.NO_NODES_AVAILABLE
+        BlockchainStatuses.NOT_INITIALIZED
+        BlockchainStatuses.REST_FAILURE
+        BlockchainStatuses.OK
+        BlockchainStatuses.UNKNOWN
+        ```
+        &#34;&#34;&#34;
+        if url is None:
+            return BlockchainStatuses.NO_NODES_AVAILABLE
+        try:
+            answer = requests.get(f&#39;{url}/node/health&#39;, timeout=1)
+        except Exception as e:
+            logger.exception(e)
+            return BlockchainStatuses.REST_FAILURE
+        if answer.status_code == HTTPStatus.OK:
+            node_info = answer.json()
+            if node_info[&#39;status&#39;][&#39;apiNode&#39;] == &#39;up&#39; and node_info[&#39;status&#39;][&#39;db&#39;] == &#39;up&#39;:
+                return BlockchainStatuses.OK
+            if node_info[&#39;status&#39;][&#39;apiNode&#39;] == &#39;down&#39;:
+                return BlockchainStatuses.NODE_FAILURE
+            if node_info[&#39;status&#39;][&#39;db&#39;] == &#39;down&#39;:
+                return BlockchainStatuses.DB_FAILURE
+        return BlockchainStatuses.UNKNOWN
+
+    @staticmethod
+    def simple_health(url) -&gt; bool:
+        health_status = NodeSelector.health(url)
+        if health_status == BlockchainStatuses.OK:
+            return True
+        return False
+
+    @staticmethod
+    def get_height(url) -&gt; int:
+        &#34;&#34;&#34;
+        Returns the last block known to the node
+        Parameters
+        ----------
+        url
+            URL node in the form of http://ngl-dual-001.testnet.symboldev.network:3000
+
+        Returns
+        -------
+
+        &#34;&#34;&#34;
+        try:
+            answer = requests.get(f&#39;{url}/chain/info&#39;, timeout=1)
+        except Exception:
+            return 0
+        node_info = answer.json()
+        height = node_info[&#39;height&#39;]
+        return int(height)
+
+    @staticmethod
+    def ping(url) -&gt; Optional[float]:
+        &#34;&#34;&#34;Calculate and return a latency point using sockets&#34;&#34;&#34;
+        if multiprocessing.current_process().daemon:
+            asyncio.set_event_loop(asyncio.new_event_loop())
+        parse_result = urlparse(url)
+        loop = asyncio.get_event_loop()
+        latency = loop.run_until_complete(NodeSelector.measure_latency(host=parse_result.hostname, port=parse_result.port, runs=3))
+        if (result := len(list(filter(None, latency)))) == 0:
+            return None
+        average = sum(filter(None, latency)) / result
+        return average
+
+    @staticmethod
+    async def measure_latency(
+            host: str,
+            port: int = 443,
+            timeout: float = 5,
+            runs: int = 1,
+            wait: float = 0,
+    ) -&gt; list:
+        &#34;&#34;&#34;
+        Builds a list composed of latency_points
+        Parameters
+        ----------
+        host
+            Host name
+        port
+            Port
+        timeout
+            Server response timeout
+        runs
+            Number of attempts
+        wait
+            Delay before request
+        Returns
+        -------
+        list
+            list of latency for all runs
+        &#34;&#34;&#34;
+        tasks = []
+        latency_points = []
+        for i in range(runs):
+            await asyncio.sleep(wait)
+            tasks.append(asyncio.create_task(NodeSelector.latency_point(host=host, port=port, timeout=timeout)))
+            # last_latency_point = await latency_point(host=host, port=port, timeout=timeout)
+        for i in range(runs):
+            latency_points.append(await tasks[i])
+        return latency_points
+
+    @staticmethod
+    async def latency_point(host: str, port: int = 443, timeout: float = 5) -&gt; Optional[float]:
+        &#34;&#34;&#34;
+        Calculate a latency point using sockets. If something bad happens the point returned is None
+        Parameters
+        ----------
+        host
+            Host name
+        port
+            Port
+        timeout
+            Server response timeout
+        Returns
+        -------
+        Optional[float]
+            Returns float if possible
+        &#34;&#34;&#34;
+        # New Socket and Time out
+        # Start a timer
+        s_start = time.time()
+
+        # Try to Connect
+        uri = f&#34;ws://{host}:{port}&#34;
+        try:
+            async with websockets.connect(uri, close_timeout=timeout):
+                pass
+        except exceptions.InvalidMessage:
+            pass
+        except exceptions.InvalidStatusCode:
+            pass
+        except Exception as e:
+            logger.debug(str(e))
+            return None
+
+        # Stop Timer
+        s_runtime = (time.time() - s_start) * 1000
+        return float(s_runtime)
+
+
+# singleton for background work with the list of nodes
+node_selector = NodeSelector(config.TEST_NODE_URLs)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="nempy.sym.network.check_transaction_state"><code class="name flex">
+<span>def <span class="ident">check_transaction_state</span></span>(<span>transaction_hash)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def check_transaction_state(transaction_hash):
+    timeout = 10
+    check_order = [&#39;confirmed&#39;, &#39;unconfirmed&#39;, &#39;partial&#39;]
+    status = TransactionStatus.NOT_FOUND
+    for checker in check_order:
+        endpoint = f&#39;{node_selector.url}/transactions/{checker}/{transaction_hash}&#39;
+        try:
+            answer = requests.get(endpoint, timeout=timeout)
+            if answer.status_code != 200:
+                raise SymbolNetworkException(**answer.json())
+        except (RequestException, SymbolNetworkException) as e:
+            if isinstance(e, SymbolNetworkException) and e.code == 404:
+                return TransactionStatus.NOT_FOUND
+            logger.exception(e)
+            raise
+        else:
+            if checker == &#39;confirmed&#39;:
+                status = TransactionStatus.CONFIRMED_ADDED
+            elif checker == &#39;unconfirmed&#39;:
+                status = TransactionStatus.UNCONFIRMED_ADDED
+            elif checker == &#39;partial&#39;:
+                status = TransactionStatus.PARTIAL_ADDED
+        return status</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.get_accounts_info"><code class="name flex">
+<span>def <span class="ident">get_accounts_info</span></span>(<span>address: str) ‑> Optional[dict]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_accounts_info(address: str) -&gt; Optional[dict]:
+    try:
+        if (avs := ed25519.check_address(address)) != AccountValidationState.OK:
+            raise SymbolNetworkException(&#39;InvalidAddress&#39;, f&#39;Incorrect account address: `{address}`: {avs}&#39;)
+        endpoint = f&#39;{node_selector.url}/accounts/{address}&#39;
+        answer = requests.get(endpoint)
+        if answer.status_code != HTTPStatus.OK:
+            return None
+    except RequestException as e:
+        logger.exception(e)
+        raise
+    except SymbolNetworkException as e:
+        logger.exception(e)
+        raise
+    else:
+        return answer.json()</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.get_balance"><code class="name flex">
+<span>def <span class="ident">get_balance</span></span>(<span>address: str) ‑> Optional[dict]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_balance(address: str) -&gt; Optional[dict]:
+    try:
+        address_info = get_accounts_info(address)
+        if address_info is None:
+            return {}
+        mosaics = address_info[&#39;account&#39;][&#39;mosaics&#39;]
+        balance = {mosaic[&#39;id&#39;]: int(mosaic[&#39;amount&#39;]) / 10 ** get_divisibility(mosaic[&#39;id&#39;]) for mosaic in mosaics}
+    except (SymbolNetworkException, RequestException) as e:
+        if isinstance(e, SymbolNetworkException) and e.code == 404:
+            return {}
+        raise
+    else:
+        return balance</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.get_block_information"><code class="name flex">
+<span>def <span class="ident">get_block_information</span></span>(<span>height: int)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_block_information(height: int):
+    answer = requests.get(f&#39;{node_selector.url}/blocks/{height}&#39;)
+    if answer.status_code == HTTPStatus.OK:
+        block_info = answer.json()
+        return block_info
+    answer.raise_for_status()</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.get_divisibilities"><code class="name flex">
+<span>def <span class="ident">get_divisibilities</span></span>(<span>n_pages: int = 0)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_divisibilities(n_pages: int = 0):
+    mosaics = {}
+    payload = {&#39;pageSize&#39;: 100}
+
+    page_count = 1
+    while True:
+        try:
+            answer = requests.get(f&#39;{node_selector.url}/mosaics&#39;, params=payload)
+        except Exception as e:
+            logger.error(e)
+            return None
+        if answer.status_code == HTTPStatus.OK:
+            mosaics_pages = answer.json()[&#39;data&#39;]
+            if len(mosaics_pages) == 0:
+                return mosaics
+            last_page = None
+            for page in mosaics_pages:
+                mosaic_id = page[&#39;mosaic&#39;][&#39;id&#39;]
+                divisibility = page[&#39;mosaic&#39;][&#39;divisibility&#39;]
+                mosaics[mosaic_id] = divisibility
+                last_page = page
+            payload[&#39;offset&#39;] = last_page[&#39;id&#39;]
+            page_count = page_count + 1 if n_pages else page_count
+            if page_count &gt; n_pages:
+                return mosaics</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.get_divisibility"><code class="name flex">
+<span>def <span class="ident">get_divisibility</span></span>(<span>mosaic_id: str) ‑> Optional[int]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_divisibility(mosaic_id: str) -&gt; Optional[int]:
+    try:
+        if not ed25519.check_hex(mosaic_id, constants.HexSequenceSizes.MOSAIC_ID):
+            raise SymbolNetworkException(&#39;InvalidArgument&#39;, f&#39;mosaicId `{mosaic_id}` has an invalid format&#39;)
+        answer = requests.get(f&#39;{node_selector.url}/mosaics/{mosaic_id}&#39;)
+        if answer.status_code == HTTPStatus.OK:
+            node_info = answer.json()
+            divisibility = int(node_info[&#39;mosaic&#39;][&#39;divisibility&#39;])
+        else:
+            raise SymbolNetworkException(**answer.json())
+    except RequestException as e:
+        logger.exception(e)
+        raise
+    except SymbolNetworkException as e:
+        logger.exception(e)
+        raise
+    else:
+        return divisibility</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.get_fee_multipliers"><code class="name flex">
+<span>def <span class="ident">get_fee_multipliers</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_fee_multipliers():
+    try:
+        answer = requests.get(f&#39;{node_selector.url}/network/fees/transaction&#39;)
+    except RequestException as e:
+        logger.exception(e)
+        return None
+    if answer.status_code == HTTPStatus.OK:
+        fee_multipliers = answer.json()
+        return fee_multipliers
+    return None</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.get_mosaic_names"><code class="name flex">
+<span>def <span class="ident">get_mosaic_names</span></span>(<span>mosaics_ids: Union[list, str]) ‑> Optional[dict]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get readable names for a set of mosaics.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>mosaics_ids</code></strong></dt>
+<dd>IDs of mosaic as list or str if there is only one mosaic</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Optional[Dict[str, list]]</code></dt>
+<dd>dict of mosaics. For example:</dd>
+</dl>
+<pre><code class="language-py">{&quot;mosaicNames&quot;: [{&quot;mosaicId&quot;: &quot;091F837E059AE13C&quot;, &quot;names&quot;: [&quot;symbol.xym&quot;]}]}
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_mosaic_names(mosaics_ids: Union[list, str]) -&gt; Optional[dict]:
+    &#34;&#34;&#34;
+    Get readable names for a set of mosaics.
+
+    Parameters
+    ----------
+    mosaics_ids
+        IDs of mosaic as list or str if there is only one mosaic
+    Returns
+    -------
+    Optional[Dict[str, list]]
+        dict of mosaics. For example:
+    ```py
+    {&#34;mosaicNames&#34;: [{&#34;mosaicId&#34;: &#34;091F837E059AE13C&#34;, &#34;names&#34;: [&#34;symbol.xym&#34;]}]}
+    ```
+    &#34;&#34;&#34;
+    if isinstance(mosaics_ids, str):
+        mosaics_ids = [mosaics_ids]
+    try:
+        for mosaic_id in mosaics_ids:
+            if not ed25519.check_hex(mosaic_id, constants.HexSequenceSizes.MOSAIC_ID):
+                raise SymbolNetworkException(&#39;InvalidArgument&#39;, f&#39;mosaicId `{mosaic_id}` has an invalid format&#39;)
+        payload = {&#39;mosaicIds&#39;: mosaics_ids}
+        headers = {&#39;Content-type&#39;: &#39;application/json&#39;}
+        answer = requests.post(f&#39;{node_selector.url}/namespaces/mosaic/names&#39;, json=payload, headers=headers, timeout=10)
+        if answer.status_code != HTTPStatus.OK:
+            raise SymbolNetworkException(**answer.json())
+    except (RequestException, SymbolNetworkException) as e:
+        logger.exception(e)
+        raise
+    else:
+        return answer.json()</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.get_namespace_info"><code class="name flex">
+<span>def <span class="ident">get_namespace_info</span></span>(<span>namespace_id: str) ‑> Optional[dict]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_namespace_info(namespace_id: str) -&gt; Optional[dict]:
+    endpoint = f&#39;{node_selector.url}/namespaces/{namespace_id}&#39;
+    try:
+        answer = requests.get(endpoint)
+    except Exception as e:
+        logger.error(e)
+        return None
+    if answer.status_code != HTTPStatus.OK:
+        logger.error(answer.text)
+        if answer.status_code == HTTPStatus.NOT_FOUND:
+            logger.error(f&#39;Invalid namespace ID `{namespace_id}`&#39;)
+            return {}
+        return None
+    namespace_info = answer.json()
+    return namespace_info</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.get_network_properties"><code class="name flex">
+<span>def <span class="ident">get_network_properties</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_network_properties():
+    answer = requests.get(f&#39;{node_selector.url}/network/properties&#39;)
+    if answer.status_code == HTTPStatus.OK:
+        network_properties = answer.json()
+        return network_properties
+    answer.raise_for_status()</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.get_node_network"><code class="name flex">
+<span>def <span class="ident">get_node_network</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_node_network():
+    try:
+        answer = requests.get(f&#39;{node_selector.url}/node/info&#39;)
+    except RequestException as e:
+        logger.exception(e)
+        raise
+    if answer.status_code == HTTPStatus.OK:
+        fee_info = answer.json()
+        network_generation_hash_seed = fee_info[&#39;networkGenerationHashSeed&#39;]
+        if network_generation_hash_seed == constants.NETWORK_GENERATION_HASH_SEED_TEST:
+            return NetworkType.TEST_NET
+        elif network_generation_hash_seed == constants.NETWORK_GENERATION_HASH_SEED_PUBLIC:
+            return NetworkType.MAIN_NET
+        else:
+            return None
+    answer.raise_for_status()</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.mosaic_id_to_name_n_real"><code class="name flex">
+<span>def <span class="ident">mosaic_id_to_name_n_real</span></span>(<span>mosaic_id: str, amount: int) ‑> Dict[str, float]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts mosaic identifiers to names and integer numbers to real numbers.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>mosaic_id</code></strong></dt>
+<dd>Mosaic ID as string</dd>
+<dt><strong><code>amount</code></strong></dt>
+<dd>Mosaic units in Symbol are defined as absolute amounts. To get an absolute amount,
+multiply the amount of assets you want to create or send by 10^divisibility.
+For example, if the mosaic has divisibility 2, to create or send 10 units (relative)
+you should define 1,000 (absolute) instead.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict[str, float]</code></dt>
+<dd>A dictionary with a name and a real amount value. For example</dd>
+</dl>
+<pre><code class="language-py">{'id': 'symbol.xym', 'amount': 1.1}
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def mosaic_id_to_name_n_real(mosaic_id: str, amount: int) -&gt; Dict[str, float]:
+    &#34;&#34;&#34;
+    Converts mosaic identifiers to names and integer numbers to real numbers.
+
+    Parameters
+    ----------
+    mosaic_id
+        Mosaic ID as string
+    amount
+        Mosaic units in Symbol are defined as absolute amounts. To get an absolute amount,
+        multiply the amount of assets you want to create or send by 10^divisibility.
+        For example, if the mosaic has divisibility 2, to create or send 10 units (relative)
+        you should define 1,000 (absolute) instead.
+    Returns
+    -------
+    Dict[str, float]
+        A dictionary with a name and a real amount value. For example
+    ```py
+    {&#39;id&#39;: &#39;symbol.xym&#39;, &#39;amount&#39;: 1.1}
+    ```
+    &#34;&#34;&#34;
+    if not isinstance(amount, int):
+        raise TypeError(&#39;To avoid confusion, automatic conversion to integer is prohibited&#39;)
+    divisibility = get_divisibility(mosaic_id)
+    divider = 10 ** int(divisibility)
+    mn = get_mosaic_names(mosaic_id)
+    name = mosaic_id
+    names = mn[&#39;mosaicNames&#39;][0][&#39;names&#39;]
+    if len(names) &gt; 0:
+        name = names[0]
+    return {&#39;id&#39;: name, &#39;amount&#39;: float(amount / divider)}</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.search_transactions"><code class="name flex">
+<span>def <span class="ident">search_transactions</span></span>(<span>address: Optional[str] = None, recipient_address: Optional[str] = None, signer_public_key: Optional[str] = None, height: Optional[int] = None, from_height: Optional[int] = None, to_height: Optional[str] = None, from_transfer_amount: Optional[str] = None, to_transfer_amount: Optional[str] = None, type: int = 16724, embedded: bool = False, transfer_mosaic_id: Optional[str] = None, page_size: int = 10, page_number: int = 1, offset: Optional[str] = None, order: str = 'desc', transaction_status: <a title="nempy.sym.constants.TransactionStatus" href="constants.html#nempy.sym.constants.TransactionStatus">TransactionStatus</a> = TransactionStatus.CONFIRMED_ADDED) ‑> Optional[list]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def search_transactions(address: Optional[str] = None,
+                        recipient_address: Optional[str] = None,
+                        signer_public_key: Optional[str] = None,
+                        height: Optional[int] = None,
+                        from_height: Optional[int] = None,
+                        to_height: Optional[str] = None,
+                        from_transfer_amount: Optional[str] = None,
+                        to_transfer_amount: Optional[str] = None,
+                        type: int = 16724,
+                        embedded: bool = False,
+                        transfer_mosaic_id: Optional[str] = None,
+                        page_size: int = 10,
+                        page_number: int = 1,
+                        offset: Optional[str] = None,
+                        order: str = &#39;desc&#39;,
+                        transaction_status: TransactionStatus = TransactionStatus.CONFIRMED_ADDED
+                        ) -&gt; Optional[list]:
+    params = {
+        &#39;address&#39;: address,
+        &#39;recipientAddress&#39;: recipient_address,
+        &#39;signerPublicKey&#39;: signer_public_key,
+        &#39;height&#39;: height,
+        &#39;fromHeight&#39;: from_height,
+        &#39;toHeight&#39;: to_height,
+        &#39;fromTransferAmount&#39;: from_transfer_amount,
+        &#39;toTransferAmount&#39;: to_transfer_amount,
+        &#39;type&#39;: type,
+        &#39;embedded&#39;: str(embedded).lower(),
+        &#39;transferMosaicId&#39;: transfer_mosaic_id,
+        &#39;pageSize&#39;: page_size,
+        &#39;pageNumber&#39;: page_number,
+        &#39;offset&#39;: offset,
+        &#39;order&#39;: order
+    }
+    payload = {key: val for key, val in params.items() if val is not None}
+    endpoint = f&#39;{node_selector.url}/transactions/{transaction_status.value}&#39;
+    try:
+        answer = requests.get(endpoint, params=payload)
+        if answer.status_code != HTTPStatus.OK:
+            raise SymbolNetworkException(**answer.json())
+    except RequestException as e:
+        logger.exception(e)
+        raise
+    except SymbolNetworkException as e:
+        logger.exception(e)
+        raise
+    transactions = answer.json()
+    transactions_response = []
+    for transaction in transactions[&#39;data&#39;]:
+        mosaics = [MosaicInfo(id=mosaic[&#39;id&#39;], amount=int(mosaic[&#39;amount&#39;])) for mosaic in transaction[&#39;transaction&#39;][&#39;mosaics&#39;]]
+        del(transaction[&#39;transaction&#39;][&#39;mosaics&#39;])
+        _transaction = TransactionResponse(id=transaction[&#39;id&#39;],
+                                           meta=Meta(**transaction[&#39;meta&#39;]),
+                                           transaction=TransactionInfo(mosaics=mosaics, **transaction[&#39;transaction&#39;])
+                                           )
+        _transaction.status = transaction_status.value
+        transactions_response.append(_transaction)
+        _transaction.transaction.humanization()
+    return transactions_response</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.send_transaction"><code class="name flex">
+<span>def <span class="ident">send_transaction</span></span>(<span>payload: bytes) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Announces a transaction to the network</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def send_transaction(payload: bytes) -&gt; bool:
+    &#34;&#34;&#34;Announces a transaction to the network&#34;&#34;&#34;
+    try:
+        headers = {&#39;Content-type&#39;: &#39;application/json&#39;}
+        answer = requests.put(f&#39;{node_selector.url}/transactions&#39;, data=payload, headers=headers, timeout=10)
+        if answer.status_code != HTTPStatus.ACCEPTED:
+            raise SymbolNetworkException(**answer.json())
+    except (RequestException, SymbolNetworkException) as e:
+        logger.exception(e)
+        return False
+    else:
+        return True</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.url_validation"><code class="name flex">
+<span>def <span class="ident">url_validation</span></span>(<span>url)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>django URL validation regex
+Raise an exception if the url is not valid</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def url_validation(url):
+    &#34;&#34;&#34;django URL validation regex
+    Raise an exception if the url is not valid&#34;&#34;&#34;
+    regex = re.compile(
+        r&#39;^(?:http|ftp)s?://&#39;  # http:// or https://
+        r&#39;(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|&#39;  # domain...
+        r&#39;localhost|&#39;  # localhost...
+        r&#39;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})&#39;  # ...or ip
+        r&#39;(?::\d+)?&#39;  # optional port
+        r&#39;(?:/?|[/?]\S+)$&#39;, re.IGNORECASE)
+    if re.match(regex, url) is None:
+        raise ValueError(f&#39;`{url}` is not a valid URL&#39;)</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="nempy.sym.network.Meta"><code class="flex name class">
+<span>class <span class="ident">Meta</span></span>
+<span>(</span><span>**data: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Transaction meta information</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Meta(BaseModel):
+    &#34;&#34;&#34;Transaction meta information&#34;&#34;&#34;
+    height: int
+    hash: str
+    merkleComponentHash: str
+    index: int</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nempy.sym.network.Meta.hash"><code class="name">var <span class="ident">hash</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.Meta.height"><code class="name">var <span class="ident">height</span> : int</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.Meta.index"><code class="name">var <span class="ident">index</span> : int</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.Meta.merkleComponentHash"><code class="name">var <span class="ident">merkleComponentHash</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nempy.sym.network.Monitor"><code class="flex name class">
+<span>class <span class="ident">Monitor</span></span>
+<span>(</span><span>url: str, subscribers: List[str], formatting: bool = False, log: str = '', callback: Optional[Callable] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Allows you to subscribe to events on the blockchain network</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Monitor:
+    &#34;&#34;&#34;Allows you to subscribe to events on the blockchain network&#34;&#34;&#34;
+    where_to_subscribe = {
+            &#39;confirmedAdded&#39;: &#39;address&#39;,
+            &#39;unconfirmedAdded&#39;: &#39;address&#39;,
+            &#39;unconfirmedRemoved&#39;: &#39;address&#39;,
+            &#39;partialAdded&#39;: &#39;address&#39;,
+            &#39;partialRemoved&#39;: &#39;address&#39;,
+            &#39;cosignature&#39;: &#39;address&#39;,
+            &#39;status&#39;: &#39;address&#39;,
+            &#39;block&#39;: None,
+            &#39;finalizedBlock&#39;: None
+    }
+
+    def __init__(self,
+                 url: str,
+                 subscribers: List[str],
+                 formatting: bool = False,
+                 log: str = &#39;&#39;,
+                 callback: Optional[Callable] = None):
+        self.url = url
+        self.subscribers = subscribers
+        self.formatting = formatting
+        self.log = log
+        self.callback = callback
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.monitoring())
+
+    async def monitoring(self):
+        result = urlparse(self.url)
+        url = f&#34;ws://{result.hostname}:{result.port}/ws&#34;
+        print(f&#39;MONITORING: {url}&#39;)
+        try:
+            async with websockets.connect(url) as ws:
+                response = json.loads(await ws.recv())
+                print(f&#39;UID: {response[&#34;uid&#34;]}&#39;)
+                if &#39;uid&#39; in response:
+                    prepare = []
+                    for subscriber in self.subscribers:
+                        added = json.dumps({&#34;uid&#34;: response[&#34;uid&#34;], &#34;subscribe&#34;: f&#34;{subscriber}&#34;})
+                        await ws.send(added)
+                        # print(f&#39;Subscribed to: {subscriber}&#39;)
+                        prepare.append([subscriber])
+                    table = tabulate(prepare, headers=[&#39;Subscribers&#39;], tablefmt=&#39;grid&#39;)
+                    print(table)
+                    print(&#39;Listening... `Ctrl+C` for abort&#39;)
+                    while True:
+                        res = await ws.recv()
+                        if self.formatting:
+                            res = json.dumps(json.loads(res), indent=4)
+                        if self.callback is not None:
+                            self.callback(json.loads(res))
+                            continue
+                        print(res)
+                        if self.log:
+                            with open(self.log, &#39;a+&#39;) as f:
+                                res += &#39;\n&#39;
+                                f.write(res)
+        except exceptions.WebSocketException as e:
+            logger.exception(e)
+            raise</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="nempy.sym.network.Monitor.where_to_subscribe"><code class="name">var <span class="ident">where_to_subscribe</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nempy.sym.network.Monitor.monitoring"><code class="name flex">
+<span>async def <span class="ident">monitoring</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def monitoring(self):
+    result = urlparse(self.url)
+    url = f&#34;ws://{result.hostname}:{result.port}/ws&#34;
+    print(f&#39;MONITORING: {url}&#39;)
+    try:
+        async with websockets.connect(url) as ws:
+            response = json.loads(await ws.recv())
+            print(f&#39;UID: {response[&#34;uid&#34;]}&#39;)
+            if &#39;uid&#39; in response:
+                prepare = []
+                for subscriber in self.subscribers:
+                    added = json.dumps({&#34;uid&#34;: response[&#34;uid&#34;], &#34;subscribe&#34;: f&#34;{subscriber}&#34;})
+                    await ws.send(added)
+                    # print(f&#39;Subscribed to: {subscriber}&#39;)
+                    prepare.append([subscriber])
+                table = tabulate(prepare, headers=[&#39;Subscribers&#39;], tablefmt=&#39;grid&#39;)
+                print(table)
+                print(&#39;Listening... `Ctrl+C` for abort&#39;)
+                while True:
+                    res = await ws.recv()
+                    if self.formatting:
+                        res = json.dumps(json.loads(res), indent=4)
+                    if self.callback is not None:
+                        self.callback(json.loads(res))
+                        continue
+                    print(res)
+                    if self.log:
+                        with open(self.log, &#39;a+&#39;) as f:
+                            res += &#39;\n&#39;
+                            f.write(res)
+    except exceptions.WebSocketException as e:
+        logger.exception(e)
+        raise</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nempy.sym.network.MosaicInfo"><code class="flex name class">
+<span>class <span class="ident">MosaicInfo</span></span>
+<span>(</span><span>**data: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Mosaic information in a transaction</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MosaicInfo(BaseModel):
+    &#34;&#34;&#34;Mosaic information in a transaction&#34;&#34;&#34;
+    id: str
+    amount: Union[StrictInt, StrictFloat]
+
+    def __str__(self):
+        return f&#39;{self.amount}({self.id})&#39;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nempy.sym.network.MosaicInfo.amount"><code class="name">var <span class="ident">amount</span> : Union[pydantic.types.StrictInt, pydantic.types.StrictFloat]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.MosaicInfo.id"><code class="name">var <span class="ident">id</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nempy.sym.network.NodeSelector"><code class="flex name class">
+<span>class <span class="ident">NodeSelector</span></span>
+<span>(</span><span>node_urls: Union[List[str], str])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Works with a list of nodes in both the main and test networks.
+Offline finds the best connection options and makes adjustments if conditions change.
+Also allows you to add connections manually.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class NodeSelector:
+    &#34;&#34;&#34;Works with a list of nodes in both the main and test networks.
+       Offline finds the best connection options and makes adjustments if conditions change.
+       Also allows you to add connections manually.
+    &#34;&#34;&#34;
+    _URL: Optional[str] = None
+    _URLs: Optional[list] = None
+    is_elections: bool = False
+    _network_type: NetworkType = NetworkType.TEST_NET
+
+    def __init__(self, node_urls: Union[List[str], str]):
+        self.thread = Thread()
+        self.url = node_urls
+
+    @property
+    def url(self):
+        while self.is_elections:
+            time.sleep(0.1)
+        return self._URL
+
+    @url.setter
+    def url(self, urls: Union[list, str]):
+        self.is_elections = True
+        self.thread.stop()
+        if isinstance(urls, str):
+            urls = [urls]
+        for url in urls:
+            url_validation(url)
+        self._URLs = urls
+        if len(self._URLs) == 1:
+            self._URL = self._URLs[0]  # setting a single URL value
+            logger.debug(f&#39;Installed node: {self._URL}&#39;)
+        else:
+            self.thread.start(self.node_actualizer, interval=3600).wait()
+        self.is_elections = False
+
+    def node_actualizer(self, interval, stop_event, updated):
+        while True:
+            self.reelection_node()
+            updated.set()
+            event_is_set = stop_event.wait(interval)
+            if event_is_set:
+                break
+
+    def reelection_node(self):
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        logger.debug(&#39;Node reselecting...&#39;)
+        heights = [NodeSelector.get_height(url) for url in self._URLs]
+        max_height = max(heights)
+        heights_filter = [True if height &gt;= max_height * 0.97 else False for height in heights]
+        # filtered by block height - 97%
+        filtered_by_height = [url for i, url in enumerate(self._URLs) if heights_filter[i]]
+        urls_p_h = {url: (NodeSelector.ping(url), NodeSelector.simple_health(url)) for url in filtered_by_height}
+        # Remove non-working nodes from the dict
+        working = {key: val for key, val in urls_p_h.items() if val[1]}
+        _sorted_URLs = [k for k, v in sorted(working.items(), key=lambda item: item[1][0])]
+        new_url = _sorted_URLs[0] if len(_sorted_URLs) &gt; 0 else None
+        if new_url != self._URL and self._URL is not None:
+            logger.warning(f&#39;Reselection node: {self._URL} -&gt; {new_url}&#39;)
+        if new_url is None:
+            logger.error(&#39;It was not possible to select the current node from the list of available ones&#39;)
+        self._URL = new_url
+        logger.debug(f&#39;Selected node: {self._URL}&#39;)
+
+    @property
+    def network_type(self):
+        return self._network_type
+
+    @network_type.setter
+    def network_type(self, network_type):
+        if network_type == self.network_type:
+            return
+        self._network_type = network_type
+        if self._network_type == NetworkType.MAIN_NET:
+            logger.debug(&#39;Switch to MAIN network&#39;)
+            self.url = config.MAIN_NODE_URLs
+        elif self._network_type == NetworkType.TEST_NET:
+            logger.debug(&#39;Switch to TEST network&#39;)
+            self.url = config.TEST_NODE_URLs
+        else:
+            raise TypeError(&#39;Unknown network type&#39;)
+
+    @staticmethod
+    def health(url) -&gt; BlockchainStatuses:
+        &#34;&#34;&#34;
+        Returns the statuses of node services
+        Parameters
+        ----------
+        url
+            URL node in the form of http://ngl-dual-001.testnet.symboldev.network:3000
+        Returns
+        -------
+        BlockchainStatuses
+            The statuses of node services
+        ```py
+        BlockchainStatuses.DB_FAILURE
+        BlockchainStatuses.NO_NODES_AVAILABLE
+        BlockchainStatuses.NOT_INITIALIZED
+        BlockchainStatuses.REST_FAILURE
+        BlockchainStatuses.OK
+        BlockchainStatuses.UNKNOWN
+        ```
+        &#34;&#34;&#34;
+        if url is None:
+            return BlockchainStatuses.NO_NODES_AVAILABLE
+        try:
+            answer = requests.get(f&#39;{url}/node/health&#39;, timeout=1)
+        except Exception as e:
+            logger.exception(e)
+            return BlockchainStatuses.REST_FAILURE
+        if answer.status_code == HTTPStatus.OK:
+            node_info = answer.json()
+            if node_info[&#39;status&#39;][&#39;apiNode&#39;] == &#39;up&#39; and node_info[&#39;status&#39;][&#39;db&#39;] == &#39;up&#39;:
+                return BlockchainStatuses.OK
+            if node_info[&#39;status&#39;][&#39;apiNode&#39;] == &#39;down&#39;:
+                return BlockchainStatuses.NODE_FAILURE
+            if node_info[&#39;status&#39;][&#39;db&#39;] == &#39;down&#39;:
+                return BlockchainStatuses.DB_FAILURE
+        return BlockchainStatuses.UNKNOWN
+
+    @staticmethod
+    def simple_health(url) -&gt; bool:
+        health_status = NodeSelector.health(url)
+        if health_status == BlockchainStatuses.OK:
+            return True
+        return False
+
+    @staticmethod
+    def get_height(url) -&gt; int:
+        &#34;&#34;&#34;
+        Returns the last block known to the node
+        Parameters
+        ----------
+        url
+            URL node in the form of http://ngl-dual-001.testnet.symboldev.network:3000
+
+        Returns
+        -------
+
+        &#34;&#34;&#34;
+        try:
+            answer = requests.get(f&#39;{url}/chain/info&#39;, timeout=1)
+        except Exception:
+            return 0
+        node_info = answer.json()
+        height = node_info[&#39;height&#39;]
+        return int(height)
+
+    @staticmethod
+    def ping(url) -&gt; Optional[float]:
+        &#34;&#34;&#34;Calculate and return a latency point using sockets&#34;&#34;&#34;
+        if multiprocessing.current_process().daemon:
+            asyncio.set_event_loop(asyncio.new_event_loop())
+        parse_result = urlparse(url)
+        loop = asyncio.get_event_loop()
+        latency = loop.run_until_complete(NodeSelector.measure_latency(host=parse_result.hostname, port=parse_result.port, runs=3))
+        if (result := len(list(filter(None, latency)))) == 0:
+            return None
+        average = sum(filter(None, latency)) / result
+        return average
+
+    @staticmethod
+    async def measure_latency(
+            host: str,
+            port: int = 443,
+            timeout: float = 5,
+            runs: int = 1,
+            wait: float = 0,
+    ) -&gt; list:
+        &#34;&#34;&#34;
+        Builds a list composed of latency_points
+        Parameters
+        ----------
+        host
+            Host name
+        port
+            Port
+        timeout
+            Server response timeout
+        runs
+            Number of attempts
+        wait
+            Delay before request
+        Returns
+        -------
+        list
+            list of latency for all runs
+        &#34;&#34;&#34;
+        tasks = []
+        latency_points = []
+        for i in range(runs):
+            await asyncio.sleep(wait)
+            tasks.append(asyncio.create_task(NodeSelector.latency_point(host=host, port=port, timeout=timeout)))
+            # last_latency_point = await latency_point(host=host, port=port, timeout=timeout)
+        for i in range(runs):
+            latency_points.append(await tasks[i])
+        return latency_points
+
+    @staticmethod
+    async def latency_point(host: str, port: int = 443, timeout: float = 5) -&gt; Optional[float]:
+        &#34;&#34;&#34;
+        Calculate a latency point using sockets. If something bad happens the point returned is None
+        Parameters
+        ----------
+        host
+            Host name
+        port
+            Port
+        timeout
+            Server response timeout
+        Returns
+        -------
+        Optional[float]
+            Returns float if possible
+        &#34;&#34;&#34;
+        # New Socket and Time out
+        # Start a timer
+        s_start = time.time()
+
+        # Try to Connect
+        uri = f&#34;ws://{host}:{port}&#34;
+        try:
+            async with websockets.connect(uri, close_timeout=timeout):
+                pass
+        except exceptions.InvalidMessage:
+            pass
+        except exceptions.InvalidStatusCode:
+            pass
+        except Exception as e:
+            logger.debug(str(e))
+            return None
+
+        # Stop Timer
+        s_runtime = (time.time() - s_start) * 1000
+        return float(s_runtime)</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="nempy.sym.network.NodeSelector.is_elections"><code class="name">var <span class="ident">is_elections</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="nempy.sym.network.NodeSelector.get_height"><code class="name flex">
+<span>def <span class="ident">get_height</span></span>(<span>url) ‑> int</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the last block known to the node
+Parameters</p>
+<hr>
+<dl>
+<dt><strong><code>url</code></strong></dt>
+<dd>URL node in the form of <a href="http://ngl-dual-001.testnet.symboldev.network:3000">http://ngl-dual-001.testnet.symboldev.network:3000</a></dd>
+</dl>
+<h2 id="returns">Returns</h2></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def get_height(url) -&gt; int:
+    &#34;&#34;&#34;
+    Returns the last block known to the node
+    Parameters
+    ----------
+    url
+        URL node in the form of http://ngl-dual-001.testnet.symboldev.network:3000
+
+    Returns
+    -------
+
+    &#34;&#34;&#34;
+    try:
+        answer = requests.get(f&#39;{url}/chain/info&#39;, timeout=1)
+    except Exception:
+        return 0
+    node_info = answer.json()
+    height = node_info[&#39;height&#39;]
+    return int(height)</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.NodeSelector.health"><code class="name flex">
+<span>def <span class="ident">health</span></span>(<span>url) ‑> <a title="nempy.sym.constants.BlockchainStatuses" href="constants.html#nempy.sym.constants.BlockchainStatuses">BlockchainStatuses</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the statuses of node services
+Parameters</p>
+<hr>
+<dl>
+<dt><strong><code>url</code></strong></dt>
+<dd>URL node in the form of <a href="http://ngl-dual-001.testnet.symboldev.network:3000">http://ngl-dual-001.testnet.symboldev.network:3000</a></dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>BlockchainStatuses</code></dt>
+<dd>The statuses of node services</dd>
+</dl>
+<pre><code class="language-py">BlockchainStatuses.DB_FAILURE
+BlockchainStatuses.NO_NODES_AVAILABLE
+BlockchainStatuses.NOT_INITIALIZED
+BlockchainStatuses.REST_FAILURE
+BlockchainStatuses.OK
+BlockchainStatuses.UNKNOWN
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def health(url) -&gt; BlockchainStatuses:
+    &#34;&#34;&#34;
+    Returns the statuses of node services
+    Parameters
+    ----------
+    url
+        URL node in the form of http://ngl-dual-001.testnet.symboldev.network:3000
+    Returns
+    -------
+    BlockchainStatuses
+        The statuses of node services
+    ```py
+    BlockchainStatuses.DB_FAILURE
+    BlockchainStatuses.NO_NODES_AVAILABLE
+    BlockchainStatuses.NOT_INITIALIZED
+    BlockchainStatuses.REST_FAILURE
+    BlockchainStatuses.OK
+    BlockchainStatuses.UNKNOWN
+    ```
+    &#34;&#34;&#34;
+    if url is None:
+        return BlockchainStatuses.NO_NODES_AVAILABLE
+    try:
+        answer = requests.get(f&#39;{url}/node/health&#39;, timeout=1)
+    except Exception as e:
+        logger.exception(e)
+        return BlockchainStatuses.REST_FAILURE
+    if answer.status_code == HTTPStatus.OK:
+        node_info = answer.json()
+        if node_info[&#39;status&#39;][&#39;apiNode&#39;] == &#39;up&#39; and node_info[&#39;status&#39;][&#39;db&#39;] == &#39;up&#39;:
+            return BlockchainStatuses.OK
+        if node_info[&#39;status&#39;][&#39;apiNode&#39;] == &#39;down&#39;:
+            return BlockchainStatuses.NODE_FAILURE
+        if node_info[&#39;status&#39;][&#39;db&#39;] == &#39;down&#39;:
+            return BlockchainStatuses.DB_FAILURE
+    return BlockchainStatuses.UNKNOWN</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.NodeSelector.latency_point"><code class="name flex">
+<span>async def <span class="ident">latency_point</span></span>(<span>host: str, port: int = 443, timeout: float = 5) ‑> Optional[float]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate a latency point using sockets. If something bad happens the point returned is None
+Parameters</p>
+<hr>
+<dl>
+<dt><strong><code>host</code></strong></dt>
+<dd>Host name</dd>
+<dt><strong><code>port</code></strong></dt>
+<dd>Port</dd>
+<dt><strong><code>timeout</code></strong></dt>
+<dd>Server response timeout</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Optional[float]</code></dt>
+<dd>Returns float if possible</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+async def latency_point(host: str, port: int = 443, timeout: float = 5) -&gt; Optional[float]:
+    &#34;&#34;&#34;
+    Calculate a latency point using sockets. If something bad happens the point returned is None
+    Parameters
+    ----------
+    host
+        Host name
+    port
+        Port
+    timeout
+        Server response timeout
+    Returns
+    -------
+    Optional[float]
+        Returns float if possible
+    &#34;&#34;&#34;
+    # New Socket and Time out
+    # Start a timer
+    s_start = time.time()
+
+    # Try to Connect
+    uri = f&#34;ws://{host}:{port}&#34;
+    try:
+        async with websockets.connect(uri, close_timeout=timeout):
+            pass
+    except exceptions.InvalidMessage:
+        pass
+    except exceptions.InvalidStatusCode:
+        pass
+    except Exception as e:
+        logger.debug(str(e))
+        return None
+
+    # Stop Timer
+    s_runtime = (time.time() - s_start) * 1000
+    return float(s_runtime)</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.NodeSelector.measure_latency"><code class="name flex">
+<span>async def <span class="ident">measure_latency</span></span>(<span>host: str, port: int = 443, timeout: float = 5, runs: int = 1, wait: float = 0) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Builds a list composed of latency_points
+Parameters</p>
+<hr>
+<dl>
+<dt><strong><code>host</code></strong></dt>
+<dd>Host name</dd>
+<dt><strong><code>port</code></strong></dt>
+<dd>Port</dd>
+<dt><strong><code>timeout</code></strong></dt>
+<dd>Server response timeout</dd>
+<dt><strong><code>runs</code></strong></dt>
+<dd>Number of attempts</dd>
+<dt><strong><code>wait</code></strong></dt>
+<dd>Delay before request</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>list of latency for all runs</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+async def measure_latency(
+        host: str,
+        port: int = 443,
+        timeout: float = 5,
+        runs: int = 1,
+        wait: float = 0,
+) -&gt; list:
+    &#34;&#34;&#34;
+    Builds a list composed of latency_points
+    Parameters
+    ----------
+    host
+        Host name
+    port
+        Port
+    timeout
+        Server response timeout
+    runs
+        Number of attempts
+    wait
+        Delay before request
+    Returns
+    -------
+    list
+        list of latency for all runs
+    &#34;&#34;&#34;
+    tasks = []
+    latency_points = []
+    for i in range(runs):
+        await asyncio.sleep(wait)
+        tasks.append(asyncio.create_task(NodeSelector.latency_point(host=host, port=port, timeout=timeout)))
+        # last_latency_point = await latency_point(host=host, port=port, timeout=timeout)
+    for i in range(runs):
+        latency_points.append(await tasks[i])
+    return latency_points</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.NodeSelector.ping"><code class="name flex">
+<span>def <span class="ident">ping</span></span>(<span>url) ‑> Optional[float]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate and return a latency point using sockets</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def ping(url) -&gt; Optional[float]:
+    &#34;&#34;&#34;Calculate and return a latency point using sockets&#34;&#34;&#34;
+    if multiprocessing.current_process().daemon:
+        asyncio.set_event_loop(asyncio.new_event_loop())
+    parse_result = urlparse(url)
+    loop = asyncio.get_event_loop()
+    latency = loop.run_until_complete(NodeSelector.measure_latency(host=parse_result.hostname, port=parse_result.port, runs=3))
+    if (result := len(list(filter(None, latency)))) == 0:
+        return None
+    average = sum(filter(None, latency)) / result
+    return average</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.NodeSelector.simple_health"><code class="name flex">
+<span>def <span class="ident">simple_health</span></span>(<span>url) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def simple_health(url) -&gt; bool:
+    health_status = NodeSelector.health(url)
+    if health_status == BlockchainStatuses.OK:
+        return True
+    return False</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="nempy.sym.network.NodeSelector.network_type"><code class="name">var <span class="ident">network_type</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def network_type(self):
+    return self._network_type</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.NodeSelector.url"><code class="name">var <span class="ident">url</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def url(self):
+    while self.is_elections:
+        time.sleep(0.1)
+    return self._URL</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nempy.sym.network.NodeSelector.node_actualizer"><code class="name flex">
+<span>def <span class="ident">node_actualizer</span></span>(<span>self, interval, stop_event, updated)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def node_actualizer(self, interval, stop_event, updated):
+    while True:
+        self.reelection_node()
+        updated.set()
+        event_is_set = stop_event.wait(interval)
+        if event_is_set:
+            break</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.NodeSelector.reelection_node"><code class="name flex">
+<span>def <span class="ident">reelection_node</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def reelection_node(self):
+    asyncio.set_event_loop(asyncio.new_event_loop())
+    logger.debug(&#39;Node reselecting...&#39;)
+    heights = [NodeSelector.get_height(url) for url in self._URLs]
+    max_height = max(heights)
+    heights_filter = [True if height &gt;= max_height * 0.97 else False for height in heights]
+    # filtered by block height - 97%
+    filtered_by_height = [url for i, url in enumerate(self._URLs) if heights_filter[i]]
+    urls_p_h = {url: (NodeSelector.ping(url), NodeSelector.simple_health(url)) for url in filtered_by_height}
+    # Remove non-working nodes from the dict
+    working = {key: val for key, val in urls_p_h.items() if val[1]}
+    _sorted_URLs = [k for k, v in sorted(working.items(), key=lambda item: item[1][0])]
+    new_url = _sorted_URLs[0] if len(_sorted_URLs) &gt; 0 else None
+    if new_url != self._URL and self._URL is not None:
+        logger.warning(f&#39;Reselection node: {self._URL} -&gt; {new_url}&#39;)
+    if new_url is None:
+        logger.error(&#39;It was not possible to select the current node from the list of available ones&#39;)
+    self._URL = new_url
+    logger.debug(f&#39;Selected node: {self._URL}&#39;)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nempy.sym.network.SymbolNetworkException"><code class="flex name class">
+<span>class <span class="ident">SymbolNetworkException</span></span>
+<span>(</span><span>code, message)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Is one exception for the convenience of working with the blockchain network</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class SymbolNetworkException(Exception):
+    &#34;&#34;&#34;Is one exception for the convenience of working with the blockchain network&#34;&#34;&#34;
+    codes = {
+        &#39;ResourceNotFound&#39;: 404,
+        &#39;InvalidAddress&#39;: 409,
+        &#39;InvalidArgument&#39;: 409,
+        &#39;InvalidContent&#39;: 400,
+        &#39;Internal&#39;: 500,
+    }
+
+    def __init__(self, code, message):
+        self.code = self.codes.get(code)
+        self.name = code
+        self.message = message
+        super(SymbolNetworkException, self).__init__(f&#39;{self.code} - {self.name}&#39;, self.message)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nempy.sym.network.SymbolNetworkException.codes"><code class="name">var <span class="ident">codes</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nempy.sym.network.Thread"><code class="flex name class">
+<span>class <span class="ident">Thread</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>A helper class for working with a thread, starting and stopping it by signals</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Thread:
+    &#34;&#34;&#34;A helper class for working with a thread, starting and stopping it by signals&#34;&#34;&#34;
+    def __init__(self):
+        self.stop_event: Optional[threading.Event] = None
+        self.thread: Optional[threading.Thread] = None
+        self.is_started = False
+        self.updated = threading.Event()
+
+    def stop(self):
+        if self.thread is not None and self.thread.is_alive():
+            self.stop_event.set()
+            self.thread.join()
+            self.is_started = False
+            logger.debug(f&#39;The node actualization thread {self.thread.name} has been stopped.&#39;)
+
+    def start(self, func: Callable, interval: int = 3600):
+        self.is_started = True
+        self.stop_event = threading.Event()
+        self.updated = threading.Event()
+        params = {&#39;interval&#39;: interval, &#39;stop_event&#39;: self.stop_event, &#39;updated&#39;: self.updated}
+        self.thread = threading.Thread(target=func, kwargs=params, daemon=True)
+        self.thread.start()
+        logger.debug(f&#39;New actualizer thread started: {self.thread.name}&#39;)
+        return self
+
+    def wait(self):
+        updated_is_set = self.updated.wait(60)
+        if not updated_is_set:
+            raise RuntimeError(&#39;Very long waiting time for node selection&#39;)</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="nempy.sym.network.Thread.start"><code class="name flex">
+<span>def <span class="ident">start</span></span>(<span>self, func: Callable, interval: int = 3600)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def start(self, func: Callable, interval: int = 3600):
+    self.is_started = True
+    self.stop_event = threading.Event()
+    self.updated = threading.Event()
+    params = {&#39;interval&#39;: interval, &#39;stop_event&#39;: self.stop_event, &#39;updated&#39;: self.updated}
+    self.thread = threading.Thread(target=func, kwargs=params, daemon=True)
+    self.thread.start()
+    logger.debug(f&#39;New actualizer thread started: {self.thread.name}&#39;)
+    return self</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.Thread.stop"><code class="name flex">
+<span>def <span class="ident">stop</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def stop(self):
+    if self.thread is not None and self.thread.is_alive():
+        self.stop_event.set()
+        self.thread.join()
+        self.is_started = False
+        logger.debug(f&#39;The node actualization thread {self.thread.name} has been stopped.&#39;)</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.Thread.wait"><code class="name flex">
+<span>def <span class="ident">wait</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def wait(self):
+    updated_is_set = self.updated.wait(60)
+    if not updated_is_set:
+        raise RuntimeError(&#39;Very long waiting time for node selection&#39;)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nempy.sym.network.Timing"><code class="flex name class">
+<span>class <span class="ident">Timing</span></span>
+<span>(</span><span>network_type: Optional[<a title="nempy.sym.constants.NetworkType" href="constants.html#nempy.sym.constants.NetworkType">NetworkType</a>] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Works with network time</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Timing:
+    &#34;&#34;&#34;Works with network time&#34;&#34;&#34;
+    def __init__(self, network_type: Optional[NetworkType] = None):
+        if network_type is None:
+            network_type = node_selector.network_type
+        if network_type == NetworkType.TEST_NET:
+            self.epoch_time = EPOCH_TIME_TESTNET
+        elif network_type == NetworkType.MAIN_NET:
+            self.epoch_time = EPOCH_TIME_MAINNET
+        else:
+            raise EnvironmentError(&#39;It is not possible to determine the type of network&#39;)
+
+    def calc_deadline(self, days: float = 0, seconds: float = 0, milliseconds: float = 0,
+                      minutes: float = 0, hours: float = 0, weeks: float = 0) -&gt; int:
+
+        if days + seconds + milliseconds + minutes + hours + weeks &lt;= 0:
+            raise TimeoutError(&#39;Added time must be positive otherwise the transaction will not have time to process&#39;)
+        # perhaps this code will be needed if you need to get time from a node
+        # node_info = json.loads(requests.get(endpoint).text)
+        # receive_timestamp = int(node_info[&#39;communicationTimestamps&#39;][&#39;receiveTimestamp&#39;])
+        # td = datetime.timedelta(milliseconds=receive_timestamp)
+        now = datetime.datetime.now(tz=datetime.timezone.utc)
+        td = now - self.epoch_time
+        td += datetime.timedelta(days=days, seconds=seconds,
+                                 milliseconds=milliseconds, minutes=minutes,
+                                 hours=hours, weeks=weeks)
+        deadline = int(td.total_seconds() * 1000)
+        return deadline
+
+    def deadline_to_date(self, deadline: int, is_local: bool = False) -&gt; datetime:
+        def utc2local(utc):
+            utc_epoch = time.mktime(utc.timetuple())
+            offset = datetime.datetime.fromtimestamp(utc_epoch) - datetime.datetime.utcfromtimestamp(utc_epoch)
+            return utc + offset
+
+        deadline = int(deadline)
+        epoch_timestamp = datetime.datetime.timestamp(self.epoch_time)
+        deadline_date_utc = datetime.datetime.utcfromtimestamp(epoch_timestamp + deadline / 1000)
+        if is_local:
+            local_deadline_date = utc2local(deadline_date_utc)
+            return local_deadline_date
+        return deadline_date_utc</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="nempy.sym.network.Timing.calc_deadline"><code class="name flex">
+<span>def <span class="ident">calc_deadline</span></span>(<span>self, days: float = 0, seconds: float = 0, milliseconds: float = 0, minutes: float = 0, hours: float = 0, weeks: float = 0) ‑> int</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_deadline(self, days: float = 0, seconds: float = 0, milliseconds: float = 0,
+                  minutes: float = 0, hours: float = 0, weeks: float = 0) -&gt; int:
+
+    if days + seconds + milliseconds + minutes + hours + weeks &lt;= 0:
+        raise TimeoutError(&#39;Added time must be positive otherwise the transaction will not have time to process&#39;)
+    # perhaps this code will be needed if you need to get time from a node
+    # node_info = json.loads(requests.get(endpoint).text)
+    # receive_timestamp = int(node_info[&#39;communicationTimestamps&#39;][&#39;receiveTimestamp&#39;])
+    # td = datetime.timedelta(milliseconds=receive_timestamp)
+    now = datetime.datetime.now(tz=datetime.timezone.utc)
+    td = now - self.epoch_time
+    td += datetime.timedelta(days=days, seconds=seconds,
+                             milliseconds=milliseconds, minutes=minutes,
+                             hours=hours, weeks=weeks)
+    deadline = int(td.total_seconds() * 1000)
+    return deadline</code></pre>
+</details>
+</dd>
+<dt id="nempy.sym.network.Timing.deadline_to_date"><code class="name flex">
+<span>def <span class="ident">deadline_to_date</span></span>(<span>self, deadline: int, is_local: bool = False) ‑> <module 'datetime' from '/usr/lib/python3.9/datetime.py'></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def deadline_to_date(self, deadline: int, is_local: bool = False) -&gt; datetime:
+    def utc2local(utc):
+        utc_epoch = time.mktime(utc.timetuple())
+        offset = datetime.datetime.fromtimestamp(utc_epoch) - datetime.datetime.utcfromtimestamp(utc_epoch)
+        return utc + offset
+
+    deadline = int(deadline)
+    epoch_timestamp = datetime.datetime.timestamp(self.epoch_time)
+    deadline_date_utc = datetime.datetime.utcfromtimestamp(epoch_timestamp + deadline / 1000)
+    if is_local:
+        local_deadline_date = utc2local(deadline_date_utc)
+        return local_deadline_date
+    return deadline_date_utc</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nempy.sym.network.TransactionInfo"><code class="flex name class">
+<span>class <span class="ident">TransactionInfo</span></span>
+<span>(</span><span>**data: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Contains information about transactions of the blockchain network</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class TransactionInfo(BaseModel):
+    &#34;&#34;&#34;Contains information about transactions of the blockchain network&#34;&#34;&#34;
+    size: int
+    signature: str
+    signerPublicKey: str
+    version: int
+    network: int
+    type: Union[int, str]
+    maxFee: int
+    deadline: Union[int, datetime.datetime]
+    recipientAddress: str
+    message: Optional[str]
+    signer_address: Optional[str]
+    mosaics: List[MosaicInfo]
+
+    def humanization(self):
+        &#34;&#34;&#34;Converts information from the blockchain into a readable form&#34;&#34;&#34;
+        self.deadline = Timing().deadline_to_date(self.deadline)
+        if self.message is not None:
+            self.message = unhexlify(self.message)[1:].decode(&#39;utf-8&#39;)
+        self.recipientAddress = b32encode(unhexlify(self.recipientAddress)).decode(&#39;utf-8&#39;)[:-1]
+        self.mosaics = [MosaicInfo(**mosaic_id_to_name_n_real(mosaic.id, mosaic.amount)) for mosaic in self.mosaics]
+        self.type = TransactionTypes.get_type_by_id(self.type).name
+        facade = SymFacade(node_selector.network_type.value)
+        self.signer_address = str(facade.network.public_key_to_address(Hash256(self.signerPublicKey)))</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nempy.sym.network.TransactionInfo.deadline"><code class="name">var <span class="ident">deadline</span> : Union[int, datetime.datetime]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.TransactionInfo.maxFee"><code class="name">var <span class="ident">maxFee</span> : int</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.TransactionInfo.message"><code class="name">var <span class="ident">message</span> : Optional[str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.TransactionInfo.mosaics"><code class="name">var <span class="ident">mosaics</span> : List[<a title="nempy.sym.network.MosaicInfo" href="#nempy.sym.network.MosaicInfo">MosaicInfo</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.TransactionInfo.network"><code class="name">var <span class="ident">network</span> : int</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.TransactionInfo.recipientAddress"><code class="name">var <span class="ident">recipientAddress</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.TransactionInfo.signature"><code class="name">var <span class="ident">signature</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.TransactionInfo.signerPublicKey"><code class="name">var <span class="ident">signerPublicKey</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.TransactionInfo.signer_address"><code class="name">var <span class="ident">signer_address</span> : Optional[str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.TransactionInfo.size"><code class="name">var <span class="ident">size</span> : int</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.TransactionInfo.type"><code class="name">var <span class="ident">type</span> : Union[int, str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.TransactionInfo.version"><code class="name">var <span class="ident">version</span> : int</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nempy.sym.network.TransactionInfo.humanization"><code class="name flex">
+<span>def <span class="ident">humanization</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts information from the blockchain into a readable form</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def humanization(self):
+    &#34;&#34;&#34;Converts information from the blockchain into a readable form&#34;&#34;&#34;
+    self.deadline = Timing().deadline_to_date(self.deadline)
+    if self.message is not None:
+        self.message = unhexlify(self.message)[1:].decode(&#39;utf-8&#39;)
+    self.recipientAddress = b32encode(unhexlify(self.recipientAddress)).decode(&#39;utf-8&#39;)[:-1]
+    self.mosaics = [MosaicInfo(**mosaic_id_to_name_n_real(mosaic.id, mosaic.amount)) for mosaic in self.mosaics]
+    self.type = TransactionTypes.get_type_by_id(self.type).name
+    facade = SymFacade(node_selector.network_type.value)
+    self.signer_address = str(facade.network.public_key_to_address(Hash256(self.signerPublicKey)))</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nempy.sym.network.TransactionResponse"><code class="flex name class">
+<span>class <span class="ident">TransactionResponse</span></span>
+<span>(</span><span>**data: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class TransactionResponse(BaseModel):
+    id: str
+    meta: Meta
+    transaction: TransactionInfo
+    status: Optional[str]
+
+    def __str__(self):
+        if self.transaction.signer_address.startswith(&#39;T&#39;):
+            test_net_explorer = &#39;http://explorer.testnet.symboldev.network/transactions/&#39;
+        else:
+            test_net_explorer = &#39;http://explorer.symbolblockchain.io/transactions/&#39;
+        prepare = list()
+        mosaics = [str(mosaic) for mosaic in self.transaction.mosaics]
+        mosaics = &#39;\n&#39;.join(mosaics)
+        prepare.append([&#39;Type:&#39;, self.transaction.type.title()])
+        prepare.append([&#39;Status:&#39;, self.status.title()])
+        prepare.append([&#39;Hash:&#39;, f&#39;{test_net_explorer}{self.meta.hash}&#39;])
+        prepare.append([&#39;Paid Fee:&#39;, f&#39;{self.transaction.maxFee / 1000000}(XYM)&#39;])
+        prepare.append([&#39;Height:&#39;, self.meta.height])
+        prepare.append([&#39;Deadline:&#39;, self.transaction.deadline])
+        prepare.append([&#39;Signature:&#39;, self.transaction.signature])
+        prepare.append([&#39;Signer Public Key:&#39;, self.transaction.signerPublicKey])
+        prepare.append([&#39;From:&#39;, self.transaction.signer_address])
+        prepare.append([&#39;To:&#39;, self.transaction.recipientAddress])
+        prepare.append([&#39;Mosaic:&#39;, mosaics])
+        prepare.append([&#39;Message:&#39;, self.transaction.message])
+        table = tabulate(prepare, headers=[&#39;Property&#39;, &#39;Value&#39;], tablefmt=&#39;grid&#39;)
+        return table</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nempy.sym.network.TransactionResponse.id"><code class="name">var <span class="ident">id</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.TransactionResponse.meta"><code class="name">var <span class="ident">meta</span> : <a title="nempy.sym.network.Meta" href="#nempy.sym.network.Meta">Meta</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.TransactionResponse.status"><code class="name">var <span class="ident">status</span> : Optional[str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nempy.sym.network.TransactionResponse.transaction"><code class="name">var <span class="ident">transaction</span> : <a title="nempy.sym.network.TransactionInfo" href="#nempy.sym.network.TransactionInfo">TransactionInfo</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="nempy.sym" href="index.html">nempy.sym</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="nempy.sym.network.check_transaction_state" href="#nempy.sym.network.check_transaction_state">check_transaction_state</a></code></li>
+<li><code><a title="nempy.sym.network.get_accounts_info" href="#nempy.sym.network.get_accounts_info">get_accounts_info</a></code></li>
+<li><code><a title="nempy.sym.network.get_balance" href="#nempy.sym.network.get_balance">get_balance</a></code></li>
+<li><code><a title="nempy.sym.network.get_block_information" href="#nempy.sym.network.get_block_information">get_block_information</a></code></li>
+<li><code><a title="nempy.sym.network.get_divisibilities" href="#nempy.sym.network.get_divisibilities">get_divisibilities</a></code></li>
+<li><code><a title="nempy.sym.network.get_divisibility" href="#nempy.sym.network.get_divisibility">get_divisibility</a></code></li>
+<li><code><a title="nempy.sym.network.get_fee_multipliers" href="#nempy.sym.network.get_fee_multipliers">get_fee_multipliers</a></code></li>
+<li><code><a title="nempy.sym.network.get_mosaic_names" href="#nempy.sym.network.get_mosaic_names">get_mosaic_names</a></code></li>
+<li><code><a title="nempy.sym.network.get_namespace_info" href="#nempy.sym.network.get_namespace_info">get_namespace_info</a></code></li>
+<li><code><a title="nempy.sym.network.get_network_properties" href="#nempy.sym.network.get_network_properties">get_network_properties</a></code></li>
+<li><code><a title="nempy.sym.network.get_node_network" href="#nempy.sym.network.get_node_network">get_node_network</a></code></li>
+<li><code><a title="nempy.sym.network.mosaic_id_to_name_n_real" href="#nempy.sym.network.mosaic_id_to_name_n_real">mosaic_id_to_name_n_real</a></code></li>
+<li><code><a title="nempy.sym.network.search_transactions" href="#nempy.sym.network.search_transactions">search_transactions</a></code></li>
+<li><code><a title="nempy.sym.network.send_transaction" href="#nempy.sym.network.send_transaction">send_transaction</a></code></li>
+<li><code><a title="nempy.sym.network.url_validation" href="#nempy.sym.network.url_validation">url_validation</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="nempy.sym.network.Meta" href="#nempy.sym.network.Meta">Meta</a></code></h4>
+<ul class="">
+<li><code><a title="nempy.sym.network.Meta.hash" href="#nempy.sym.network.Meta.hash">hash</a></code></li>
+<li><code><a title="nempy.sym.network.Meta.height" href="#nempy.sym.network.Meta.height">height</a></code></li>
+<li><code><a title="nempy.sym.network.Meta.index" href="#nempy.sym.network.Meta.index">index</a></code></li>
+<li><code><a title="nempy.sym.network.Meta.merkleComponentHash" href="#nempy.sym.network.Meta.merkleComponentHash">merkleComponentHash</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nempy.sym.network.Monitor" href="#nempy.sym.network.Monitor">Monitor</a></code></h4>
+<ul class="">
+<li><code><a title="nempy.sym.network.Monitor.monitoring" href="#nempy.sym.network.Monitor.monitoring">monitoring</a></code></li>
+<li><code><a title="nempy.sym.network.Monitor.where_to_subscribe" href="#nempy.sym.network.Monitor.where_to_subscribe">where_to_subscribe</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nempy.sym.network.MosaicInfo" href="#nempy.sym.network.MosaicInfo">MosaicInfo</a></code></h4>
+<ul class="">
+<li><code><a title="nempy.sym.network.MosaicInfo.amount" href="#nempy.sym.network.MosaicInfo.amount">amount</a></code></li>
+<li><code><a title="nempy.sym.network.MosaicInfo.id" href="#nempy.sym.network.MosaicInfo.id">id</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nempy.sym.network.NodeSelector" href="#nempy.sym.network.NodeSelector">NodeSelector</a></code></h4>
+<ul class="two-column">
+<li><code><a title="nempy.sym.network.NodeSelector.get_height" href="#nempy.sym.network.NodeSelector.get_height">get_height</a></code></li>
+<li><code><a title="nempy.sym.network.NodeSelector.health" href="#nempy.sym.network.NodeSelector.health">health</a></code></li>
+<li><code><a title="nempy.sym.network.NodeSelector.is_elections" href="#nempy.sym.network.NodeSelector.is_elections">is_elections</a></code></li>
+<li><code><a title="nempy.sym.network.NodeSelector.latency_point" href="#nempy.sym.network.NodeSelector.latency_point">latency_point</a></code></li>
+<li><code><a title="nempy.sym.network.NodeSelector.measure_latency" href="#nempy.sym.network.NodeSelector.measure_latency">measure_latency</a></code></li>
+<li><code><a title="nempy.sym.network.NodeSelector.network_type" href="#nempy.sym.network.NodeSelector.network_type">network_type</a></code></li>
+<li><code><a title="nempy.sym.network.NodeSelector.node_actualizer" href="#nempy.sym.network.NodeSelector.node_actualizer">node_actualizer</a></code></li>
+<li><code><a title="nempy.sym.network.NodeSelector.ping" href="#nempy.sym.network.NodeSelector.ping">ping</a></code></li>
+<li><code><a title="nempy.sym.network.NodeSelector.reelection_node" href="#nempy.sym.network.NodeSelector.reelection_node">reelection_node</a></code></li>
+<li><code><a title="nempy.sym.network.NodeSelector.simple_health" href="#nempy.sym.network.NodeSelector.simple_health">simple_health</a></code></li>
+<li><code><a title="nempy.sym.network.NodeSelector.url" href="#nempy.sym.network.NodeSelector.url">url</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nempy.sym.network.SymbolNetworkException" href="#nempy.sym.network.SymbolNetworkException">SymbolNetworkException</a></code></h4>
+<ul class="">
+<li><code><a title="nempy.sym.network.SymbolNetworkException.codes" href="#nempy.sym.network.SymbolNetworkException.codes">codes</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nempy.sym.network.Thread" href="#nempy.sym.network.Thread">Thread</a></code></h4>
+<ul class="">
+<li><code><a title="nempy.sym.network.Thread.start" href="#nempy.sym.network.Thread.start">start</a></code></li>
+<li><code><a title="nempy.sym.network.Thread.stop" href="#nempy.sym.network.Thread.stop">stop</a></code></li>
+<li><code><a title="nempy.sym.network.Thread.wait" href="#nempy.sym.network.Thread.wait">wait</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nempy.sym.network.Timing" href="#nempy.sym.network.Timing">Timing</a></code></h4>
+<ul class="">
+<li><code><a title="nempy.sym.network.Timing.calc_deadline" href="#nempy.sym.network.Timing.calc_deadline">calc_deadline</a></code></li>
+<li><code><a title="nempy.sym.network.Timing.deadline_to_date" href="#nempy.sym.network.Timing.deadline_to_date">deadline_to_date</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nempy.sym.network.TransactionInfo" href="#nempy.sym.network.TransactionInfo">TransactionInfo</a></code></h4>
+<ul class="two-column">
+<li><code><a title="nempy.sym.network.TransactionInfo.deadline" href="#nempy.sym.network.TransactionInfo.deadline">deadline</a></code></li>
+<li><code><a title="nempy.sym.network.TransactionInfo.humanization" href="#nempy.sym.network.TransactionInfo.humanization">humanization</a></code></li>
+<li><code><a title="nempy.sym.network.TransactionInfo.maxFee" href="#nempy.sym.network.TransactionInfo.maxFee">maxFee</a></code></li>
+<li><code><a title="nempy.sym.network.TransactionInfo.message" href="#nempy.sym.network.TransactionInfo.message">message</a></code></li>
+<li><code><a title="nempy.sym.network.TransactionInfo.mosaics" href="#nempy.sym.network.TransactionInfo.mosaics">mosaics</a></code></li>
+<li><code><a title="nempy.sym.network.TransactionInfo.network" href="#nempy.sym.network.TransactionInfo.network">network</a></code></li>
+<li><code><a title="nempy.sym.network.TransactionInfo.recipientAddress" href="#nempy.sym.network.TransactionInfo.recipientAddress">recipientAddress</a></code></li>
+<li><code><a title="nempy.sym.network.TransactionInfo.signature" href="#nempy.sym.network.TransactionInfo.signature">signature</a></code></li>
+<li><code><a title="nempy.sym.network.TransactionInfo.signerPublicKey" href="#nempy.sym.network.TransactionInfo.signerPublicKey">signerPublicKey</a></code></li>
+<li><code><a title="nempy.sym.network.TransactionInfo.signer_address" href="#nempy.sym.network.TransactionInfo.signer_address">signer_address</a></code></li>
+<li><code><a title="nempy.sym.network.TransactionInfo.size" href="#nempy.sym.network.TransactionInfo.size">size</a></code></li>
+<li><code><a title="nempy.sym.network.TransactionInfo.type" href="#nempy.sym.network.TransactionInfo.type">type</a></code></li>
+<li><code><a title="nempy.sym.network.TransactionInfo.version" href="#nempy.sym.network.TransactionInfo.version">version</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nempy.sym.network.TransactionResponse" href="#nempy.sym.network.TransactionResponse">TransactionResponse</a></code></h4>
+<ul class="">
+<li><code><a title="nempy.sym.network.TransactionResponse.id" href="#nempy.sym.network.TransactionResponse.id">id</a></code></li>
+<li><code><a title="nempy.sym.network.TransactionResponse.meta" href="#nempy.sym.network.TransactionResponse.meta">meta</a></code></li>
+<li><code><a title="nempy.sym.network.TransactionResponse.status" href="#nempy.sym.network.TransactionResponse.status">status</a></code></li>
+<li><code><a title="nempy.sym.network.TransactionResponse.transaction" href="#nempy.sym.network.TransactionResponse.transaction">transaction</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
