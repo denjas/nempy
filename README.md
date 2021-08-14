@@ -3,8 +3,8 @@
 [![tests](https://github.com/denjas/nempy/actions/workflows/tests.yml/badge.svg)](https://github.com/denjas/nempy/actions/workflows/tests.yml)
 [![build](https://github.com/denjas/nempy/actions/workflows/build.yml/badge.svg)](https://github.com/denjas/nempy/actions/workflows/build.yml)
 [![pypi](https://badge.fury.io/py/nem-py.svg)](https://pypi.org/project/nem-py/)
-[![python-ver](https://github.com/denjas/nempy/raw/dev/.github/badges/python-version.svg)](https://www.python.org/)
-[![license](https://github.com/denjas/nempy/raw/dev/.github/badges/license.svg)](https://github.com/denjas/nempy/blob/main/LICENSE)
+[![python-ver](https://github.com/denjas/nempy/raw/main/.github/badges/python-version.svg)](https://www.python.org/)
+[![license](https://github.com/denjas/nempy/raw/main/.github/badges/license.svg)](https://github.com/denjas/nempy/blob/main/LICENSE)
 ![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/denjas/9c7a615b3b16ced41d8530c7535ca131/raw/coverage.json)
 
 
@@ -62,7 +62,7 @@ You can get funds for the balance for testing in the [Faucet](http://faucet.test
 
 Additional [documentation](https://denjas.github.io/nempy/) can be found [here](https://denjas.github.io/nempy/)
 ## Command-line interface (CLI)
-You can get acquainted with the capabilities of the CLI interface [here](https://github.com/denjas/nempy/blob/dev/docs/cli.md)
+You can get acquainted with the capabilities of the CLI interface [here](https://github.com/denjas/nempy/blob/main/docs/cli.md)
 
 ## Working with [pipenv](https://pipenv.pypa.io/) environment
 1. Clone the repository `git clone https://github.com/denjas/nempy.git`
