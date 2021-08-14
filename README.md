@@ -5,7 +5,7 @@
 [![license](https://github.com/denjas/nempy/raw/main/.github/badges/license.svg)](https://github.com/denjas/nempy/blob/main/LICENSE)
 ![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/denjas/9c7a615b3b16ced41d8530c7535ca131/raw/coverage.json)
 
-<img src="https://raw.githubusercontent.com/denjas/nempy/dev/docs/nempy.png" style="display:block;float:none;margin-left:auto;margin-right:auto;">
+![](https://raw.githubusercontent.com/denjas/nempy/dev/docs/nempy.png)
 
 High-level python wrapper for working with NEM cryptocurrencies ecosystem (only Symbol supported)
 
