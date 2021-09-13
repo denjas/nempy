@@ -20,8 +20,8 @@ from nempy.sym.ed25519 import check_address
 from pydantic import BaseModel, validator, StrictStr, StrictBytes
 from symbolchain.core.Bip32 import Bip32
 from symbolchain.core.CryptoTypes import PrivateKey
-from symbolchain.core.facade.SymFacade import SymFacade
-from symbolchain.core.sym.KeyPair import KeyPair
+from symbolchain.core.facade.SymbolFacade import SymbolFacade
+from symbolchain.core.symbol.KeyPair import KeyPair
 from tabulate import tabulate
 
 logger = logging.getLogger(__name__)
@@ -139,7 +139,7 @@ class AccountData(UserData):
     @classmethod
     def create(cls, private_key: str, network_type: NetworkType) -> 'AccountData':
         private_key = private_key.upper()
-        facade = SymFacade(network_type.value)
+        facade = SymbolFacade(network_type.value)
         key_pair = KeyPair(PrivateKey(unhexlify(private_key)))
         public_key = str(key_pair.public_key).upper()
         address = str(facade.network.public_key_to_address(key_pair.public_key)).upper()
@@ -194,7 +194,7 @@ class AccountData(UserData):
     def accounts_pool_by_mnemonic(network_type: NetworkType,
                                   bip32_coin_id: int,
                                   mnemonic: str) -> Dict[str, 'AccountData']:
-        facade = SymFacade(network_type.value)
+        facade = SymbolFacade(network_type.value)
 
         bip = Bip32(facade.BIP32_CURVE_NAME)
         root_node = bip.from_mnemonic(mnemonic, '')
