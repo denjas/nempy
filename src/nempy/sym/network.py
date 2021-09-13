@@ -19,7 +19,7 @@ from nempy.sym.constants import BlockchainStatuses, EPOCH_TIME_TESTNET, EPOCH_TI
     TransactionTypes, AccountValidationState
 from pydantic import BaseModel, StrictInt, StrictFloat
 from symbolchain.core.CryptoTypes import Hash256
-from symbolchain.core.facade.SymFacade import SymFacade
+from symbolchain.core.facade.SymbolFacade import SymbolFacade
 from tabulate import tabulate
 from websockets import exceptions
 
@@ -129,11 +129,11 @@ class TransactionInfo(BaseModel):
         """Converts information from the blockchain into a readable form"""
         self.deadline = Timing().deadline_to_date(self.deadline)
         if self.message is not None:
-            self.message = unhexlify(self.message)[1:].decode('utf-8')
+            self.message = unhexlify(self.message)[1:].decode('utf-8', 'ignore')
         self.recipientAddress = b32encode(unhexlify(self.recipientAddress)).decode('utf-8')[:-1]
         self.mosaics = [MosaicInfo(**mosaic_id_to_name_n_real(mosaic.id, mosaic.amount)) for mosaic in self.mosaics]
         self.type = TransactionTypes.get_type_by_id(self.type).name
-        facade = SymFacade(node_selector.network_type.value)
+        facade = SymbolFacade(node_selector.network_type.value)
         self.signer_address = str(facade.network.public_key_to_address(Hash256(self.signerPublicKey)))
 
 

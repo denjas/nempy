@@ -8,8 +8,8 @@ from typing import Union, Optional, List, Tuple
 from symbolchain.core.CryptoTypes import Hash256
 from symbolchain.core.CryptoTypes import PrivateKey
 from symbolchain.core.CryptoTypes import Signature, PublicKey
-from symbolchain.core.facade.SymFacade import SymFacade
-from symbolchain.core.sym.IdGenerator import generate_namespace_id
+from symbolchain.core.facade.SymbolFacade import SymbolFacade
+from symbolchain.core.symbol.IdGenerator import generate_namespace_id
 
 from . import ed25519, network
 from .constants import Fees, FM, TransactionTypes, TransactionMetrics, HexSequenceSizes, NetworkType
@@ -139,7 +139,7 @@ class Transaction:
 
         self.network_type: NetworkType = network.get_node_network()
         self.timing: network.Timing = network.Timing(self.network_type)
-        self.sym_facade: SymFacade = SymFacade(self.network_type.value)
+        self.sym_facade: SymbolFacade = SymbolFacade(self.network_type.value)
 
     def create(self,
                pr_key: str,
@@ -168,7 +168,7 @@ class Transaction:
 
         descriptor = {
             'type': 'transfer',
-            'recipient_address': SymFacade.Address(recipient_address.replace('-', '')).bytes,
+            'recipient_address': SymbolFacade.Address(recipient_address.replace('-', '')).bytes,
             'signer_public_key': key_pair.public_key,
             'mosaics': mosaics,
             'fee': self.max_fee,
