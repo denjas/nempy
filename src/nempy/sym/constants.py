@@ -15,8 +15,8 @@ class AccountValidationState(Enum):
 
 
 class NetworkType(Enum):
-    TEST_NET = 'public_test'
-    MAIN_NET = 'public'
+    TEST_NET = 'testnet'
+    MAIN_NET = 'mainnet'
 
 
 class TransactionStatus(Enum):
