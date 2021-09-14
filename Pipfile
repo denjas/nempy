@@ -20,7 +20,7 @@ tabulate = "==0.8.9"
 bcrypt = "==3.2.0"
 pyfiglet = "==0.7.6"
 pydantic = "==1.8.2"
-
+aiohttp = "==3.7.4"
 
 [dev-packages]
 pytest = "==6.2.4"
