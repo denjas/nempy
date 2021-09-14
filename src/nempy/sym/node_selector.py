@@ -7,10 +7,10 @@ import time
 import aiohttp
 
 from http import HTTPStatus
-from typing import Optional, Union, List, Callable
+from typing import Optional, Union, List
 from urllib.parse import urlparse
 
-import requests
+
 import websockets
 from requests import RequestException
 from websockets import exceptions
@@ -89,6 +89,10 @@ class NodeSelector:
         return self._network_type
 
     def start(self, interval: Optional[int] = None):
+        """
+        Starts a background task to select the nodes of the blockchain network
+        The method is synchronous but needs to be run from async code
+        """
         if len(self._URLs) == 1:
             logger.warning(
                 "Only one blockchain node is installed. "
@@ -100,6 +104,7 @@ class NodeSelector:
         self.task.set_name("elector")
 
     async def stop(self):
+        """Stops the background async thread of node selection"""
         if self.task is not None and not self.task.cancelled():
             self.task.cancel()
             await self.task
@@ -107,6 +112,7 @@ class NodeSelector:
             print("Task is cancelled or not set")
 
     async def restart(self, interval: Optional[int] = None):
+        """Restarts the background node selection async thread"""
         await self.stop()
         self.start(interval)
 
