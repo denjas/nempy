@@ -9,6 +9,7 @@ from http import HTTPStatus
 from typing import Optional, Union, List, Callable, Dict
 from urllib.parse import urlparse
 
+import aiohttp
 import requests
 import websockets
 from pydantic import BaseModel, StrictInt, StrictFloat
@@ -43,7 +44,7 @@ class SymbolNetworkException(Exception):
         super(SymbolNetworkException, self).__init__(f'{self.code} - {self.name}', self.message)
 
 
-def mosaic_id_to_name_n_real(mosaic_id: str, amount: int) -> Dict[str, float]:
+async def mosaic_id_to_name_n_real(mosaic_id: str, amount: int) -> dict:
     """
     Converts mosaic identifiers to names and integer numbers to real numbers.
 
@@ -66,9 +67,9 @@ def mosaic_id_to_name_n_real(mosaic_id: str, amount: int) -> Dict[str, float]:
     """
     if not isinstance(amount, int):
         raise TypeError('To avoid confusion, automatic conversion to integer is prohibited')
-    divisibility = get_divisibility(mosaic_id)
+    divisibility = await get_divisibility(mosaic_id)
     divider = 10 ** int(divisibility)
-    mn = get_mosaic_names(mosaic_id)
+    mn = await get_mosaic_names(mosaic_id)
     name = mosaic_id
     names = mn['mosaicNames'][0]['names']
     if len(names) > 0:
@@ -108,13 +109,13 @@ class TransactionInfo(BaseModel):
     signer_address: Optional[str]
     mosaics: List[MosaicInfo]
 
-    def humanization(self):
+    async def humanization(self):
         """Converts information from the blockchain into a readable form"""
         self.deadline = Timing().deadline_to_date(self.deadline)
         if self.message is not None:
             self.message = unhexlify(self.message)[1:].decode('utf-8', 'ignore')
         self.recipientAddress = b32encode(unhexlify(self.recipientAddress)).decode('utf-8')[:-1]
-        self.mosaics = [MosaicInfo(**mosaic_id_to_name_n_real(mosaic.id, mosaic.amount)) for mosaic in self.mosaics]
+        self.mosaics = [MosaicInfo(**(await mosaic_id_to_name_n_real(mosaic.id, mosaic.amount))) for mosaic in self.mosaics]
         self.type = TransactionTypes.get_type_by_id(self.type).name
         facade = SymbolFacade(node_selector.network_type.value)
         self.signer_address = str(facade.network.public_key_to_address(Hash256(self.signerPublicKey)))
@@ -150,13 +151,19 @@ class TransactionResponse(BaseModel):
         return table
 
 
-def send_transaction(payload: bytes) -> bool:
+async def send_transaction(payload: bytes) -> bool:
     """Announces a transaction to the network"""
     try:
         headers = {'Content-type': 'application/json'}
-        answer = requests.put(f'{node_selector.url}/transactions', data=payload, headers=headers, timeout=10)
-        if answer.status_code != HTTPStatus.ACCEPTED:
-            raise SymbolNetworkException(**answer.json())
+        async with aiohttp.ClientSession() as session:
+            async with session.put(
+                    f'{node_selector.url}/transactions',
+                    data=payload,
+                    headers=headers,
+                    timeout=10
+            ) as response:
+                if response.status != HTTPStatus.ACCEPTED:
+                    raise SymbolNetworkException(**(await response.json()))
     except (RequestException, SymbolNetworkException) as e:
         logger.exception(e)
         return False
@@ -164,7 +171,7 @@ def send_transaction(payload: bytes) -> bool:
         return True
 
 
-def get_mosaic_names(mosaics_ids: Union[list, str]) -> Optional[dict]:
+async def get_mosaic_names(mosaics_ids: Union[list, str]) -> dict:
     """
     Get readable names for a set of mosaics.
 
@@ -188,24 +195,31 @@ def get_mosaic_names(mosaics_ids: Union[list, str]) -> Optional[dict]:
                 raise SymbolNetworkException('InvalidArgument', f'mosaicId `{mosaic_id}` has an invalid format')
         payload = {'mosaicIds': mosaics_ids}
         headers = {'Content-type': 'application/json'}
-        answer = requests.post(f'{node_selector.url}/namespaces/mosaic/names', json=payload, headers=headers, timeout=10)
-        if answer.status_code != HTTPStatus.OK:
-            raise SymbolNetworkException(**answer.json())
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                    f'{node_selector.url}/namespaces/mosaic/names',
+                    json=payload,
+                    headers=headers,
+                    timeout=1) as response:
+                result = await response.json()
+                if response.status != HTTPStatus.OK:
+                    raise SymbolNetworkException(**result)
     except (RequestException, SymbolNetworkException) as e:
         logger.exception(e)
         raise
     else:
-        return answer.json()
+        return result
 
 
-def get_accounts_info(address: str) -> Optional[dict]:
+async def get_accounts_info(address: str) -> Optional[dict]:
     try:
         if (avs := ed25519.check_address(address)) != AccountValidationState.OK:
             raise SymbolNetworkException('InvalidAddress', f'Incorrect account address: `{address}`: {avs}')
         endpoint = f'{node_selector.url}/accounts/{address}'
-        answer = requests.get(endpoint)
-        if answer.status_code != HTTPStatus.OK:
-            return None
+        async with aiohttp.ClientSession() as session:
+            async with session.get(endpoint, timeout=1) as response:
+                if response.status != HTTPStatus.OK:
+                    return None
     except RequestException as e:
         logger.exception(e)
         raise
@@ -213,26 +227,26 @@ def get_accounts_info(address: str) -> Optional[dict]:
         logger.exception(e)
         raise
     else:
-        return answer.json()
+        return await response.json()
 
 
-def search_transactions(address: Optional[str] = None,
-                        recipient_address: Optional[str] = None,
-                        signer_public_key: Optional[str] = None,
-                        height: Optional[int] = None,
-                        from_height: Optional[int] = None,
-                        to_height: Optional[str] = None,
-                        from_transfer_amount: Optional[str] = None,
-                        to_transfer_amount: Optional[str] = None,
-                        type: int = 16724,
-                        embedded: bool = False,
-                        transfer_mosaic_id: Optional[str] = None,
-                        page_size: int = 10,
-                        page_number: int = 1,
-                        offset: Optional[str] = None,
-                        order: str = 'desc',
-                        transaction_status: TransactionStatus = TransactionStatus.CONFIRMED_ADDED
-                        ) -> Optional[list]:
+async def search_transactions(address: Optional[str] = None,
+                              recipient_address: Optional[str] = None,
+                              signer_public_key: Optional[str] = None,
+                              height: Optional[int] = None,
+                              from_height: Optional[int] = None,
+                              to_height: Optional[str] = None,
+                              from_transfer_amount: Optional[str] = None,
+                              to_transfer_amount: Optional[str] = None,
+                              type: int = 16724,
+                              embedded: bool = False,
+                              transfer_mosaic_id: Optional[str] = None,
+                              page_size: int = 10,
+                              page_number: int = 1,
+                              offset: Optional[str] = None,
+                              order: str = 'desc',
+                              transaction_status: TransactionStatus = TransactionStatus.CONFIRMED_ADDED
+                              ) -> Optional[list]:
     params = {
         'address': address,
         'recipientAddress': recipient_address,
@@ -253,57 +267,62 @@ def search_transactions(address: Optional[str] = None,
     payload = {key: val for key, val in params.items() if val is not None}
     endpoint = f'{node_selector.url}/transactions/{transaction_status.value}'
     try:
-        answer = requests.get(endpoint, params=payload)
-        if answer.status_code != HTTPStatus.OK:
-            raise SymbolNetworkException(**answer.json())
+        async with aiohttp.ClientSession() as session:
+            async with session.get(endpoint, params=payload, timeout=1) as response:
+                result = await response.json()
+                if response.status != HTTPStatus.OK:
+                    raise SymbolNetworkException(**result)
+                transactions = result
+                transactions_response = []
+                for transaction in transactions['data']:
+                    mosaics = [MosaicInfo(id=mosaic['id'], amount=int(mosaic['amount'])) for mosaic in
+                               transaction['transaction']['mosaics']]
+                    del (transaction['transaction']['mosaics'])
+                    _transaction = TransactionResponse(id=transaction['id'],
+                                                       meta=Meta(**transaction['meta']),
+                                                       transaction=TransactionInfo(mosaics=mosaics,
+                                                                                   **transaction['transaction'])
+                                                       )
+                    _transaction.status = transaction_status.value
+                    transactions_response.append(_transaction)
+                    await _transaction.transaction.humanization()
+                return transactions_response
     except RequestException as e:
         logger.exception(e)
         raise
     except SymbolNetworkException as e:
         logger.exception(e)
         raise
-    transactions = answer.json()
-    transactions_response = []
-    for transaction in transactions['data']:
-        mosaics = [MosaicInfo(id=mosaic['id'], amount=int(mosaic['amount'])) for mosaic in transaction['transaction']['mosaics']]
-        del(transaction['transaction']['mosaics'])
-        _transaction = TransactionResponse(id=transaction['id'],
-                                           meta=Meta(**transaction['meta']),
-                                           transaction=TransactionInfo(mosaics=mosaics, **transaction['transaction'])
-                                           )
-        _transaction.status = transaction_status.value
-        transactions_response.append(_transaction)
-        _transaction.transaction.humanization()
-    return transactions_response
 
 
-def get_namespace_info(namespace_id: str) -> Optional[dict]:
+async def get_namespace_info(namespace_id: str) -> Optional[dict]:
     endpoint = f'{node_selector.url}/namespaces/{namespace_id}'
     try:
-        answer = requests.get(endpoint)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(endpoint, timeout=1) as response:
+                if response.status != HTTPStatus.OK:
+                    logger.error(await response.text())
+                    if response.status == HTTPStatus.NOT_FOUND:
+                        logger.error(f'Invalid namespace ID `{namespace_id}`')
+                        return {}
+                    return None
+                namespace_info = await response.json()
+                return namespace_info
     except Exception as e:
         logger.error(e)
         return None
-    if answer.status_code != HTTPStatus.OK:
-        logger.error(answer.text)
-        if answer.status_code == HTTPStatus.NOT_FOUND:
-            logger.error(f'Invalid namespace ID `{namespace_id}`')
-            return {}
-        return None
-    namespace_info = answer.json()
-    return namespace_info
 
 
-def check_transaction_state(transaction_hash):
-    timeout = 10
+async def check_transaction_state(transaction_hash):
     check_order = ['confirmed', 'unconfirmed', 'partial']
     status = TransactionStatus.NOT_FOUND
     for checker in check_order:
         endpoint = f'{node_selector.url}/transactions/{checker}/{transaction_hash}'
         try:
-            answer = requests.get(endpoint, timeout=timeout)
-            if answer.status_code != 200:
-                raise SymbolNetworkException(**answer.json())
+            async with aiohttp.ClientSession() as session:
+                async with session.get(endpoint, timeout=1) as response:
+                    if response.status != HTTPStatus.OK:
+                        raise SymbolNetworkException(**(await response.json()))
         except (RequestException, SymbolNetworkException) as e:
             if isinstance(e, SymbolNetworkException) and e.code == 404:
                 return TransactionStatus.NOT_FOUND
@@ -319,44 +338,52 @@ def check_transaction_state(transaction_hash):
         return status
 
 
-def get_network_properties():
-    answer = requests.get(f'{node_selector.url}/network/properties')
-    if answer.status_code == HTTPStatus.OK:
-        network_properties = answer.json()
-        return network_properties
-    answer.raise_for_status()
+async def get_network_properties():
+    endpoint = f'{node_selector.url}/network/properties'
+    async with aiohttp.ClientSession() as session:
+        async with session.get(endpoint, timeout=1) as response:
+            if response.status == HTTPStatus.OK:
+                network_properties = await response.json()
+                return network_properties
+            response.raise_for_status()
 
 
-def get_block_information(height: int):
-    answer = requests.get(f'{node_selector.url}/blocks/{height}')
-    if answer.status_code == HTTPStatus.OK:
-        block_info = answer.json()
-        return block_info
-    answer.raise_for_status()
+async def get_block_information(height: int):
+    endpoint = f'{node_selector.url}/blocks/{height}'
+    async with aiohttp.ClientSession() as session:
+        async with session.get(endpoint, timeout=1) as response:
+            if response.status == HTTPStatus.OK:
+                block_info = await response.json()
+                return block_info
+            response.raise_for_status()
 
 
-def get_fee_multipliers():
+async def get_fee_multipliers():
+    endpoint = f'{node_selector.url}/network/fees/transaction'
     try:
-        answer = requests.get(f'{node_selector.url}/network/fees/transaction')
+        async with aiohttp.ClientSession() as session:
+            async with session.get(endpoint, timeout=1) as response:
+                if response.status == HTTPStatus.OK:
+                    fee_multipliers = await response.json()
+                    return fee_multipliers
+                return None
     except RequestException as e:
         logger.exception(e)
         return None
-    if answer.status_code == HTTPStatus.OK:
-        fee_multipliers = answer.json()
-        return fee_multipliers
-    return None
 
 
-def get_divisibility(mosaic_id: str) -> Optional[int]:
+async def get_divisibility(mosaic_id: str) -> Optional[int]:
     try:
         if not ed25519.check_hex(mosaic_id, constants.HexSequenceSizes.MOSAIC_ID):
             raise SymbolNetworkException('InvalidArgument', f'mosaicId `{mosaic_id}` has an invalid format')
-        answer = requests.get(f'{node_selector.url}/mosaics/{mosaic_id}')
-        if answer.status_code == HTTPStatus.OK:
-            node_info = answer.json()
-            divisibility = int(node_info['mosaic']['divisibility'])
-        else:
-            raise SymbolNetworkException(**answer.json())
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f'{node_selector.url}/mosaics/{mosaic_id}', timeout=1) as response:
+
+                node_info = await response.json()
+                if response.status == HTTPStatus.OK:
+                    divisibility = int(node_info['mosaic']['divisibility'])
+                else:
+                    raise SymbolNetworkException(**node_info)
     except RequestException as e:
         logger.exception(e)
         raise
@@ -367,40 +394,42 @@ def get_divisibility(mosaic_id: str) -> Optional[int]:
         return divisibility
 
 
-def get_divisibilities(n_pages: int = 0):
+async def get_divisibilities(n_pages: int = 0):
     mosaics = {}
     payload = {'pageSize': 100}
+    endpoint = f'{node_selector.url}/mosaics'
 
     page_count = 1
     while True:
         try:
-            answer = requests.get(f'{node_selector.url}/mosaics', params=payload)
+            async with aiohttp.ClientSession() as session:
+                async with session.get(endpoint, params=payload, timeout=1) as response:
+                    if response.status == HTTPStatus.OK:
+                        mosaics_pages = (await response.json())['data']
+                        if len(mosaics_pages) == 0:
+                            return mosaics
+                        last_page = None
+                        for page in mosaics_pages:
+                            mosaic_id = page['mosaic']['id']
+                            divisibility = page['mosaic']['divisibility']
+                            mosaics[mosaic_id] = divisibility
+                            last_page = page
+                        payload['offset'] = last_page['id']
+                        page_count = page_count + 1 if n_pages else page_count
+                        if page_count > n_pages:
+                            return mosaics
         except Exception as e:
             logger.error(e)
             return None
-        if answer.status_code == HTTPStatus.OK:
-            mosaics_pages = answer.json()['data']
-            if len(mosaics_pages) == 0:
-                return mosaics
-            last_page = None
-            for page in mosaics_pages:
-                mosaic_id = page['mosaic']['id']
-                divisibility = page['mosaic']['divisibility']
-                mosaics[mosaic_id] = divisibility
-                last_page = page
-            payload['offset'] = last_page['id']
-            page_count = page_count + 1 if n_pages else page_count
-            if page_count > n_pages:
-                return mosaics
 
 
-def get_balance(address: str) -> Optional[dict]:
+async def get_balance(address: str) -> Optional[dict]:
     try:
-        address_info = get_accounts_info(address)
+        address_info = await get_accounts_info(address)
         if address_info is None:
             return {}
         mosaics = address_info['account']['mosaics']
-        balance = {mosaic['id']: int(mosaic['amount']) / 10 ** get_divisibility(mosaic['id']) for mosaic in mosaics}
+        balance = {mosaic['id']: int(mosaic['amount']) / 10 ** await get_divisibility(mosaic['id']) for mosaic in mosaics}
     except (SymbolNetworkException, RequestException) as e:
         if isinstance(e, SymbolNetworkException) and e.code == 404:
             return {}
