@@ -327,24 +327,6 @@ def get_network_properties():
     answer.raise_for_status()
 
 
-def get_node_network():
-    try:
-        answer = requests.get(f'{node_selector.url}/node/info')
-    except RequestException as e:
-        logger.exception(e)
-        raise
-    if answer.status_code == HTTPStatus.OK:
-        fee_info = answer.json()
-        network_generation_hash_seed = fee_info['networkGenerationHashSeed']
-        if network_generation_hash_seed == constants.NETWORK_GENERATION_HASH_SEED_TEST:
-            return NetworkType.TEST_NET
-        elif network_generation_hash_seed == constants.NETWORK_GENERATION_HASH_SEED_PUBLIC:
-            return NetworkType.MAIN_NET
-        else:
-            return None
-    answer.raise_for_status()
-
-
 def get_block_information(height: int):
     answer = requests.get(f'{node_selector.url}/blocks/{height}')
     if answer.status_code == HTTPStatus.OK:

@@ -11,6 +11,7 @@ from symbolchain.core.CryptoTypes import Signature, PublicKey
 from symbolchain.core.facade.SymbolFacade import SymbolFacade
 from symbolchain.core.symbol.IdGenerator import generate_namespace_id
 
+from .node_selector import get_node_network
 from . import ed25519, network
 from .constants import Fees, FM, TransactionTypes, TransactionMetrics, HexSequenceSizes, NetworkType
 
@@ -137,7 +138,7 @@ class Transaction:
         self.size: int = -1  #: transaction size
         self.max_fee: int = -1  #: The maximum amount of network currency that the sender of the transaction is willing to pay to get the transaction accepted
 
-        self.network_type: NetworkType = network.get_node_network()
+        self.network_type: NetworkType = get_node_network()
         self.timing: network.Timing = network.Timing(self.network_type)
         self.sym_facade: SymbolFacade = SymbolFacade(self.network_type.value)
 
