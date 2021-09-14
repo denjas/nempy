@@ -1,11 +1,10 @@
 import configparser
 import logging
 import os
-from typing import Optional
 
-from nempy.config import WALLET_DIR, C
-from nempy.ui import PasswordPolicyError, RepeatPasswordError, ProfileUI, AccountUI
-from nempy.user_data import ProfileData
+from .config import WALLET_DIR, C
+from .ui import PasswordPolicyError, RepeatPasswordError, ProfileUI, AccountUI
+from .user_data import ProfileData
 
 logger = logging.getLogger(__name__)
 

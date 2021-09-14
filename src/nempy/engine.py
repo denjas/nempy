@@ -2,12 +2,13 @@ import abc
 import logging
 from enum import Enum
 from typing import List, Tuple, Union, Dict, Optional
-from nempy.user_data import AccountData
-from nempy.sym.constants import BlockchainStatuses, Fees, TransactionStatus
 
+from nempy.sym.constants import BlockchainStatuses, Fees, TransactionStatus
+from nempy.user_data import AccountData
 from .sym import api as sym
 from .sym import network
-from .sym.network import NodeSelector
+from .sym.node_selector import NodeSelector
+from .sym.node_selector import node_selector
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +73,7 @@ class XYMEngine(NEMEngine):
         account
             User account data
         """
-        self.node_selector = network.node_selector
+        self.node_selector = node_selector
         self.node_selector.network_type = account.network_type
         self.transaction = sym.Transaction()
         self.timing = self.transaction.timing

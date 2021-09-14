@@ -1,4 +1,4 @@
-import abc
+import binascii
 import binascii
 import configparser
 import logging
@@ -6,20 +6,21 @@ import os
 import random
 from enum import Enum
 from hashlib import blake2b
-from typing import Optional, Dict, Tuple, Union, List, Type
+from typing import Optional, Dict, Tuple, List, Type
 
 import bcrypt
 import inquirer
 import stdiomask
 from bip_utils import Bip39MnemonicGenerator, Bip39Languages
-from nempy.config import C
-from nempy.sym import network
-from nempy.sym.constants import NetworkType, TransactionStatus
-from nempy.sym.network import TransactionResponse
-from nempy.user_data import AccountData, GenerationType, UserData
-from nempy.user_data import ProfileData
 from password_strength import PasswordPolicy
 
+from .config import C
+from .sym import network
+from .sym.constants import NetworkType, TransactionStatus
+from .sym.network import TransactionResponse
+from .sym.node_selector import node_selector
+from .user_data import AccountData, GenerationType, UserData
+from .user_data import ProfileData
 
 logger = logging.getLogger(__name__)
 
@@ -306,7 +307,7 @@ class ProfileUI(ProfileI):
             exit(1)
         name = names[answers['name']]
         profile_data = profiles[name]
-        network.node_selector.network_type = profile_data.network_type
+        node_selector.network_type = profile_data.network_type
         return profile_data  # -> set_default_profile(profile)
 
     @classmethod

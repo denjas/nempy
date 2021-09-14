@@ -5,6 +5,8 @@ import datetime
 from unittest.mock import patch, PropertyMock
 
 import pytest
+
+from nempy.sym.node_selector import node_selector
 from nempy.sym import network
 from nempy.sym.constants import NetworkType
 import requests
@@ -14,21 +16,21 @@ from nempy.sym.network import Monitor
 
 def test_node_selector():
     urls = ['http://ngl-dual-301.testnet.symboldev.network:3000', 'http://ngl-dual-401.testnet.symboldev.network:3000']
-    network.node_selector.url = urls
-    assert network.node_selector.url in urls
+    node_selector.url = urls
+    assert node_selector.url in urls
     not_valid_url = 'http:/ngl-dual-301.testnet.symboldev.network:3000'
     with pytest.raises(ValueError):
-        network.node_selector.url = not_valid_url
+        node_selector.url = not_valid_url
     not_worked_url = 'http://sdfgdfg.sdfgdsgdgfd.sdfgd.sdfgsdg:3000'
-    network.node_selector.url = not_worked_url
-    assert network.node_selector.url == not_worked_url
-    network.node_selector.url = urls
-    assert network.node_selector.url in urls
+    node_selector.url = not_worked_url
+    assert node_selector.url == not_worked_url
+    node_selector.url = urls
+    assert node_selector.url in urls
     with patch.object(threading.Event, 'wait', return_value=False):
         with pytest.raises(RuntimeError):
-            network.node_selector.url = urls
-    network.node_selector.url = urls[0]
-    assert network.node_selector.url == urls[0]
+            node_selector.url = urls
+    node_selector.url = urls[0]
+    assert node_selector.url == urls[0]
 
 
 def test_get_divisibility():
@@ -87,11 +89,11 @@ def test_search_transactions():
 
 
 def test_get_divisibilities():
-    network.node_selector.network_type = NetworkType.MAIN_NET
-    network.node_selector.thread.wait()
+    node_selector.network_type = NetworkType.MAIN_NET
+    node_selector.thread.wait()
     mosaics = network.get_divisibilities(2)
     assert len(mosaics) == 200
-    network.node_selector.network_type = NetworkType.TEST_NET
+    node_selector.network_type = NetworkType.TEST_NET
     mosaics = network.get_divisibilities(2)
     assert len(mosaics) == 200
 
@@ -145,12 +147,12 @@ def test_check_transaction_state():
 
 
 def test_get_node_network():
-    network.node_selector.network_type = NetworkType.MAIN_NET
+    node_selector.network_type = NetworkType.MAIN_NET
     assert network.get_node_network() == NetworkType.MAIN_NET
-    network.node_selector.network_type = NetworkType.TEST_NET
+    node_selector.network_type = NetworkType.TEST_NET
     assert network.get_node_network() == NetworkType.TEST_NET
     with pytest.raises(TypeError):
-        network.node_selector.network_type = 'UNKNOWN'
+        node_selector.network_type = 'UNKNOWN'
     with patch('requests.get', side_effect=exceptions.RequestException):
         with pytest.raises(exceptions.RequestException):
             network.get_node_network()
@@ -191,7 +193,7 @@ def test_monitor():
     subscribers = ['block']
     with tempfile.NamedTemporaryFile() as log:
         with pytest.raises(SystemExit):
-            Monitor(network.node_selector.url, subscribers, formatting=True, log=log, callback=monitoring_callback)
+            Monitor(node_selector.url, subscribers, formatting=True, log=log, callback=monitoring_callback)
 
 
 

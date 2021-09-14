@@ -3,15 +3,16 @@ import os
 
 import click
 import stdiomask
-from nempy.user_data import DecoderStatus
-from nempy.config import C
-from nempy.engine import XYMEngine, EngineStatusCode
-from nempy.sym import ed25519
-from nempy.sym.constants import HexSequenceSizes
-from nempy.sym.network import Monitor, NetworkType
-from nempy.wallet import Wallet
-from nempy.ui import AccountUI, ProfileUI, print_warning
 from tabulate import tabulate
+
+from ..config import C
+from ..engine import XYMEngine, EngineStatusCode
+from ..sym import ed25519
+from ..sym.constants import HexSequenceSizes
+from ..sym.network import Monitor, NetworkType
+from ..ui import AccountUI, ProfileUI, print_warning
+from ..user_data import DecoderStatus
+from ..wallet import Wallet
 
 
 @click.group('account', help='- Interactive account management')

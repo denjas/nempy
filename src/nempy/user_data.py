@@ -14,15 +14,16 @@ import bcrypt
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
-from nempy.config import C
-from nempy.sym.constants import NetworkType, AccountValidationState
-from nempy.sym.ed25519 import check_address
 from pydantic import BaseModel, validator, StrictStr, StrictBytes
 from symbolchain.core.Bip32 import Bip32
 from symbolchain.core.CryptoTypes import PrivateKey
 from symbolchain.core.facade.SymbolFacade import SymbolFacade
 from symbolchain.core.symbol.KeyPair import KeyPair
 from tabulate import tabulate
+
+from .config import C
+from .sym.constants import NetworkType, AccountValidationState
+from .sym.ed25519 import check_address
 
 logger = logging.getLogger(__name__)
 

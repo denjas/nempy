@@ -3,7 +3,7 @@
 import asyncio
 
 import click
-from nempy.sym.network import NodeSelector
+from ..sym.node_selector import NodeSelector
 
 
 @click.command()

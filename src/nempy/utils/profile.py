@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 import click
-from nempy.config import C
-from nempy.wallet import Wallet
-from nempy.ui import ProfileUI
+
+from ..config import C
+from ..ui import ProfileUI
+from ..wallet import Wallet
 
 
 @click.group('profile', help='- Interactive profile management')
