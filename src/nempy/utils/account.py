@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 
@@ -88,7 +89,8 @@ def get_balance(address):
     if not address:
         address = wallet.profile.account.data.address
     engine = XYMEngine(wallet.profile.account.data)
-    balance = engine.get_balance(address, humanization=True)
+    loop = asyncio.get_event_loop()
+    balance = loop.run_until_complete(engine.get_balance(address, humanization=True))
     if balance == {}:
         print(f'Account `{address}` does not exist, or there was no movement of funds on it')
         exit(0)
@@ -168,19 +170,20 @@ def send(address: str, plain_message: str, encrypted_message: str, mosaics: str,
             print(f'`{mosaic[0]}` cannot be a mosaic index. You may have forgotten to put `@` in front of the alias name (example: @symbol.xym)')
             exit(1)
     wallet = Wallet()
+    loop = asyncio.get_event_loop()
     engine = XYMEngine(wallet.profile.account.data)
-    balance = engine.get_balance(humanization=True)
+    balance = loop.run_until_complete(engine.get_balance(humanization=True))
     mosaics = [(mosaic.split(':')[0], float(mosaic.split(':')[1])) for mosaic in mosaics]
     message = plain_message or encrypted_message or ''
     is_encrypted = True if encrypted_message else False
     confirmation(address, mosaics, message, is_encrypted, fee, deadline, balance, wallet.profile.data.network_type)
     password = stdiomask.getpass(f'Enter your `{wallet.profile.data.name} [{wallet.profile.data.network_type.name}]` profile password: ')
-    entity_hash, status = engine.send_tokens(recipient_address=address,
-                                             mosaics=mosaics,
-                                             message=message,
-                                             is_encrypted=is_encrypted,
-                                             password=password,
-                                             deadline={'minutes': deadline})
+    entity_hash, status = loop.run_until_complete(engine.send_tokens(recipient_address=address,
+                                                                     mosaics=mosaics,
+                                                                     message=message,
+                                                                     is_encrypted=is_encrypted,
+                                                                     password=password,
+                                                                     deadline={'minutes': deadline}))
     if status != EngineStatusCode.ACCEPTED:
         if status == EngineStatusCode.INVALID_ACCOUNT_INFO:
             print(status.value, '\nThe account either does not exist, or there were no transactions on it.'
@@ -188,7 +191,8 @@ def send(address: str, plain_message: str, encrypted_message: str, mosaics: str,
         exit(1)
     subscribers = ['confirmedAdded', 'unconfirmedAdded', 'status']
     subscribers = [os.path.join(subscribe, address) for subscribe in subscribers]
-    await Monitor(await engine.node_selector.url, subscribers, formatting=True, callback=_monitoring_callback).monitoring()
+    url = loop.run_until_complete(engine.node_selector.url)
+    loop.run_until_complete(Monitor(url, subscribers, formatting=True, callback=_monitoring_callback).monitoring())
 
 
 @main.command('history')

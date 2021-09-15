@@ -1,12 +1,11 @@
 #!/usr/bin/env python
-
+import asyncio
 import logging
 import os.path
 
 import click
 from ..sym.network import Monitor
 from ..sym.node_selector import node_selector
-
 
 
 @click.command('monitoring', help='- Monitor blocks, transactions and errors', context_settings=dict(max_content_width=300))
@@ -20,6 +19,7 @@ from ..sym.node_selector import node_selector
 @click.option('-l', '--log', type=str, required=False, default='', help='Path to the log file')
 @click.option('-f', '--formatting', is_flag=True, help='Formatted output')
 def main(url, channels, address, formatting, log):
+    loop = asyncio.get_event_loop()
     addresses = address
     if log and os.path.exists(log):
         answer = input(f'`{log}` file exists, overwrite? y/N: ')
@@ -40,7 +40,8 @@ def main(url, channels, address, formatting, log):
         else:
             subscribers.append(channel)
     logging.debug(subscribers)
-    await Monitor(await node_selector.url, subscribers, formatting, log).monitoring()
+    url = loop.run_until_complete(node_selector.url)
+    loop.run_until_complete(Monitor(url, subscribers, formatting, log).monitoring())
 
 
 if __name__ == '__main__':
