@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import logging
 import re
@@ -97,32 +98,38 @@ class Namespace(str):
 
 class Mosaic(tuple):
     """Builds a mosaic. Gets additional data by divisor and mosaic ID by name"""
-    def __new__(cls, mosaic_id: str, amount: float):
+    def __new__(cls, mosaic_id: int, amount: int):
         cls.size = 16
+        if not isinstance(amount, int):
+            raise ValueError('Only integer values are allowed to set the amount of mosaics')
+        return tuple.__new__(Mosaic, [mosaic_id, amount])
+
+    @classmethod
+    async def create(cls, mosaic_id: str, amount: float) -> 'Mosaic':
         if mosaic_id.startswith('@'):
-            mosaic_id = Mosaic.alias_to_mosaic_id(mosaic_id[1:])
-        divisibility = Mosaic.get_divisibility(mosaic_id)
+            mosaic_id = await Mosaic.alias_to_mosaic_id(mosaic_id[1:])
+        divisibility = await Mosaic.get_divisibility(mosaic_id)
         if divisibility is None:
             raise ValueError(f'Failed to get divisibility from network')
         divider = 10 ** int(divisibility)
-        return tuple.__new__(Mosaic, [int(mosaic_id, 16), int(amount * divider)])
+        return cls(int(mosaic_id, 16), int(amount * divider))
 
     @staticmethod
-    def get_divisibility(mosaic_id: str):
+    async def get_divisibility(mosaic_id: str):
         """Gets the divisibility by mosaic ID"""
         if mosaic_id in dividers:
             return dividers.get(mosaic_id)
         else:
-            divisibility = network.get_divisibility(mosaic_id)
+            divisibility = await network.get_divisibility(mosaic_id)
             if divisibility is not None:
                 dividers.set(mosaic_id, divisibility)
             return divisibility
 
     @staticmethod
-    def alias_to_mosaic_id(alis):
+    async def alias_to_mosaic_id(alis):
         """Translates aliases to mosaic id"""
         namespace_id = Namespace(alis)
-        namespace_info = network.get_namespace_info(namespace_id)
+        namespace_info = await network.get_namespace_info(namespace_id)
         if namespace_info is None or namespace_info == {}:
             raise ValueError(f'Failed to get mosaic_id by name `{alis}`')
         mosaic_id = namespace_info['namespace']['alias']['mosaicId']
@@ -137,18 +144,18 @@ class Transaction:
     def __init__(self):
         self.size: int = -1  #: transaction size
         self.max_fee: int = -1  #: The maximum amount of network currency that the sender of the transaction is willing to pay to get the transaction accepted
-
-        self.network_type: NetworkType = get_node_network()
-        self.timing: network.Timing = network.Timing(self.network_type)
+        loop = asyncio.get_event_loop()
+        self.network_type: NetworkType = loop.run_until_complete(get_node_network())
+        self.timing: network.Timing = loop.run_until_complete(network.Timing(self.network_type))
         self.sym_facade: SymbolFacade = SymbolFacade(self.network_type.value)
 
-    def create(self,
-               pr_key: str,
-               recipient_address: str,
-               mosaics: Union[Mosaic, List[Mosaic], None] = None,
-               message: Union[PlainMessage, EncryptMessage] = PlainMessage(''),
-               fee_type: Fees = Fees.SLOWEST,
-               deadline: Optional[dict] = None) -> Tuple[str, bytes]:
+    async def create(self,
+                     pr_key: str,
+                     recipient_address: str,
+                     mosaics: Union[Mosaic, List[Mosaic], None] = None,
+                     message: Union[PlainMessage, EncryptMessage] = PlainMessage(''),
+                     fee_type: Fees = Fees.SLOWEST,
+                     deadline: Optional[dict] = None) -> Tuple[str, bytes]:
         """Create a transaction"""
 
         if deadline is None:
@@ -178,7 +185,7 @@ class Transaction:
         }
 
         self.size = self.MIN_TRANSACTION_SIZE + descriptor['message'].size + sum(mosaic.size for mosaic in descriptor['mosaics'])
-        self.max_fee = Transaction.calc_max_fee(self.size, fee_type)
+        self.max_fee = await Transaction.calc_max_fee(self.size, fee_type)
         descriptor['fee'] = self.max_fee
 
         transaction = self.sym_facade.transaction_factory.create(descriptor)
@@ -197,10 +204,10 @@ class Transaction:
         return entity_hash, payload_bytes
 
     @staticmethod
-    def calc_max_fee(transaction_size: int, fee_type: Fees):
+    async def calc_max_fee(transaction_size: int, fee_type: Fees):
         """Calculation of the transaction fee"""
         # network fee multipliers
-        nfm = network.get_fee_multipliers()
+        nfm = await network.get_fee_multipliers()
         if nfm is None:
             raise ValueError(f'Failed to get fee multipliers from network. Unable to calculate fee')
         # https://github.com/nemgrouplimited/symbol-desktop-wallet/blob/507d4694a0ff55b0b039be0b5d061b47b2386fde/src/services/TransactionCommand.ts#L200

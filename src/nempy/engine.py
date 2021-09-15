@@ -1,4 +1,5 @@
 import abc
+import asyncio
 import logging
 from enum import Enum
 from typing import List, Tuple, Union, Dict, Optional
@@ -40,7 +41,7 @@ class NEMEngine:
         yield "public_key", self.account.public_key
 
     @abc.abstractmethod
-    def send_tokens(
+    async def send_tokens(
         self,
         recipient_address: str,
         mosaics: List[Tuple[str, float]],
@@ -52,11 +53,11 @@ class NEMEngine:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def check_status(self):
+    async def check_status(self):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_balance(self, nem_address, test=False):
+    async def get_balance(self, nem_address, test=False):
         raise NotImplementedError
 
 
@@ -74,12 +75,14 @@ class XYMEngine(NEMEngine):
             User account data
         """
         self.node_selector = node_selector
-        self.node_selector.network_type = account.network_type
+        # self.node_selector.network_type = account.network_type
         self.transaction = sym.Transaction()
         self.timing = self.transaction.timing
-        super().__init__(self.node_selector.url, account)
+        loop = asyncio.get_event_loop()
+        url: str = loop.run_until_complete(self.node_selector.url)
+        super().__init__(url, account)
 
-    def send_tokens(
+    async def send_tokens(
         self,
         recipient_address: str,
         mosaics: List[Tuple[str, float]],
@@ -154,10 +157,10 @@ class XYMEngine(NEMEngine):
         """
         recipient_address = recipient_address.replace("-", "")
         mosaics = [
-            sym.Mosaic(mosaic_id=mosaic[0], amount=mosaic[1]) for mosaic in mosaics
+            await sym.Mosaic.create(mosaic_id=mosaic[0], amount=mosaic[1]) for mosaic in mosaics
         ]
         if is_encrypted:
-            address_info = network.get_accounts_info(address=recipient_address)
+            address_info = await network.get_accounts_info(address=recipient_address)
             if address_info is None:
                 return None, EngineStatusCode.INVALID_ACCOUNT_INFO
             public_key = address_info["account"]["publicKey"]
@@ -166,7 +169,7 @@ class XYMEngine(NEMEngine):
             )
         else:
             message = sym.PlainMessage(message)
-        entity_hash, payload = self.transaction.create(
+        entity_hash, payload = await self.transaction.create(
             pr_key=self.account.decrypt(password).private_key,
             recipient_address=recipient_address,
             mosaics=mosaics,
@@ -174,12 +177,12 @@ class XYMEngine(NEMEngine):
             deadline=deadline,
             fee_type=fee_type,
         )
-        is_sent = network.send_transaction(payload)
+        is_sent = await network.send_transaction(payload)
         if is_sent:
             return entity_hash, EngineStatusCode.ACCEPTED
         return None, EngineStatusCode.ANNOUNCE_ERROR
 
-    def check_status(self) -> BlockchainStatuses:
+    async def check_status(self) -> BlockchainStatuses:
         """ Checking the status of a blockchain node
 
         Returns:
@@ -187,9 +190,9 @@ class XYMEngine(NEMEngine):
         """
         if self.account is None:
             return BlockchainStatuses.NOT_INITIALIZED
-        return NodeSelector.health(self.node_selector.url)
+        return await NodeSelector.health(await self.node_selector.url)
 
-    def get_balance(self, nem_address: str = "", humanization: bool = False) -> Dict[str, float]:
+    async def get_balance(self, nem_address: str = "", humanization: bool = False) -> Dict[str, float]:
         """
         Gets account balance
 
@@ -212,13 +215,13 @@ class XYMEngine(NEMEngine):
         """
         if not nem_address:
             nem_address = self.account.address
-        amount = network.get_balance(nem_address)
+        amount = await network.get_balance(nem_address)
         if humanization:
-            amount = XYMEngine.mosaic_humanization(amount)
+            amount = await XYMEngine.mosaic_humanization(amount)
         return amount
 
     @staticmethod
-    def mosaic_humanization(mosaics: Dict[str, float]) -> Dict[str, float]:
+    async def mosaic_humanization(mosaics: Dict[str, float]) -> Dict[str, float]:
         """Translates mosaic IDs into friendly names (linked namespaces)
 
         Parameters
@@ -242,7 +245,7 @@ class XYMEngine(NEMEngine):
 
         """
         mosaics_ids = list(mosaics.keys())
-        mosaic_names = network.get_mosaic_names(mosaics_ids)
+        mosaic_names: dict = await network.get_mosaic_names(mosaics_ids)
         if mosaic_names is not None:
             mosaic_names = mosaic_names["mosaicNames"]
             rf_mosaic_names = {
@@ -258,7 +261,7 @@ class XYMEngine(NEMEngine):
             return mosaics
 
     @staticmethod
-    def check_transaction_confirmation(transaction_hash) -> TransactionStatus:
+    async def check_transaction_confirmation(transaction_hash) -> TransactionStatus:
         """
         Determines the current status of a transaction by its hash
 
@@ -278,4 +281,4 @@ class XYMEngine(NEMEngine):
         TransactionStatus.PARTIAL_ADDED
         ```
         """
-        return network.check_transaction_state(transaction_hash)
+        return await network.check_transaction_state(transaction_hash)

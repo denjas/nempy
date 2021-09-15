@@ -1,3 +1,4 @@
+import asyncio
 import binascii
 import binascii
 import configparser
@@ -227,12 +228,15 @@ class AccountUI(AccountI):
 
     @staticmethod
     def ui_history_inquirer(address: str = None, page_size: int = 10):
-        conf_transactions: List[TransactionResponse] = network.search_transactions(address=address,
-                                                                                   page_size=page_size,
-                                                                                   transaction_status=TransactionStatus.CONFIRMED_ADDED)
-        unconf_transactions: List[TransactionResponse] = network.search_transactions(address=address,
-                                                                                     page_size=page_size,
-                                                                                     transaction_status=TransactionStatus.UNCONFIRMED_ADDED)
+        loop = asyncio.get_event_loop()
+        conf_transactions: List[TransactionResponse] = loop.run_until_complete(
+            network.search_transactions(address=address,
+                                        page_size=page_size,
+                                        transaction_status=TransactionStatus.CONFIRMED_ADDED))
+        unconf_transactions: List[TransactionResponse] = loop.run_until_complete(
+            network.search_transactions(address=address,
+                                        page_size=page_size,
+                                        transaction_status=TransactionStatus.UNCONFIRMED_ADDED))
         transactions = unconf_transactions + conf_transactions
         short_names = {}
         for transaction in transactions:
@@ -307,7 +311,7 @@ class ProfileUI(ProfileI):
             exit(1)
         name = names[answers['name']]
         profile_data = profiles[name]
-        node_selector.network_type = profile_data.network_type
+        # node_selector.network_type = profile_data.network_type  # TODO
         return profile_data  # -> set_default_profile(profile)
 
     @classmethod

@@ -76,28 +76,32 @@ class TestMosaic:
     @staticmethod
     @patch(__name__ + '.Mosaic.get_divisibility', return_value=6)
     @patch(__name__ + '.Mosaic.alias_to_mosaic_id', return_value='091F837E059AE13C')
-    def test_new(mock_alias, mock_div):
-        mosaic = Mosaic('091F837E059AE13C', 0.123)
+    @pytest.mark.asyncio
+    async def test_new(mock_alias, mock_div):
+        mosaic = await Mosaic.create('091F837E059AE13C', 0.123)
         assert mosaic == (657388647902535996, 123000)
-        mosaic = Mosaic('@symbol.xym', 0.123)
+        mosaic = await Mosaic.create('@symbol.xym', 0.123)
         assert mosaic == (657388647902535996, 123000)
         mock_div.return_value = None
         with pytest.raises(ValueError):
-            Mosaic('', 0.123)
+            await Mosaic.create('', 0.123)
+        with pytest.raises(ValueError):
+            await Mosaic('', 0.123)
 
     @staticmethod
-    def test_alias_to_mosaic_id():
+    @pytest.mark.asyncio
+    async def test_alias_to_mosaic_id():
         mosaic_id = '.'.join(['eh434g57dz6sd76fogs76sd6fsd65f'] * 3)
         is_joke = False
         try:
-            Mosaic.alias_to_mosaic_id(mosaic_id)
+            await Mosaic.alias_to_mosaic_id(mosaic_id)
         except ValueError:
             #  if someone has created namespace named eh434g57dz6sd76fogs76sd6fsd65f * 3
             is_joke = True
         if not is_joke:
             with pytest.raises(ValueError):
-                Mosaic.alias_to_mosaic_id(mosaic_id)
-        mosaic_id = Mosaic.alias_to_mosaic_id('symbol.xym')
+                await Mosaic.alias_to_mosaic_id(mosaic_id)
+        mosaic_id = await Mosaic.alias_to_mosaic_id('symbol.xym')
         assert mosaic_id == '091F837E059AE13C'
 
 
@@ -117,40 +121,42 @@ class TestTransaction:
 
     def setup(self):
         self.transaction = Transaction()
-        self.transaction.network_type = NetworkType.TEST_NET
-        self.transaction.timing = Timing(self.transaction.network_type)
+        # self.transaction.network_type = NetworkType.TEST_NET
+        # self.transaction.timing = Timing(self.transaction.network_type)
         self.account0, self.account1 = TestAccountData().setup()
 
-    def test_create(self):
-        self.transaction.create(pr_key=self.account0.private_key,
-                                recipient_address=self.account1.address)
+    @pytest.mark.asyncio
+    async def test_create(self):
+        await self.transaction.create(pr_key=self.account0.private_key,
+                                      recipient_address=self.account1.address)
 
         with pytest.raises(ValueError):
-            self.transaction.create(pr_key=self.account0.private_key,
-                                    recipient_address=self.account1.address,
-                                    mosaics=('symbol.xym', 0000))
+            await self.transaction.create(pr_key=self.account0.private_key,
+                                          recipient_address=self.account1.address,
+                                          mosaics=('symbol.xym', 0000))
 
         payload_bytes = self.transaction.create(pr_key=self.account0.private_key,
                                                 recipient_address=self.account1.address,
-                                                mosaics=[Mosaic('63BD920B6562A692', 0.0001),
-                                                         Mosaic('091F837E059AE13C', 0.00001)])
+                                                mosaics=[await Mosaic.create('63BD920B6562A692', 0.0001),
+                                                         await Mosaic.create('091F837E059AE13C', 0.00001)])
 
         payload_bytes = self.transaction.create(pr_key=self.account0.private_key,
                                                 recipient_address=self.account1.address,
-                                                mosaics=Mosaic('63BD920B6562A692', 0.0001))
+                                                mosaics=await Mosaic.create('63BD920B6562A692', 0.0001))
 
-    def test_calc_max_fee(self):
-        fast = Transaction.calc_max_fee(160, Fees.FAST)
-        average = Transaction.calc_max_fee(160, Fees.AVERAGE)
-        slow = Transaction.calc_max_fee(160, Fees.SLOW)
-        slowest = Transaction.calc_max_fee(160, Fees.SLOWEST)
-        zero = Transaction.calc_max_fee(160, Fees.ZERO)
+    @pytest.mark.asyncio
+    async def test_calc_max_fee(self):
+        fast = await Transaction.calc_max_fee(160, Fees.FAST)
+        average = await Transaction.calc_max_fee(160, Fees.AVERAGE)
+        slow = await Transaction.calc_max_fee(160, Fees.SLOW)
+        slowest = await Transaction.calc_max_fee(160, Fees.SLOWEST)
+        zero = await Transaction.calc_max_fee(160, Fees.ZERO)
         print(zero, slowest, slow, average, fast)
         assert zero < slowest < slow < average < fast
 
         with patch.object(network, 'get_fee_multipliers', return_value=None):
             with pytest.raises(ValueError):
-                Transaction.calc_max_fee(160, Fees.FAST)
+                await Transaction.calc_max_fee(160, Fees.FAST)
 
     def test_entity_hash_gen(self):
         class T:
