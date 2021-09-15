@@ -23,9 +23,10 @@ logger = logging.getLogger(__name__)
 
 
 async def get_node_network():
+    endpoint = f"{await node_selector.url}/node/info"
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"{node_selector.url}/node/info", timeout=1) as response:
+            async with session.get(endpoint, timeout=1) as response:
                 if response.status == HTTPStatus.OK:
                     fee_info = await response.json()
                     network_generation_hash_seed = fee_info["networkGenerationHashSeed"]
@@ -73,6 +74,7 @@ class NodeSelector:
 
     def __init__(self, node_urls: Union[List[str], str]):
         self._URLs = [node_urls] if isinstance(node_urls, str) else node_urls
+        [url_validation(url) for url in self._URLs]
         self._URL = self._URLs[0]
 
     @property

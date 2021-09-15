@@ -40,7 +40,7 @@ def main(url, channels, address, formatting, log):
         else:
             subscribers.append(channel)
     logging.debug(subscribers)
-    Monitor(node_selector.url, subscribers, formatting, log)
+    await Monitor(await node_selector.url, subscribers, formatting, log).monitoring()
 
 
 if __name__ == '__main__':

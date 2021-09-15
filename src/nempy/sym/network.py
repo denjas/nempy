@@ -6,7 +6,7 @@ import time
 from base64 import b32encode
 from binascii import unhexlify
 from http import HTTPStatus
-from typing import Optional, Union, List, Callable, Dict
+from typing import Optional, Union, List, Callable, Dict, Coroutine
 from urllib.parse import urlparse
 
 import aiohttp
@@ -69,7 +69,7 @@ async def mosaic_id_to_name_n_real(mosaic_id: str, amount: int) -> dict:
         raise TypeError('To avoid confusion, automatic conversion to integer is prohibited')
     divisibility = await get_divisibility(mosaic_id)
     divider = 10 ** int(divisibility)
-    mn = await get_mosaic_names(mosaic_id)
+    mn: dict = await get_mosaic_names(mosaic_id)
     name = mosaic_id
     names = mn['mosaicNames'][0]['names']
     if len(names) > 0:
@@ -111,13 +111,13 @@ class TransactionInfo(BaseModel):
 
     async def humanization(self):
         """Converts information from the blockchain into a readable form"""
-        self.deadline = Timing().deadline_to_date(self.deadline)
+        self.deadline = (await Timing()).deadline_to_date(self.deadline)
         if self.message is not None:
             self.message = unhexlify(self.message)[1:].decode('utf-8', 'ignore')
         self.recipientAddress = b32encode(unhexlify(self.recipientAddress)).decode('utf-8')[:-1]
         self.mosaics = [MosaicInfo(**(await mosaic_id_to_name_n_real(mosaic.id, mosaic.amount))) for mosaic in self.mosaics]
         self.type = TransactionTypes.get_type_by_id(self.type).name
-        facade = SymbolFacade(node_selector.network_type.value)
+        facade = SymbolFacade((await node_selector.network_type).value)
         self.signer_address = str(facade.network.public_key_to_address(Hash256(self.signerPublicKey)))
 
 
@@ -157,7 +157,7 @@ async def send_transaction(payload: bytes) -> bool:
         headers = {'Content-type': 'application/json'}
         async with aiohttp.ClientSession() as session:
             async with session.put(
-                    f'{node_selector.url}/transactions',
+                    f'{await node_selector.url}/transactions',
                     data=payload,
                     headers=headers,
                     timeout=10
@@ -171,7 +171,7 @@ async def send_transaction(payload: bytes) -> bool:
         return True
 
 
-async def get_mosaic_names(mosaics_ids: Union[list, str]) -> dict:
+async def get_mosaic_names(mosaics_ids: Union[list, str]) -> Dict[str, list]:
     """
     Get readable names for a set of mosaics.
 
@@ -181,7 +181,7 @@ async def get_mosaic_names(mosaics_ids: Union[list, str]) -> dict:
         IDs of mosaic as list or str if there is only one mosaic
     Returns
     -------
-    Optional[Dict[str, list]]
+    Coroutine[Dict[str, list]]
         dict of mosaics. For example:
     ```py
     {"mosaicNames": [{"mosaicId": "091F837E059AE13C", "names": ["symbol.xym"]}]}
@@ -197,37 +197,35 @@ async def get_mosaic_names(mosaics_ids: Union[list, str]) -> dict:
         headers = {'Content-type': 'application/json'}
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                    f'{node_selector.url}/namespaces/mosaic/names',
+                    f'{await node_selector.url}/namespaces/mosaic/names',
                     json=payload,
                     headers=headers,
                     timeout=1) as response:
                 result = await response.json()
                 if response.status != HTTPStatus.OK:
                     raise SymbolNetworkException(**result)
+                return dict(result)
     except (RequestException, SymbolNetworkException) as e:
         logger.exception(e)
         raise
-    else:
-        return result
 
 
 async def get_accounts_info(address: str) -> Optional[dict]:
     try:
         if (avs := ed25519.check_address(address)) != AccountValidationState.OK:
             raise SymbolNetworkException('InvalidAddress', f'Incorrect account address: `{address}`: {avs}')
-        endpoint = f'{node_selector.url}/accounts/{address}'
+        endpoint = f'{await node_selector.url}/accounts/{address}'
         async with aiohttp.ClientSession() as session:
             async with session.get(endpoint, timeout=1) as response:
                 if response.status != HTTPStatus.OK:
                     return None
+                return await response.json()
     except RequestException as e:
         logger.exception(e)
         raise
     except SymbolNetworkException as e:
         logger.exception(e)
         raise
-    else:
-        return await response.json()
 
 
 async def search_transactions(address: Optional[str] = None,
@@ -265,7 +263,7 @@ async def search_transactions(address: Optional[str] = None,
         'order': order
     }
     payload = {key: val for key, val in params.items() if val is not None}
-    endpoint = f'{node_selector.url}/transactions/{transaction_status.value}'
+    endpoint = f'{await node_selector.url}/transactions/{transaction_status.value}'
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(endpoint, params=payload, timeout=1) as response:
@@ -296,7 +294,7 @@ async def search_transactions(address: Optional[str] = None,
 
 
 async def get_namespace_info(namespace_id: str) -> Optional[dict]:
-    endpoint = f'{node_selector.url}/namespaces/{namespace_id}'
+    endpoint = f'{await node_selector.url}/namespaces/{namespace_id}'
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(endpoint, timeout=1) as response:
@@ -317,7 +315,7 @@ async def check_transaction_state(transaction_hash):
     check_order = ['confirmed', 'unconfirmed', 'partial']
     status = TransactionStatus.NOT_FOUND
     for checker in check_order:
-        endpoint = f'{node_selector.url}/transactions/{checker}/{transaction_hash}'
+        endpoint = f'{await node_selector.url}/transactions/{checker}/{transaction_hash}'
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(endpoint, timeout=1) as response:
@@ -339,7 +337,7 @@ async def check_transaction_state(transaction_hash):
 
 
 async def get_network_properties():
-    endpoint = f'{node_selector.url}/network/properties'
+    endpoint = f'{await node_selector.url}/network/properties'
     async with aiohttp.ClientSession() as session:
         async with session.get(endpoint, timeout=1) as response:
             if response.status == HTTPStatus.OK:
@@ -349,7 +347,7 @@ async def get_network_properties():
 
 
 async def get_block_information(height: int):
-    endpoint = f'{node_selector.url}/blocks/{height}'
+    endpoint = f'{await node_selector.url}/blocks/{height}'
     async with aiohttp.ClientSession() as session:
         async with session.get(endpoint, timeout=1) as response:
             if response.status == HTTPStatus.OK:
@@ -359,7 +357,7 @@ async def get_block_information(height: int):
 
 
 async def get_fee_multipliers():
-    endpoint = f'{node_selector.url}/network/fees/transaction'
+    endpoint = f'{await node_selector.url}/network/fees/transaction'
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(endpoint, timeout=1) as response:
@@ -377,7 +375,7 @@ async def get_divisibility(mosaic_id: str) -> Optional[int]:
         if not ed25519.check_hex(mosaic_id, constants.HexSequenceSizes.MOSAIC_ID):
             raise SymbolNetworkException('InvalidArgument', f'mosaicId `{mosaic_id}` has an invalid format')
         async with aiohttp.ClientSession() as session:
-            async with session.get(f'{node_selector.url}/mosaics/{mosaic_id}', timeout=1) as response:
+            async with session.get(f'{await node_selector.url}/mosaics/{mosaic_id}', timeout=1) as response:
 
                 node_info = await response.json()
                 if response.status == HTTPStatus.OK:
@@ -397,7 +395,7 @@ async def get_divisibility(mosaic_id: str) -> Optional[int]:
 async def get_divisibilities(n_pages: int = 0):
     mosaics = {}
     payload = {'pageSize': 100}
-    endpoint = f'{node_selector.url}/mosaics'
+    endpoint = f'{await node_selector.url}/mosaics'
 
     page_count = 1
     while True:
@@ -463,8 +461,8 @@ class Monitor:
         self.formatting = formatting
         self.log = log
         self.callback = callback
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.monitoring())
+        # loop = asyncio.get_event_loop()
+        # loop.run_until_complete(self.monitoring())
 
     async def monitoring(self):
         result = urlparse(self.url)
@@ -502,20 +500,31 @@ class Monitor:
 
 
 class Timing:
+    network_type: Optional[NetworkType] = None
+    epoch_time: datetime.datetime = None
     """Works with network time"""
     def __init__(self, network_type: Optional[NetworkType] = None):
-        if network_type is None:
-            network_type = node_selector.network_type
-        if network_type == NetworkType.TEST_NET:
+        self.network_type = network_type
+
+    def __await__(self):
+        return self.__init().__await__()
+
+    async def __init(self):
+        """ Crutch used for __await__ after spawning """
+        if self.network_type is None:
+            self.network_type = await node_selector.network_type
+        if self.network_type == NetworkType.TEST_NET:
             self.epoch_time = EPOCH_TIME_TESTNET
-        elif network_type == NetworkType.MAIN_NET:
+        elif self.network_type == NetworkType.MAIN_NET:
             self.epoch_time = EPOCH_TIME_MAINNET
         else:
             raise EnvironmentError('It is not possible to determine the type of network')
+        return self
 
     def calc_deadline(self, days: float = 0, seconds: float = 0, milliseconds: float = 0,
                       minutes: float = 0, hours: float = 0, weeks: float = 0) -> int:
-
+        if self.epoch_time is None:
+            raise RuntimeError('Incomplete initialization Timing. Execute with `await Timing()`')
         if days + seconds + milliseconds + minutes + hours + weeks <= 0:
             raise TimeoutError('Added time must be positive otherwise the transaction will not have time to process')
         # perhaps this code will be needed if you need to get time from a node
@@ -535,6 +544,9 @@ class Timing:
             utc_epoch = time.mktime(utc.timetuple())
             offset = datetime.datetime.fromtimestamp(utc_epoch) - datetime.datetime.utcfromtimestamp(utc_epoch)
             return utc + offset
+
+        if self.epoch_time is None:
+            raise RuntimeError('Incomplete initialization Timing. Execute with `await Timing()`')
 
         deadline = int(deadline)
         epoch_timestamp = datetime.datetime.timestamp(self.epoch_time)

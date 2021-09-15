@@ -188,7 +188,7 @@ def send(address: str, plain_message: str, encrypted_message: str, mosaics: str,
         exit(1)
     subscribers = ['confirmedAdded', 'unconfirmedAdded', 'status']
     subscribers = [os.path.join(subscribe, address) for subscribe in subscribers]
-    Monitor(engine.node_selector.url, subscribers, formatting=True, callback=_monitoring_callback)
+    await Monitor(await engine.node_selector.url, subscribers, formatting=True, callback=_monitoring_callback).monitoring()
 
 
 @main.command('history')
