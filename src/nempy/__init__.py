@@ -8,5 +8,5 @@ __pdoc__ = {
     "nempy.sym.ed25519": False,
 }
 
-__version__ = "0.0.6"
+__version__ = "0.1.0"
 __package_name__ = 'nem-py'
