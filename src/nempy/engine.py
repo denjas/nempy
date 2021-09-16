@@ -51,12 +51,11 @@ class NEMEngine:
     def decrypt(self, password: str):
         self._password = password
         if self.account.is_encrypted():
-            try:
-                self.account = self.account.decrypt(self._password)
-                self._is_active = True
-            except Exception as e:
-                logger.exception(e)
-                raise
+            self.account = self.account.decrypt(self._password)
+            self._is_active = True
+        else:
+            logger.warning('Account does not need decryption')
+
 
     @property
     def is_active(self):
