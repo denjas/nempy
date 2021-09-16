@@ -215,7 +215,7 @@ class AccountData(UserData):
         return accounts
 
     @staticmethod
-    def accounts_by_private_key(network_type: NetworkType, private_key: str) -> 'AccountData':
+    def account_by_private_key(network_type: NetworkType, private_key: str) -> 'AccountData':
         sym_facade: SymbolFacade = SymbolFacade(network_type.value)
         key_pair = sym_facade.KeyPair(PrivateKey(unhexlify(private_key)))
         public_key = key_pair.public_key

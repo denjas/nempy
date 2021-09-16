@@ -299,7 +299,7 @@ class AccountUI(AccountI):
     @classmethod
     def ui_import_account_by_private_key(cls, network_type: NetworkType) -> 'AccountData':
         private_key = stdiomask.getpass('Enter private key: ')
-        account = AccountData.accounts_by_private_key(network_type, private_key)
+        account = AccountData.account_by_private_key(network_type, private_key)
         return account
 
     @classmethod
