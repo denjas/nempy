@@ -11,6 +11,7 @@ from ..engine import XYMEngine, EngineStatusCode
 from ..sym import ed25519
 from ..sym.constants import HexSequenceSizes
 from ..sym.network import Monitor, NetworkType
+from ..sym.node_selector import node_selector
 from ..ui import AccountUI, ProfileUI, print_warning
 from ..user_data import DecoderStatus
 from ..wallet import Wallet
@@ -178,11 +179,11 @@ def send(address: str, plain_message: str, encrypted_message: str, mosaics: str,
     is_encrypted = True if encrypted_message else False
     confirmation(address, mosaics, message, is_encrypted, fee, deadline, balance, wallet.profile.data.network_type)
     password = stdiomask.getpass(f'Enter your `{wallet.profile.data.name} [{wallet.profile.data.network_type.name}]` profile password: ')
+    engine.password = password
     entity_hash, status = loop.run_until_complete(engine.send_tokens(recipient_address=address,
                                                                      mosaics=mosaics,
                                                                      message=message,
                                                                      is_encrypted=is_encrypted,
-                                                                     password=password,
                                                                      deadline={'minutes': deadline}))
     if status != EngineStatusCode.ACCEPTED:
         if status == EngineStatusCode.INVALID_ACCOUNT_INFO:
@@ -191,7 +192,7 @@ def send(address: str, plain_message: str, encrypted_message: str, mosaics: str,
         exit(1)
     subscribers = ['confirmedAdded', 'unconfirmedAdded', 'status']
     subscribers = [os.path.join(subscribe, address) for subscribe in subscribers]
-    url = loop.run_until_complete(engine.node_selector.url)
+    url = loop.run_until_complete(node_selector.url)
     loop.run_until_complete(Monitor(url, subscribers, formatting=True, callback=_monitoring_callback).monitoring())
 
 

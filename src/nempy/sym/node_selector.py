@@ -153,14 +153,11 @@ class NodeSelector:
         if new_url != self._URL and self._URL is not None:
             logger.warning(f"Reselection node: {self._URL} -> {new_url}")
         if new_url is None:
-            logger.error(
-                "It was not possible to select the current node from the list of available ones"
-            )
+            logger.error("It was not possible to select the current node from the list of available ones")
         self._URL = new_url
         logger.warning(f"Selected node: {self._URL}")
 
-    @staticmethod
-    async def health(url) -> BlockchainStatuses:
+    async def health(self, url=None) -> BlockchainStatuses:
         """
         Returns the statuses of node services
         Parameters
@@ -180,8 +177,11 @@ class NodeSelector:
         BlockchainStatuses.UNKNOWN
         ```
         """
+
         if url is None:
-            return BlockchainStatuses.NO_NODES_AVAILABLE
+            url = self.url
+            if url is None:
+                return BlockchainStatuses.NO_NODES_AVAILABLE
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(f"{url}/node/health", timeout=1) as response:

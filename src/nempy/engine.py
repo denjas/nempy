@@ -8,8 +8,8 @@ from nempy.sym.constants import BlockchainStatuses, Fees, TransactionStatus
 from nempy.user_data import AccountData
 from .sym import api as sym
 from .sym import network
-from .sym.node_selector import NodeSelector
 from .sym.node_selector import node_selector
+
 
 logger = logging.getLogger(__name__)
 
@@ -23,22 +23,49 @@ class EngineStatusCode(Enum):
     """Transaction announce error"""
     ACCEPTED = "Request accepted, processing continues off-line"
     """Request accepted"""
+    INVALID_PASSWORD = "Incorrect or not set account password"
+    """Wrong account password"""
 
 
 class NEMEngine:
-    account = None
+    account: Optional[AccountData] = None
+    _password: Optional[str] = None
+    _is_active: bool = False  # Indicates whether the account can make outgoing transactions with founds
 
-    def __init__(self, url: str, account: AccountData):
-        self.url = url
-        self.account = account
+    def __init__(self, account: AccountData, password: Optional[str] = None):
+        self._password = password
+        try:
+            if self._password is None:
+                self.account = account
+            else:
+                account.decrypt(self._password)
+                self._is_active = True
+        except Exception as e:
+            logger.exception(e)
 
     def __str__(self):
-        return f"URL: {self.url}\nAddress: {self.account.address}\nPublic Key: {self.account.public_key}"
+        return f"Address: {self.account.address}\nPublic Key: {self.account.public_key}"
 
     def __iter__(self):
-        yield "url", self.url
         yield "address", self.account.address
         yield "public_key", self.account.public_key
+
+    # only setter
+    def password(self, value: str):
+        self._password = value
+        if self.account.is_encrypted():
+            try:
+                self.account = self.account.decrypt(self._password)
+                self._is_active = True
+            except Exception as e:
+                logger.exception(e)
+
+    # for only `password` setter
+    password = property(None, password)
+
+    @property
+    def is_active(self):
+        return self._is_active
 
     @abc.abstractmethod
     async def send_tokens(
@@ -47,7 +74,6 @@ class NEMEngine:
         mosaics: List[Tuple[str, float]],
         message: Union[str, bytes] = "",
         is_encrypted=False,
-        password: str = "",
         deadline: Optional[dict] = None,
     ):
         raise NotImplementedError
@@ -65,7 +91,7 @@ class XYMEngine(NEMEngine):
     """
     An interface that combines a user account of the transaction and work with the network
     """
-    def __init__(self, account: AccountData):
+    def __init__(self, account: AccountData, password: Optional[str] = None):
         """
         Inits SampleClass with AccountData
 
@@ -73,14 +99,12 @@ class XYMEngine(NEMEngine):
         ----------
         account
             User account data
+        password
+            Account password
         """
-        self.node_selector = node_selector
-        # self.node_selector.network_type = account.network_type
         self.transaction = sym.Transaction()
         self.timing = self.transaction.timing
-        loop = asyncio.get_event_loop()
-        url: str = loop.run_until_complete(self.node_selector.url)
-        super().__init__(url, account)
+        super().__init__(account, password)
 
     async def send_tokens(
         self,
@@ -88,7 +112,6 @@ class XYMEngine(NEMEngine):
         mosaics: List[Tuple[str, float]],
         message: Union[str, bytes] = "",
         is_encrypted=False,
-        password: str = "",
         fee_type: Fees = Fees.SLOWEST,
         deadline: Optional[Dict[str, float]] = None,
     ) -> Tuple[Optional[str], EngineStatusCode]:
@@ -105,8 +128,6 @@ class XYMEngine(NEMEngine):
             Plain or encrypted messages
         is_encrypted
             Indication for encrypting a message or sending in plain text
-        password
-            Password for decrypting secret account data
         fee_type
             One of the types of fee that affects the speed and cost of
             confirming a transaction by the blockchain network. The following types are available:
@@ -155,6 +176,9 @@ class XYMEngine(NEMEngine):
         print(status.name, status.value)
         ```
         """
+        if not self._is_active:
+            logger.error('Unable to send funds without a password set for the account')
+            return None, EngineStatusCode.INVALID_PASSWORD
         recipient_address = recipient_address.replace("-", "")
         mosaics = [
             await sym.Mosaic.create(mosaic_id=mosaic[0], amount=mosaic[1]) for mosaic in mosaics
@@ -165,12 +189,12 @@ class XYMEngine(NEMEngine):
                 return None, EngineStatusCode.INVALID_ACCOUNT_INFO
             public_key = address_info["account"]["publicKey"]
             message = sym.EncryptMessage(
-                message, self.account.decrypt(password).private_key, public_key
+                message, self.account.private_key, public_key
             )
         else:
             message = sym.PlainMessage(message)
         entity_hash, payload = await self.transaction.create(
-            pr_key=self.account.decrypt(password).private_key,
+            pr_key=self.account.private_key,
             recipient_address=recipient_address,
             mosaics=mosaics,
             message=message,
@@ -190,9 +214,9 @@ class XYMEngine(NEMEngine):
         """
         if self.account is None:
             return BlockchainStatuses.NOT_INITIALIZED
-        return await NodeSelector.health(await self.node_selector.url)
+        return await node_selector.health()
 
-    async def get_balance(self, nem_address: str = "", humanization: bool = False) -> Dict[str, float]:
+    async def get_balance(self, nem_address: Optional[str] = None, humanization: bool = False) -> Dict[str, float]:
         """
         Gets account balance
 
@@ -213,7 +237,7 @@ class XYMEngine(NEMEngine):
         }
         ```
         """
-        if not nem_address:
+        if nem_address is None:
             nem_address = self.account.address
         amount = await network.get_balance(nem_address)
         if humanization:

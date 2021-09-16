@@ -30,7 +30,7 @@ class MyGroup(click.Group):
 @click.option('-d', '--debug', is_flag=True, default=False, help='Turns on debug mode for logs')
 @click.option('-v', '--version', is_flag=True, default=False, help='Show this version and exit.')
 def main(debug, version):
-    log_format = "[%(asctime)s][%(levelname)s] %(name)s - %(message)s"
+    log_format = "[%(asctime)s][%(levelname)s] %(name)s.%(funcName)s:%(lineno)d - %(message)s"
     if debug:
         logging.basicConfig(level=logging.DEBUG, format=log_format)
     else:
