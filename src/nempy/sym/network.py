@@ -111,7 +111,7 @@ class TransactionInfo(BaseModel):
 
     async def humanization(self):
         """Converts information from the blockchain into a readable form"""
-        self.deadline = (await Timing()).deadline_to_date(self.deadline)
+        self.deadline = Timing(await node_selector.network_type).deadline_to_date(self.deadline)
         if self.message is not None:
             self.message = unhexlify(self.message)[1:].decode('utf-8', 'ignore')
         self.recipientAddress = b32encode(unhexlify(self.recipientAddress)).decode('utf-8')[:-1]
@@ -500,31 +500,18 @@ class Monitor:
 
 
 class Timing:
-    network_type: Optional[NetworkType] = None
     epoch_time: datetime.datetime = None
     """Works with network time"""
-    def __init__(self, network_type: Optional[NetworkType] = None):
-        self.network_type = network_type
-
-    def __await__(self):
-        return self.__init().__await__()
-
-    async def __init(self):
-        """ Crutch used for __await__ after spawning """
-        if self.network_type is None:
-            self.network_type = await node_selector.network_type
-        if self.network_type == NetworkType.TEST_NET:
+    def __init__(self, network_type: Optional[NetworkType]):
+        if network_type == NetworkType.TEST_NET:
             self.epoch_time = EPOCH_TIME_TESTNET
-        elif self.network_type == NetworkType.MAIN_NET:
+        elif network_type == NetworkType.MAIN_NET:
             self.epoch_time = EPOCH_TIME_MAINNET
         else:
             raise EnvironmentError('It is not possible to determine the type of network')
-        return self
 
     def calc_deadline(self, days: float = 0, seconds: float = 0, milliseconds: float = 0,
                       minutes: float = 0, hours: float = 0, weeks: float = 0) -> int:
-        if self.epoch_time is None:
-            raise RuntimeError('Incomplete initialization Timing. Execute with `await Timing()`')
         if days + seconds + milliseconds + minutes + hours + weeks <= 0:
             raise TimeoutError('Added time must be positive otherwise the transaction will not have time to process')
         # perhaps this code will be needed if you need to get time from a node

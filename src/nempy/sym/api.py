@@ -144,10 +144,6 @@ class Transaction:
     def __init__(self):
         self.size: int = -1  #: transaction size
         self.max_fee: int = -1  #: The maximum amount of network currency that the sender of the transaction is willing to pay to get the transaction accepted
-        loop = asyncio.get_event_loop()
-        self.network_type: NetworkType = loop.run_until_complete(get_node_network())
-        self.timing: network.Timing = loop.run_until_complete(network.Timing(self.network_type))
-        self.sym_facade: SymbolFacade = SymbolFacade(self.network_type.value)
 
     async def create(self,
                      pr_key: str,
@@ -157,6 +153,9 @@ class Transaction:
                      fee_type: Fees = Fees.SLOWEST,
                      deadline: Optional[dict] = None) -> Tuple[str, bytes]:
         """Create a transaction"""
+        network_type: NetworkType = await get_node_network()
+        timing: network.Timing = network.Timing(network_type)
+        sym_facade: SymbolFacade = SymbolFacade(network_type.value)
 
         if deadline is None:
             deadline = {'minutes': 2}
@@ -170,9 +169,9 @@ class Transaction:
             # sorting mosaic by ID (blockchain requirement)
             mosaics = sorted(mosaics, key=lambda tup: tup[0])
 
-        key_pair = self.sym_facade.KeyPair(PrivateKey(unhexlify(pr_key)))
+        key_pair = sym_facade.KeyPair(PrivateKey(unhexlify(pr_key)))
 
-        deadline = self.timing.calc_deadline(**deadline)
+        deadline = timing.calc_deadline(**deadline)
 
         descriptor = {
             'type': 'transfer',
@@ -188,13 +187,13 @@ class Transaction:
         self.max_fee = await Transaction.calc_max_fee(self.size, fee_type)
         descriptor['fee'] = self.max_fee
 
-        transaction = self.sym_facade.transaction_factory.create(descriptor)
+        transaction = sym_facade.transaction_factory.create(descriptor)
 
-        signature = self.sym_facade.sign_transaction(key_pair, transaction)
+        signature = sym_facade.sign_transaction(key_pair, transaction)
         entity_hash = Transaction.entity_hash_gen(signature, key_pair.public_key, transaction,
-                                                  self.sym_facade.network.generation_hash_seed)
+                                                  sym_facade.network.generation_hash_seed)
 
-        payload_bytes = self.sym_facade.transaction_factory.attach_signature(transaction, signature)
+        payload_bytes = sym_facade.transaction_factory.attach_signature(transaction, signature)
 
         # print(transaction)
         # print(hexlify(transaction.serialize()))

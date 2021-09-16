@@ -103,7 +103,6 @@ class XYMEngine(NEMEngine):
             Account password
         """
         self.transaction = sym.Transaction()
-        self.timing = self.transaction.timing
         super().__init__(account, password)
 
     async def send_tokens(
