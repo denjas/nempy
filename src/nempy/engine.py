@@ -37,11 +37,14 @@ class NEMEngine:
         try:
             if self._password is None:
                 self.account = account
+            elif account is None:
+                pass
             else:
                 account.decrypt(self._password)
                 self._is_active = True
         except Exception as e:
             logger.exception(e)
+            raise
 
     def __str__(self):
         return f"Address: {self.account.address}\nPublic Key: {self.account.public_key}"
