@@ -39,7 +39,7 @@ class NEMEngine:
             logger.error('msg')
             raise RuntimeError(msg)
         if password is not None:
-            self.decrypt(self._password)
+            self.decrypt(password)
 
     def __str__(self):
         return f"Address: {self.account.address}\nPublic Key: {self.account.public_key}"
