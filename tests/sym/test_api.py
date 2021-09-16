@@ -135,14 +135,14 @@ class TestTransaction:
                                           recipient_address=self.account1.address,
                                           mosaics=('symbol.xym', 0000))
 
-        payload_bytes = self.transaction.create(pr_key=self.account0.private_key,
-                                                recipient_address=self.account1.address,
-                                                mosaics=[await Mosaic.create('63BD920B6562A692', 0.0001),
-                                                         await Mosaic.create('091F837E059AE13C', 0.00001)])
+        await self.transaction.create(pr_key=self.account0.private_key,
+                                      recipient_address=self.account1.address,
+                                      mosaics=[await Mosaic.create('63BD920B6562A692', 0.0001),
+                                               await Mosaic.create('091F837E059AE13C', 0.00001)])
 
-        payload_bytes = self.transaction.create(pr_key=self.account0.private_key,
-                                                recipient_address=self.account1.address,
-                                                mosaics=await Mosaic.create('63BD920B6562A692', 0.0001))
+        await self.transaction.create(pr_key=self.account0.private_key,
+                                      recipient_address=self.account1.address,
+                                      mosaics=await Mosaic.create('63BD920B6562A692', 0.0001))
 
     @pytest.mark.asyncio
     async def test_calc_max_fee(self):
