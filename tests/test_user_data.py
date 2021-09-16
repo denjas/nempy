@@ -17,7 +17,7 @@ class TestAccountData:
                    'glance craft upset danger cheese pet dilemma soda sound ' \
                    'question autumn theory garden ceiling height taxi'
         network_type = NetworkType.TEST_NET
-        accounts = AccountData.accounts_pool_by_mnemonic(network_type, bip32_coin_id_test_net, mnemonic)
+        accounts = AccountData.accounts_pool_by_mnemonic(network_type, mnemonic)
         self.account_data = accounts['TBTCYCIDRQ7TJBEAYDZLDPHOTGIRKZHO5CH2SMQ']  #  'TCULT7R63UUSG2NTE3FJTWJD3U2JEOWPOFYEQQA' - second account
         account_data = accounts['TCULT7R63UUSG2NTE3FJTWJD3U2JEOWPOFYEQQA']
         return self.account_data, account_data

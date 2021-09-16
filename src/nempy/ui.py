@@ -292,7 +292,7 @@ class AccountUI(AccountI):
             random_char_set = cls.ui_keyprint_entropy()
             entropy_bytes_hex = blake2b(random_char_set.encode(), digest_size=32).hexdigest().encode()
             mnemonic = Bip39MnemonicGenerator(Bip39Languages.ENGLISH).FromEntropy(binascii.unhexlify(entropy_bytes_hex))
-            accounts = AccountData.accounts_pool_by_mnemonic(network_type, network_type.bip32_coin_id, mnemonic)
+            accounts = AccountData.accounts_pool_by_mnemonic(network_type, mnemonic)
         account_name = cls.ui_account_inquirer(accounts.keys())
         return accounts[account_name]
 
@@ -305,7 +305,7 @@ class AccountUI(AccountI):
     @classmethod
     def ui_import_account_by_mnemonic(cls, network_type: NetworkType) -> OrderedDict[str, 'AccountData']:
         mnemonic = stdiomask.getpass('Enter a mnemonic passphrase. Words must be separated by spaces: ')
-        accounts = AccountData.accounts_pool_by_mnemonic(network_type, network_type.bip32_coin_id, mnemonic)
+        accounts = AccountData.accounts_pool_by_mnemonic(network_type, mnemonic)
         return accounts
 
 

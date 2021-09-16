@@ -150,32 +150,28 @@ class TestAccountUI:
             with patch('nempy.ui.input', side_effect=['', 'test_exist', 'test', 'y']):
                 #  emulate exist account
                 open(os.path.join(accounts_dir, 'test_exist.account'), 'a').close()
-                account_path, name, bip32_coin_id, is_default = AccountUI.ui_init_general_params(NetworkType.TEST_NET,
-                                                                                                 accounts_dir)
+                account_path, name, is_default = AccountUI.ui_init_general_params(accounts_dir)
+                bip32_coin_id = NetworkType.TEST_NET.bip32_coin_id
                 assert account_path == os.path.join(accounts_dir, tmp_test_account)
                 assert bip32_coin_id == 1
                 assert is_default is True
                 assert name == 'test'
 
             with patch('nempy.ui.input', side_effect=['test', 'n']):
-                account_path, name, bip32_coin_id, is_default = AccountUI.ui_init_general_params(NetworkType.TEST_NET,
-                                                                                                 accounts_dir)
+                account_path, name, is_default = AccountUI.ui_init_general_params(accounts_dir)
+                bip32_coin_id = NetworkType.TEST_NET.bip32_coin_id
                 assert account_path == os.path.join(accounts_dir, tmp_test_account)
                 assert bip32_coin_id == 1
                 assert is_default is False
                 assert name == 'test'
 
             with patch('nempy.ui.input', side_effect=['test', 'y']):
-                account_path, name, bip32_coin_id, is_default = AccountUI.ui_init_general_params(NetworkType.MAIN_NET,
-                                                                                                 accounts_dir)
+                account_path, name, is_default = AccountUI.ui_init_general_params(accounts_dir)
+                bip32_coin_id = NetworkType.MAIN_NET.bip32_coin_id
                 assert account_path == os.path.join(accounts_dir, tmp_test_account)
                 assert bip32_coin_id == 4343
                 assert is_default is True
                 assert name == 'test'
-
-            with patch('nempy.ui.input', side_effect=['test', 'n']):
-                with pytest.raises(ValueError):
-                    AccountUI.ui_init_general_params('MAIN_NET', accounts_dir)
 
     def test_iu_create_import_account(self):
         account_path = os.path.join(self.wallet.accounts_dir, self.account_data.name)

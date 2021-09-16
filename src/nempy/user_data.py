@@ -193,17 +193,14 @@ class AccountData(UserData):
         logger.debug(f'Wallet saved along the way: {path}')
 
     @staticmethod
-    def accounts_pool_by_mnemonic(network_type: NetworkType,
-                                  bip32_coin_id: int,
-                                  mnemonic: str
-                                  ) -> OrderedDict[str, 'AccountData']:
+    def accounts_pool_by_mnemonic(network_type: NetworkType, mnemonic: str) -> OrderedDict[str, 'AccountData']:
         facade = SymbolFacade(network_type.value)
 
         bip = Bip32(facade.BIP32_CURVE_NAME)
         root_node = bip.from_mnemonic(mnemonic, '')
         accounts = OrderedDict()
         for i in range(10):
-            path = [44, bip32_coin_id, i, 0, 0]
+            path = [44, network_type.bip32_coin_id, i, 0, 0]
             child_node = root_node.derive_path(path)
             child_key_pair = facade.bip32_node_to_key_pair(child_node)
             private_key = str(child_key_pair.private_key).upper()
