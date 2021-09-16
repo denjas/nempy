@@ -149,12 +149,10 @@ class AccountData(UserData):
 
     def decrypt(self, password: str) -> 'AccountData':
         if not isinstance(self.private_key, bytes):
-            logger.error('Unencrypted account?')
             raise ValueError(DecoderStatus.WRONG_DATA.value)
         decrypted_account = copy.deepcopy(self)
         decrypted_key = decryption(password, self.private_key)
         if decrypted_key is None:
-            logger.error(DecoderStatus.WRONG_PASS.value)
             raise ValueError(DecoderStatus.WRONG_PASS.value)
         decrypted_account.private_key = pickle.loads(decrypted_key)
         if decrypted_account.mnemonic is not None:
