@@ -33,18 +33,13 @@ class NEMEngine:
     _is_active: bool = False  # Indicates whether the account can make outgoing transactions with founds
 
     def __init__(self, account: AccountData, password: Optional[str] = None):
-        self._password = password
-        try:
-            if self._password is None:
-                self.account = account
-            elif account is None:
-                pass
-            else:
-                account.decrypt(self._password)
-                self._is_active = True
-        except Exception as e:
-            logger.exception(e)
-            raise
+        self.account = account
+        if not self.account.is_encrypted():
+            msg = 'Only work with encrypted accounts is supported'
+            logger.error('msg')
+            raise RuntimeError(msg)
+        if password is not None:
+            self.decrypt(self._password)
 
     def __str__(self):
         return f"Address: {self.account.address}\nPublic Key: {self.account.public_key}"
@@ -53,18 +48,15 @@ class NEMEngine:
         yield "address", self.account.address
         yield "public_key", self.account.public_key
 
-    # only setter
-    def password(self, value: str):
-        self._password = value
+    def decrypt(self, password: str):
+        self._password = password
         if self.account.is_encrypted():
             try:
                 self.account = self.account.decrypt(self._password)
                 self._is_active = True
             except Exception as e:
                 logger.exception(e)
-
-    # for only `password` setter
-    password = property(None, password)
+                raise
 
     @property
     def is_active(self):
