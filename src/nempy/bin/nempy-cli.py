@@ -3,6 +3,7 @@
 import logging
 
 import click
+import nempy
 from nempy.utils.monitoring import main as monitoring_sym
 from nempy.utils.profile import main as profile_sym
 from nempy.utils.account import main as account_sym
@@ -17,7 +18,7 @@ logging.getLogger('urllib3').setLevel(logging.ERROR)
 class MyGroup(click.Group):
     def parse_args(self, ctx, args):
         if '-v' in args or '--version' in args:
-            print(f'NEMpy {open("version.txt", "r").read()}')
+            print(f'NEMpy {nempy.__version__}')
             if '-d' in args or '--debug' in args:
                 import sys
                 print(sys.version)

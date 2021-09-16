@@ -2,6 +2,7 @@
 
 import json
 import os
+import importlib.util
 
 from setuptools import setup, find_packages
 
@@ -21,11 +22,14 @@ def get_packages_from_pipfile_lock(path: str, version):
         return packages
 
 
-version = open('version.txt', 'r').read()
-
+spec = importlib.util.spec_from_file_location('nempy', 'src/nempy/__init__.py')
+nempy = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(nempy)
+version = nempy.__version__
+package_name = nempy.__package_name__
 
 setup(
-    name='nem-py',
+    name=package_name,
     version=version,
     python_requires='>=3.6.0',
     author="Denys Shcheglov",
