@@ -14,9 +14,16 @@ class AccountValidationState(Enum):
     CHECKSUM_FAILURE = 'Checksum does not match'
 
 
-class NetworkType(Enum):
-    TEST_NET = 'testnet'
-    MAIN_NET = 'mainnet'
+class NetworkType(str, Enum):
+    TEST_NET = 'testnet', 1
+    MAIN_NET = 'mainnet', 4343
+
+    def __new__(cls, value, bip32_coin_id):
+        obj = str.__new__(cls, value)
+        obj._value_ = value
+
+        obj.bip32_coin_id = bip32_coin_id
+        return obj
 
 
 class TransactionStatus(Enum):

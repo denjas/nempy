@@ -6,6 +6,7 @@ import pickle
 from base64 import b64decode
 from base64 import b64encode
 from binascii import unhexlify
+from collections import OrderedDict
 from enum import Enum
 from hashlib import blake2b
 from typing import Union, Dict, Optional
@@ -194,12 +195,13 @@ class AccountData(UserData):
     @staticmethod
     def accounts_pool_by_mnemonic(network_type: NetworkType,
                                   bip32_coin_id: int,
-                                  mnemonic: str) -> Dict[str, 'AccountData']:
+                                  mnemonic: str
+                                  ) -> OrderedDict[str, 'AccountData']:
         facade = SymbolFacade(network_type.value)
 
         bip = Bip32(facade.BIP32_CURVE_NAME)
         root_node = bip.from_mnemonic(mnemonic, '')
-        accounts = {}
+        accounts = OrderedDict()
         for i in range(10):
             path = [44, bip32_coin_id, i, 0, 0]
             child_node = root_node.derive_path(path)
@@ -214,6 +216,19 @@ class AccountData(UserData):
                                                'path': f"m/44'/{path[1]}'/{path[2]}'/0'/0'",
                                                'network_type': network_type})
         return accounts
+
+    @staticmethod
+    def accounts_by_private_key(network_type: NetworkType, private_key: str) -> 'AccountData':
+        sym_facade: SymbolFacade = SymbolFacade(network_type.value)
+        key_pair = sym_facade.KeyPair(PrivateKey(unhexlify(private_key)))
+        public_key = key_pair.public_key
+        address = str(sym_facade.network.public_key_to_address(public_key)).upper()
+        account = AccountData(
+            address=address,
+            public_key=public_key,
+            private_key=private_key,
+            network_type=network_type)
+        return account
 
 
 class ProfileData(UserData):

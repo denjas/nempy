@@ -5,6 +5,7 @@ import configparser
 import logging
 import os
 import random
+from collections import OrderedDict
 from enum import Enum
 from hashlib import blake2b
 from typing import Optional, Dict, Tuple, List, Type
@@ -149,7 +150,7 @@ class ProfileI(UD):
 class AccountUI(AccountI):
 
     @staticmethod
-    def ui_init_general_params(network_type: NetworkType, accounts_dir: str, is_default: bool = False) -> Tuple[str, str, int, bool]:
+    def ui_init_general_params(accounts_dir: str, is_default: bool = False) -> Tuple[str, str, bool]:
         while True:
             name = input('Enter the account name: ')
             if name != '':
@@ -163,34 +164,27 @@ class AccountUI(AccountI):
             answer = input(f'Set `{name}` account as default? [Y/n]: ') or 'y'
             if answer.lower() == 'y':
                 is_default = True
-        if network_type == NetworkType.MAIN_NET:
-            bip32_coin_id = 4343
-        elif network_type == NetworkType.TEST_NET:
-            bip32_coin_id = 1
-        else:
-            raise ValueError('Invalid URL or network not supported')
-        return account_path, name, bip32_coin_id, is_default
+        return account_path, name, is_default
 
     @staticmethod
     def iu_create_account(profile_data: ProfileData,
                           accounts_dir: str,
                           is_default: bool = False,
                           is_import: bool = False) -> Tuple[Optional[AccountData], bool]:
-        account_path, name, bip32_coin_id, is_default = AccountUI.ui_init_general_params(profile_data.network_type, accounts_dir, is_default)
+        account_path, name, is_default = AccountUI.ui_init_general_params(accounts_dir, is_default)
         password = ProfileUI.ui_check_pass(profile_data, attempts=3)
         if password is not None:
             if is_import:
                 gen_type = AccountUI.ui_generation_type_inquirer()
                 if gen_type == GenerationType.MNEMONIC:
-                    account_data = AccountUI.ui_account_by_mnemonic(profile_data.network_type, bip32_coin_id, is_import=True)
+                    account_data = AccountUI.ui_account_by_mnemonic(profile_data.network_type, is_import=True)
                 elif gen_type == GenerationType.PRIVATE_KEY:
-                    raise NotImplementedError(
-                        'The functionality of building an account from a private key is not implemented')
+                    account_data = AccountUI.ui_import_account_by_private_key(profile_data.network_type)
                 else:
                     raise NotImplementedError(
                         f'The functionality of building an account from a {gen_type.name} key is not implemented')
             else:
-                account_data = AccountUI.ui_account_by_mnemonic(profile_data.network_type, bip32_coin_id, is_import=is_import)
+                account_data = AccountUI.ui_account_by_mnemonic(profile_data.network_type, is_import=is_import)
             account_data.name = name
             account_data.profile = profile_data.name
             AccountUI.save_and_check(account_data, account_path, password)
@@ -287,17 +281,32 @@ class AccountUI(AccountI):
         return account_name
 
     @classmethod
-    def ui_account_by_mnemonic(cls, network_type: NetworkType, bip32_coin_id: int, is_import: bool = False) -> 'AccountData':
+    def ui_account_by_mnemonic(
+            cls,
+            network_type: NetworkType,
+            is_import: bool = False
+    ) -> 'AccountData':
         if is_import:
-            mnemonic = stdiomask.getpass('Enter a mnemonic passphrase. Words must be separated by spaces: ')
+            accounts = AccountUI.ui_import_account_by_mnemonic(network_type)
         else:
             random_char_set = cls.ui_keyprint_entropy()
             entropy_bytes_hex = blake2b(random_char_set.encode(), digest_size=32).hexdigest().encode()
             mnemonic = Bip39MnemonicGenerator(Bip39Languages.ENGLISH).FromEntropy(binascii.unhexlify(entropy_bytes_hex))
-
-        accounts = AccountData.accounts_pool_by_mnemonic(network_type, bip32_coin_id, mnemonic)
+            accounts = AccountData.accounts_pool_by_mnemonic(network_type, network_type.bip32_coin_id, mnemonic)
         account_name = cls.ui_account_inquirer(accounts.keys())
         return accounts[account_name]
+
+    @classmethod
+    def ui_import_account_by_private_key(cls, network_type: NetworkType) -> 'AccountData':
+        private_key = stdiomask.getpass('Enter private key: ')
+        account = AccountData.accounts_by_private_key(network_type, private_key)
+        return account
+
+    @classmethod
+    def ui_import_account_by_mnemonic(cls, network_type: NetworkType) -> OrderedDict[str, 'AccountData']:
+        mnemonic = stdiomask.getpass('Enter a mnemonic passphrase. Words must be separated by spaces: ')
+        accounts = AccountData.accounts_pool_by_mnemonic(network_type, network_type.bip32_coin_id, mnemonic)
+        return accounts
 
 
 class ProfileUI(ProfileI):
