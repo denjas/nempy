@@ -179,7 +179,7 @@ class NodeSelector:
         """
 
         if url is None:
-            url = self.url
+            url = await self.url
             if url is None:
                 return BlockchainStatuses.NO_NODES_AVAILABLE
         try:
