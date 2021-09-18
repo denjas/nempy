@@ -4,6 +4,8 @@ import logging
 from enum import Enum
 from typing import List, Tuple, Union, Dict, Optional
 
+from symbolchain.core.facade.SymbolFacade import SymbolFacade
+
 from nempy.sym.constants import BlockchainStatuses, Fees, TransactionStatus
 from nempy.user_data import AccountData
 from .sym import api as sym
@@ -299,3 +301,10 @@ class XYMEngine(NEMEngine):
         ```
         """
         return await network.check_transaction_state(transaction_hash)
+
+    @staticmethod
+    async def account_bu_pub_key(public_key: str):
+        sym_facade: SymbolFacade = SymbolFacade(await node_selector.network_type)
+        address = str(sym_facade.network.public_key_to_address(public_key)).upper()
+        return address
+

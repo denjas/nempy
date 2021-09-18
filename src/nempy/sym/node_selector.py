@@ -85,6 +85,8 @@ class NodeSelector:
 
     @property
     async def network_type(self):
+        if self._network_type is not None:
+            return self._network_type
         while self.is_elections:
             await asyncio.sleep(0.1)
         self._network_type = await get_node_network()
