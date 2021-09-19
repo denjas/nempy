@@ -112,8 +112,6 @@ class NodeSelector:
         if self.task is not None and not self.task.cancelled():
             self.task.cancel()
             await self.task
-        else:
-            logger.warning("Task is cancelled or not set")
 
     async def restart(self, interval: Optional[int] = None):
         """Restarts the background node selection async thread"""
