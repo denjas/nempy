@@ -20,8 +20,6 @@ from .constants import NetworkType, BlockchainStatuses
 
 
 logger = logging.getLogger(__name__)
-print(logger.name)
-print(logger.level)
 
 
 async def get_node_network():
