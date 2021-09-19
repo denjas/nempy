@@ -10,7 +10,7 @@ from nempy.sym.constants import BlockchainStatuses, Fees, TransactionStatus
 from nempy.user_data import AccountData
 from .sym import api as sym
 from .sym import network
-from .sym.node_selector import node_selector
+from .sym.node_selector import node_selector, NodeSelector
 
 
 logger = logging.getLogger(__name__)
@@ -209,7 +209,7 @@ class XYMEngine(NEMEngine):
         """
         if self.account is None:
             return BlockchainStatuses.NOT_INITIALIZED
-        return await node_selector.health()
+        return await NodeSelector.health(await node_selector.url)
 
     async def get_balance(self, nem_address: Optional[str] = None, humanization: bool = False) -> Dict[str, float]:
         """
