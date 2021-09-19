@@ -80,7 +80,8 @@ class NodeSelector:
     @property
     async def url(self):
         while self.is_elections:
-            await asyncio.sleep(0.1)
+            logger.debug('Waiting for the process of selecting nodes')
+            await asyncio.sleep(0.3)
         return self._URL
 
     @property
