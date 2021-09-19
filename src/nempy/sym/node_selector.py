@@ -20,6 +20,8 @@ from .constants import NetworkType, BlockchainStatuses
 
 
 logger = logging.getLogger(__name__)
+print(logger.name)
+print(logger.level)
 
 
 async def get_node_network():
@@ -75,10 +77,13 @@ class NodeSelector:
     def __init__(self, node_urls: Union[List[str], str]):
         self._URLs = [node_urls] if isinstance(node_urls, str) else node_urls
         [url_validation(url) for url in self._URLs]
-        self._URL = self._URLs[0]
+        self.is_elections = True
+        # self._URL = self._URLs[0]
 
     @property
     async def url(self):
+        if self._URL is not None:
+            return self._URL
         while self.is_elections:
             logger.debug('Waiting for the process of selecting nodes')
             await asyncio.sleep(0.3)
@@ -89,7 +94,8 @@ class NodeSelector:
         if self._network_type is not None:
             return self._network_type
         while self.is_elections:
-            await asyncio.sleep(0.1)
+            logger.debug('Waiting for the process of selecting')
+            await asyncio.sleep(0.3)
         self._network_type = await get_node_network()
         return self._network_type
 
@@ -103,16 +109,24 @@ class NodeSelector:
                 "Only one blockchain node is installed. "
                 "It is recommended to install a list of several nodes for more stable work"
             )
+            self.is_elections = False
             return
         self.interval = interval if interval is not None else self.interval
         self.task = asyncio.create_task(self.node_actualizer(self.interval))
-        self.task.set_name("elector")
+        # self.task.set_name("elector")
 
     async def stop(self):
         """Stops the background async thread of node selection"""
         if self.task is not None and not self.task.cancelled():
             self.task.cancel()
-            await self.task
+            # await self.task
+            # try:
+
+            # self.task.print_stack()
+
+            # except asyncio.CancelledError as e:
+            #     self.is_elections = False
+            #     print("Stop node actualizer stop()")
 
     async def restart(self, interval: Optional[int] = None):
         """Restarts the background node selection async thread"""
@@ -127,12 +141,12 @@ class NodeSelector:
                 self.is_elections = False
                 await asyncio.sleep(interval)
             except asyncio.CancelledError as e:
-                print("Stop node actualizer")
+                logger.warning("Stop node actualizer")
                 break
 
     async def set_urls_pool(self, urls: List[str]):
-        while self.is_elections:
-            await asyncio.sleep(0.1)
+        logger.debug('The node reselection process has been restarted')
+        self.is_elections = True
         self._URLs = urls
         await self.restart()
 
@@ -164,7 +178,8 @@ class NodeSelector:
         self._URL = new_url
         logger.warning(f"Selected node: {self._URL}")
 
-    async def health(self, url=None) -> BlockchainStatuses:
+    @staticmethod
+    async def health(url) -> BlockchainStatuses:
         """
         Returns the statuses of node services
         Parameters
@@ -184,11 +199,6 @@ class NodeSelector:
         BlockchainStatuses.UNKNOWN
         ```
         """
-
-        if url is None:
-            url = await self.url
-            if url is None:
-                return BlockchainStatuses.NO_NODES_AVAILABLE
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(f"{url}/node/health", timeout=1) as response:
