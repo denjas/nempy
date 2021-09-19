@@ -131,6 +131,12 @@ class NodeSelector:
                 print("Stop node actualizer")
                 break
 
+    async def set_urls_pool(self, urls: List[str]):
+        while self.is_elections:
+            await asyncio.sleep(0.1)
+        self._URLs = urls
+        await self.restart()
+
     async def reelection_node(self):
         logger.debug("Node reselecting...")
         heights = [await NodeSelector.get_height(url) for url in self._URLs]
