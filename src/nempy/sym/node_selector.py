@@ -107,6 +107,7 @@ class NodeSelector:
                 "Only one blockchain node is installed. "
                 "It is recommended to install a list of several nodes for more stable work"
             )
+            self._URL = self._URLs[0]
             self.is_elections = False
             return
         self.interval = interval if interval is not None else self.interval
