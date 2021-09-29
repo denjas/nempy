@@ -243,8 +243,8 @@ class NodeSelector:
                     node_info = await response.json()
                     height = node_info["height"]
                     return int(height)
-        except Exception as e:
-            logger.exception(e)
+        except Exception:
+            logger.warning(f'Slow or not working node detected: {url}')
             return 0
 
     @staticmethod
