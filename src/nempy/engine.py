@@ -304,7 +304,9 @@ class XYMEngine(NEMEngine):
 
     @staticmethod
     async def account_bu_pub_key(public_key: str):
-        sym_facade: SymbolFacade = SymbolFacade(await node_selector.network_type)
+        sym_facade: SymbolFacade = SymbolFacade('testnet')  # TODO return back node selection depending on the URL
+        # sym_facade: SymbolFacade = SymbolFacade(await node_selector.network_type)
+        # sym_facade: SymbolFacade = SymbolFacade(await node_selector.network_type)
         address = str(sym_facade.network.public_key_to_address(PublicKey(public_key))).upper()
         return address
 
