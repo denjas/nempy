@@ -82,9 +82,13 @@ class NodeSelector:
     async def url(self):
         if self._URL is not None:
             return self._URL
+        count = 0
         while self.is_elections:
+            if count >= 3:
+                return None
             logger.debug('Waiting for the process of selecting nodes')
             await asyncio.sleep(0.3)
+            count += 1
         return self._URL
 
     @property
